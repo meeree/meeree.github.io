@@ -21,7 +21,7 @@
 title: Project Emergent
 email: j.a.hazelden@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
-    This 499 research portfolio will investigate the intersection between biology and gaming. 
+    499 research portfolio investigating the intersection between biology and gaming. 
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "" # the base hostname & protocol for your site, e.g. http://example.com
 youtube_username: 2meeree2
