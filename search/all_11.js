@@ -33,5 +33,6 @@ var searchData=
   ['sim_5fparams_5fn_168',['SIM_PARAMS_N',['../defines_8cuh.html#a9355da7418c7d511bc8ba26663686652',1,'defines.cuh']]],
   ['sim_5fparams_5fv_169',['SIM_PARAMS_V',['../defines_8cuh.html#aa2ac97b2b6d4715fe384cc0d0bea33e8',1,'defines.cuh']]],
   ['slice_5findex_170',['slice_index',['../namespace_graphics.html#a85781c7fcd6555318df976123c7e1531',1,'Graphics']]],
-  ['startup_171',['startup',['../namespace_graphics.html#a8f249fa225e018430ea622e24c50da10',1,'Graphics']]]
+  ['solidsphere_171',['SolidSphere',['../class_solid_sphere.html',1,'']]],
+  ['startup_172',['startup',['../namespace_graphics.html#a8f249fa225e018430ea622e24c50da10',1,'Graphics']]]
 ];

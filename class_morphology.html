@@ -80,9 +80,10 @@ Inheritance diagram for Morphology:</div>
   <map id="Morphology_map" name="Morphology_map">
 <area href="class_file_morphology.html" title="Morphology read in from a file with format inferred in constructor." alt="FileMorphology" shape="rect" coords="0,56,101,80"/>
 <area href="class_hollow_sphere.html" title="Hollow Sphere shell. 2D Manifold." alt="HollowSphere" shape="rect" coords="111,56,212,80"/>
-<area href="class_implicit_volume.html" title="Volume given by the solution of the equations F(x,y,z) &lt;= 0." alt="ImplicitVolume" shape="rect" coords="222,56,323,80"/>
-<area href="class_unit_cube.html" title="3D Square [-1,1] X [-1,1] X [-1,1]. 3D Manifold." alt="UnitCube" shape="rect" coords="333,56,434,80"/>
+<area href="class_implicit_solid.html" alt="ImplicitSolid" shape="rect" coords="222,56,323,80"/>
+<area href="class_unit_cube.html" title="3D Square [-1,1] X [-1,1] X [-1,1]." alt="UnitCube" shape="rect" coords="333,56,434,80"/>
 <area href="class_unit_square.html" title="2D Square [-1,1] X [-1,1]. 2D Manifold." alt="UnitSquare" shape="rect" coords="444,56,545,80"/>
+<area href="class_solid_sphere.html" title="Solid unit sphere implemented as an implicit solid." alt="SolidSphere" shape="rect" coords="222,112,323,136"/>
   </map>
 </div></div>
 <table class="memberdecls">
@@ -223,7 +224,7 @@ Protected Attributes</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>If the function is successful for not. </dd></dl>
 
-<p>Implemented in <a class="el" href="class_file_morphology.html#a7ffa1d04ec8a2635c7a77a3dc7c05392">FileMorphology</a>, <a class="el" href="class_implicit_volume.html#ab35735a11d4b25a6e318ae6fd4c1f90f">ImplicitVolume</a>, <a class="el" href="class_unit_cube.html#a409e16c959b7b7f0562276b436341b2b">UnitCube</a>, <a class="el" href="class_unit_square.html#a9db9fee3445d0eb9117654edd1461998">UnitSquare</a>, and <a class="el" href="class_hollow_sphere.html#aab39106d6a51b8b5b59dd2e52e81c516">HollowSphere</a>.</p>
+<p>Implemented in <a class="el" href="class_file_morphology.html#a7ffa1d04ec8a2635c7a77a3dc7c05392">FileMorphology</a>, <a class="el" href="class_implicit_solid.html#a470488c73cc8948be0dda00ee0a397b1">ImplicitSolid</a>, <a class="el" href="class_unit_cube.html#a409e16c959b7b7f0562276b436341b2b">UnitCube</a>, <a class="el" href="class_unit_square.html#a9db9fee3445d0eb9117654edd1461998">UnitSquare</a>, and <a class="el" href="class_hollow_sphere.html#aab39106d6a51b8b5b59dd2e52e81c516">HollowSphere</a>.</p>
 
 </div>
 </div>
@@ -276,7 +277,7 @@ Protected Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00035">35</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00036">36</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
 
 </div>
 </div>
@@ -385,7 +386,7 @@ Protected Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00027">27</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00028">28</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
 
 </div>
 </div>
@@ -413,7 +414,7 @@ Protected Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00021">21</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00022">22</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
 
 </div>
 </div>
@@ -443,7 +444,7 @@ Protected Attributes</h2></td></tr>
 <p>Positions in GLM format. </p>
 <p>Creates kd_tree using positions. </p>
 
-<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00060">60</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00061">61</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
 
 </div>
 </div>
@@ -471,7 +472,7 @@ Protected Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00015">15</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00016">16</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
 
 </div>
 </div>
@@ -499,7 +500,7 @@ Protected Attributes</h2></td></tr>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00007">7</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="morphology_8cpp_source.html#l00008">8</a> of file <a class="el" href="morphology_8cpp_source.html">morphology.cpp</a>.</p>
 
 </div>
 </div>

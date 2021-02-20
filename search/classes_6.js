@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['knnnetwork_217',['KNNNetwork',['../class_k_n_n_network.html',1,'']]]
+  ['knnnetwork_218',['KNNNetwork',['../class_k_n_n_network.html',1,'']]]
 ];
