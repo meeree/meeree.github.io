@@ -1,0 +1,17 @@
+digraph "Morphology"
+{
+ // LATEX_PDF_SIZE
+  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
+  node [fontname="Helvetica",fontsize="10",shape=record];
+  Node1 [label="Morphology",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node2 [label="FileMorphology",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$class_file_morphology.html",tooltip="Morphology read in from a file with format inferred in constructor."];
+  Node1 -> Node3 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node3 [label="HollowSphere",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$class_hollow_sphere.html",tooltip="Hollow Sphere shell. 2D Manifold."];
+  Node1 -> Node4 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node4 [label="ImplicitVolume",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$class_implicit_volume.html",tooltip="Volume given by the solution of the equations F(x,y,z) <= 0."];
+  Node1 -> Node5 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node5 [label="UnitCube",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$class_unit_cube.html",tooltip="3D Square [-1,1] X [-1,1] X [-1,1]. 3D Manifold."];
+  Node1 -> Node6 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
+  Node6 [label="UnitSquare",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$class_unit_square.html",tooltip="2D Square [-1,1] X [-1,1]. 2D Manifold."];
+}

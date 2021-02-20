@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['m_5fmat_5floc_88',['m_mat_loc',['../namespace_graphics.html#acf2724be7a18e8148883bb0629e5ca3c',1,'Graphics']]],
+  ['main_89',['main',['../main_8cu.html#ae66f6b31b5ad750f1fe042a706a4e3d4',1,'main.cu']]],
+  ['main_2ecu_90',['main.cu',['../main_8cu.html',1,'']]],
+  ['matrix_91',['matrix',['../struct_cu_blas_adjacency_matrix.html#a51bd5a98ac1b3b89125adde060a84187',1,'CuBlasAdjacencyMatrix']]],
+  ['matrixcoupling_92',['MatrixCoupling',['../class_matrix_coupling.html',1,'MatrixCoupling'],['../class_matrix_coupling.html#aabfefb9940df7b06bd075a150673b486',1,'MatrixCoupling::MatrixCoupling()']]],
+  ['max_5fraw_5fvideo_5fsize_5fgb_93',['max_raw_video_size_gb',['../namespace_graphics.html#a8cc2b613e01468cd06738e6aabfbb233',1,'Graphics']]],
+  ['measureaverageentirenetwork_94',['MeasureAverageEntireNetwork',['../class_electrode_net.html#abb1a781f9362936fb62f102c648a5074',1,'ElectrodeNet']]],
+  ['merge_5fkernel_95',['merge_kernel',['../coupling_8cu.html#ac291fbaed5c0d8ddf5b9af6b6bd5f037',1,'coupling.cu']]],
+  ['model_96',['model',['../namespace_graphics.html#acef47ff2fb5bb5de0df186a57b236947',1,'Graphics']]],
+  ['morphology_97',['Morphology',['../class_morphology.html',1,'Morphology'],['../class_morphology.html#a11a3bb86ec7ad042588f807a783614f8',1,'Morphology::Morphology()']]],
+  ['morphology_2ecpp_98',['morphology.cpp',['../morphology_8cpp.html',1,'']]],
+  ['morphology_2eh_99',['morphology.h',['../morphology_8h.html',1,'']]],
+  ['morphology_5fhandle_100',['morphology_handle',['../class_k_n_n_network.html#a0b7951d7d3e979294613a73fea0a0973',1,'KNNNetwork']]],
+  ['mouse_101',['mouse',['../namespace_graphics.html#ab9b7d01516fea5a69f0082a9a7aa4602',1,'Graphics']]],
+  ['mov_5fvideo_5fidx_102',['mov_video_idx',['../namespace_graphics.html#adeec2db5ee6c6115b9717d264566a7ea',1,'Graphics']]],
+  ['move_5fn_5fframes_103',['move_N_frames',['../struct_graphics_1_1_replay_buffer.html#a1bb0f5f7fa5a5919f8ae2b453c11c276',1,'Graphics::ReplayBuffer']]]
+];
