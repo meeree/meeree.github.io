@@ -48,17 +48,36 @@ The incremement \(\Delta z_i\) should be small, and I'm not sure what is a good 
 <b>In summary:</b> to compute the total derivative \(D_{_W} f\), we first approximate \(\nabla f(z)\) as above, then we take an outer product with \(a\). 
 </p>
 
-<h2>Simple Example</h2>
+<!--<h2>Simple Example</h2>
 
-<p>TODO: text goes here</p>
+<p>TODO: text goes here</p>-->
 
 
 <h2>Network of Coupled Oscillators</h2>
 
-I wanted to use a simple oscillator model to try out these ideas in a more specific application and see how we do.
+<p>
+I wanted to use a simple oscillator model to try out these ideas in a more specific application and see how we do. The Van der Pol oscillator is a simple 2D oscillator model given by:
+$$x' = y$$
+$$y' = \mu (1 - x^2) y - x,$$
+for some parameter \(\mu\). With this simple model we can get some cool plots easily. For example, here is a plot of the phase space for a grid of initial conditions from -5 to 5 demonstrating that all the states reach a stable cycle:
+<img src="./van_der_pole_all.png" alt="Grid"/>
+The green dot denotes the initial condition and the red denotes the final conditions and everything was simulated for 30 time units with a timestep of 0.03.
+</p>
+<p>
+Let's add some more complexity by considering a network of coupled Van Der Pol oscillators. In particular, a quick google search linked me to <a href="https://www.sciencedirect.com/science/article/pii/S037596011930773X">this paper</a> which looks at the dynamics of two coupled oscillators. In their equations, they add a new direct term to \(x'\) and \(y'\) based on the difference between these quantities and the mean of these quantities throughout the network. These terms are scaled by some fixed constants \(\epsilon_A, \epsilon_B\) and added to the original ODE. I decided to first set \(\epsilon_B\) to zero, so we only have input through the \(x\) variable. Next, I introduced weights, so that, instead of looking at the input average to a neuron, we look at the weighted input average based on the particular neuron's weights. With these changes the vectorized system now looks like:
+$$x' = y + \epsilon (z - x)$$
+$$y' = \mu (1 - x^2) y - x,$$
+where \(z\) is the weighted quantitiy
+$$z = W x.$$
+Let's look at the behavior with a network of 5 fully connected neurons with random normal weights and random normal initial conditions with a standard deviation of 2, as in the graph at the top of this page. Below is a plot of some sample trajectories:
+<img src="./van_der_pole_network_FIX.png" alt="Net"/>
+We need some way to convert this network to a quantifiable single scalar quantity. In real machine learning tasks, this is a loss function. In our case, I am just screwing around, so let's come up with something on the fly. Inspired by the paper I linked above, let's try use the Pearson correlation coefficient. This is motivated by the idea that taking the gradient of this quantity with respect to weights should tell us how the weights affect correlation in the network, assuming we have simulated for a sufficiently long time period. One detail is that Pearson correlation only considers two signals. Thus, I just measured the correlation between the first two neurons. Then, I measured the gradients using the methods above. Here is the resulting matrix:
+<img src="./van_der_pole_grads_FIX.png" alt="Net" style="width:30%;"/>
+Here's another example:
+<img src="./van_der_pole_network_FIX_2.png" alt="Net"/><img src="./van_der_pole_grads_FIX_2.png" alt="Net" style="width:30%;"/>
 
 
-<h2>Mathematical Details</h2>
+<h2>Mathematical Details of Finite Difference</h2>
 
 In here we will go through the details of stability/order of accuracy/computational complexity/etc.
 
