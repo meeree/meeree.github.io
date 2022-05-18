@@ -1,0 +1,27 @@
+digraph D {
+  n1 [shape=circle]
+  n2 [shape=circle]
+  n3 [shape=circle]
+  n4 [shape=circle]
+  n5 [shape=circle]
+
+  n1 -> n1 
+  n2 -> n2 
+  n3 -> n3 
+  n4 -> n4 
+  n5 -> n5 
+
+  n1 -> n2 [dir=both]
+  n1 -> n3 [dir=both]
+  n1 -> n4 [dir=both]
+  n1 -> n5 [dir=both]
+
+  n2 -> n3 [dir=both]
+  n2 -> n4 [dir=both]
+  n2 -> n5 [dir=both]
+
+  n3 -> n4 [dir=both]
+  n3 -> n5 [dir=both]
+
+  n4 -> n5 [dir=both]
+}

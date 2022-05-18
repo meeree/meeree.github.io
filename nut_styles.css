@@ -1,0 +1,48 @@
+* {
+}
+
+html {
+    background-color: green;
+}
+
+body {
+    margin: auto;
+    width: 80%;
+    border: 5px solid brown;
+    padding: 10px;
+    margin-top: 1cm;
+    background-color: white;
+}
+
+h1,h2,h3,h4,h5 {
+    text-align: center;
+    font-family: 'Times New Roman', serif;
+    padding-bottom: 0px;
+    margin-bottom: 0px;
+}
+
+h2 {
+    font-size: 1cm;
+    text-decoration: underline;
+}
+
+h1 {
+    font-size: 1.5cm;
+}
+
+hr {
+    margin-bottom: 0.8cm;
+}
+
+p {
+    font-size: 0.6cm;
+    width: 95%;
+    margin: auto;
+    text-indent: 50px;
+}
+
+img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
