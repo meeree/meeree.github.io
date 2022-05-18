@@ -2,7 +2,7 @@
 <head>
 <meta name="description" content="James Hazelden">
 <!--<link rel=StyleSheet href="pdbstyle.css" type="text/css" media=all>-->
-<title>Trianing Neuronal Circuits</title>
+<title>James Hazelden</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <script language="JavaScript">
@@ -12,15 +12,16 @@
    }
 -->
 </script>
-<script type="text/javascript" async
-  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
 </script>
 </head>
 <body>
 <h1>Finite Difference Gradients in Neuronal Circuits</h1>
 <p align="justify">
 Using Pytorch to compute gradients explicitly in circuits of realistic complex neuronal models, especially those with very complex internal connections, can be very computationally expensive. Furthermore, I think that issues such as numerical stability will become significant because of all the multiplications over every timestep, among other factors. One idea is to compute gradients using something different to backpropogation. In particular, I tried out using finite difference methods instead, which, as far as I can tell online, is not a particularly well-researched idea, especially in terms of actual applications. 
-The idea is simple. $x \lt y$
+The idea is simple. $$x \lt y$$
 </p>
 
 <br><br><br><br><br><br>
