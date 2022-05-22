@@ -5,13 +5,18 @@ html {
     background-color: green;
 }
 
+.main_text {
+    border: 5px solid brown;
+    background-color: white;
+    width: 80%;
+    margin: auto;
+    padding-bottom: 5cm;
+}
+
 body {
     margin: auto;
-    width: 80%;
-    border: 5px solid brown;
     padding: 10px;
     margin-top: 1cm;
-    background-color: white;
 }
 
 h1,h2,h3,h4,h5 {

@@ -1,0 +1,20 @@
+digraph D { 
+    dpi=300
+    rankdir=LR
+    {rank=same
+    n1 [shape=plaintext,label="3. Unmeasured\n Inputs u(t)", width=1.4]}
+
+    {rank=same 
+    n4 [shape=square,fontsize=10,label="2. Init \n F(0)"]
+    n2 [shape=circle,label="1. Dynamical \n System F(t)", penwidth=3]}
+
+	{rank=same
+    n3 [shape=plaintext, label="4. Spiketrain/\nFiring Rate \n Output r(t)", width=1.4]}
+    
+    n4 -> n2 [penwidth=3,minlen=0.05]
+    n1 -> n2 [label="Drive"]
+    n2 -> n3 [label="Output"]
+
+    labelloc="t";
+    label=<<B>Dynamical System Hypothesis</B>>;
+}

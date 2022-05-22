@@ -1,0 +1,73 @@
+<html>
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text">
+<h1>Training Biological Neural Networks on Spiking Data</h1>
+<hr>
+<h2>Overview</h2>
+<p>
+Inspired by my work on training biological neural networks (BNNs) and many recent papers training, for example, variational autoencoders (VAEs) on spiking data from real animals, I wanted to try and combine these two tasks. This work is kind of a long shot because I have only been succesful in training BNNs on MNIST which is one of the dumbest tasks in deep learning. I made the unfotunate decision to do this work as a final project for my one class, requiring me to double down and try and get it done in a very short amount of time (around two weeks). This article will take the form of my thoughts as I think them up on the topic, with the hope of forming some coherent approach. 
+</p>
+<h2>Inspiration: LFADS</h2>
+<img src="./41592_2018_109_Fig1_HTML.webp" style="max-width:80%;" alt="Schematic from LFADS Paper"/>
+<br>
+<br>
+<p>
+The main work I aim to build on is <a href="https://www.nature.com/articles/s41592-018-0109-9">this "LFADS" paper</a>, and the previous paper introducing the technique <a href="https://arxiv.org/pdf/1608.06315.pdf">here</a>.  
+</p>
+<br>
+<img src="./dynamical_system.png" alt="Dynamical System Hypothesis" style="max-width:50%;"/>
+<br>
+<p>
+What is it that LFADS is trying to do? Above is a schematic underlying the main idea of the approach. The indexing corresponds to the four assumptions detailed in their introduction. Essentially, the assumption is that we have some dynamical system \(F\) driven by some external inferred input as well as an initial condition which is also inferred. The output is then some transformation of the internal state \(F(t)\) to a spiketrain or firing rate trace that should approximate the original spiketrain. In the LFADS paper, they assume that external output (4) is modelled by a Poisson process. 
+</p>
+<p>
+The diagram above really just describes the network generator (decoder) and drops details of the encoder. The encoder, however, is central to training the encoder and inferring (2) and (3), the initial conditions, and what drives the network over time. These are what is considered the "latent representation" of the data because it is a (typically lower-dimensional) representation of the data that drives the system to give us a prediction. We can view this as a form of compression but also can view it is as a translation from raw data to some representation that is potentially more interpretable and tells us something about the system. The latter perspective is more important in the LFADS case, I think.
+</p>
+<p>
+Here are some of the more internal details of LFADS. They use a bidirectional RNN encoder network which encodes a spiketrain to distributions for each input in the spike array. Then, they use another RNN that is just trained forwards to predict firing rates and then corresponding spiketrains from the input distributions. The aim is to reproduce the data by encoding it using the distributions. Variational autoencoders are used because the trained decoder (also called generator) can be used to generate novel samples given inputs not produced by the encoder.
+</p>
+
+<!--<h3>Dicussion: What Confused Me</h3>
+<br>
+<p>
+One confusion I had was the encoding. Does the latent encoding vary over time (which might make sense because the spiketrains are temporal), or is it just a single encoding per spiketrain? Firstly, note that the encoder encodes two variables: the initial hidden state of the decoer, \(g_0\), and the temporal input \(u_t\). We get the former distribution from a variable that is obtained by feeding through the encoder forwards and feeding backwards and concatenating the final temporal values in each case (equation 13 in the methods). So, this quanitity is not time varying. \(u_t\), on the other hand, is time-varying as suggested by the subscript \(t\). How we get this variable is quite complicated. In particular, there is a pair of RNNs, one which is run forwards in time and the other which is run bakcwards in time. Then, the estimates from these two are concatenated and fed into a "controller" network which is fowards in time. Finally, this controller is also fed the previous estimate of the decoder network, which allows us to have some communication from the decoder to the encoder. The controller's estimates over time are what ultimately determine \(u_t\). 
+</p>-->
+
+<h2>Incorporating BNNs: First Steps</h2>
+<br>
+
+<p>
+Let's look at the plot I made of the dynamical system hypothesis above and let's try come up with something using BNNs to replace/incorporate into LFADS. First, let's ask what it is that \(F\) is really approximating. In the case of spiking data from from the motor cortex, \(F\) is approximating a population of neurons in the motor cortex that are being sampled. This is where there is a clear application of BNNs: just replace \(F\) with some network of biological neuron models with a sufficient level of complexity. The idea is something like this:
+</p>
+<br>
+<img src="./rev1.png" alt="Revision 1" style="width:80%;max-width:80%;"/>
+
+<!--<img src="./schematic_v1.png" alt="Initial Schematic" style="max-width:80%;"/>-->
+
+
+
+</div>
+
+</body>
+
+</html>
+
