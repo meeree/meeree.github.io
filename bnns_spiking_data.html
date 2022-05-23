@@ -31,7 +31,7 @@ Inspired by my work on training biological neural networks (BNNs) and many recen
 <br>
 <br>
 <p>
-The main work I aim to build on is <a href="https://www.nature.com/articles/s41592-018-0109-9">this "LFADS" paper</a>, and the previous paper introducing the technique <a href="https://arxiv.org/pdf/1608.06315.pdf">here</a>.  
+The main work I aim to build on is <a href="https://www.nature.com/articles/s41592-018-0109-9">this "LFADS" paper</a>, and the preprint introducing the technique <a href="https://arxiv.org/pdf/1608.06315.pdf">here</a>.  
 </p>
 <br>
 <img src="./dynamical_system.png" alt="Dynamical System Hypothesis" style="max-width:50%;"/>
@@ -43,7 +43,31 @@ What is it that LFADS is trying to do? Above is a schematic underlying the main 
 The diagram above really just describes the network generator (decoder) and drops details of the encoder. The encoder, however, is central to training the encoder and inferring (2) and (3), the initial conditions, and what drives the network over time. These are what is considered the "latent representation" of the data because it is a (typically lower-dimensional) representation of the data that drives the system to give us a prediction. We can view this as a form of compression but also can view it is as a translation from raw data to some representation that is potentially more interpretable and tells us something about the system. The latter perspective is more important in the LFADS case, I think.
 </p>
 <p>
-Here are some of the more internal details of LFADS. They use a bidirectional RNN encoder network which encodes a spiketrain to distributions for each input in the spike array. Then, they use another RNN that is just trained forwards to predict firing rates and then corresponding spiketrains from the input distributions. The aim is to reproduce the data by encoding it using the distributions. Variational autoencoders are used because the trained decoder (also called generator) can be used to generate novel samples given inputs not produced by the encoder.
+Here are some of the more internal details of LFADS. They use a bidirectional RNN encoder which encodes a spiketrain to distributions for each input in the spike array. This bidirectional RNN consists of two seperate RNNs: one which gets fed the data forwards in time and one that goes backwards in time. Then, they use another RNN that is just trained forwards to predict firing rates and then corresponding spiketrains from the input distributions. The aim is to reproduce the data by encoding it using the distributions. Variational autoencoders are used because the trained decoder (also called generator) can be used to generate novel samples given inputs not produced by the encoder. 
+</p>
+<p>
+Below is some Pytorch code I found to initialize the RNN components for LFADS which gives a more clear picture of the architecture. They use GRUs instead of vanilla RNNs to avoid some of the pitfalls in vanilla RNNs such as vanishing gradients. 
+<br>
+<br>
+<code>                      # LFADS Construction #
+# Generator Forward Encoder
+self.gru_Egen_forward  = nn.GRUCell(input_size= self.inputs_dim, hidden_size= self.g0_encoder_dim)
+
+# Generator Backward Encoder
+self.gru_Egen_backward = nn.GRUCell(input_size= self.inputs_dim, hidden_size= self.g0_encoder_dim)
+
+# Controller Forward Encoder
+self.gru_Econ_forward  = nn.GRUCell(input_size= self.inputs_dim, hidden_size= self.c_encoder_dim)
+
+# Controller Backward Encoder
+self.gru_Econ_backward = nn.GRUCell(input_size= self.inputs_dim, hidden_size= self.c_encoder_dim)
+
+# Controller
+self.gru_controller    = nn.GRUCell(input_size= self.c_encoder_dim * 2 + self.factors_dim, hidden_size= self.controller_dim)
+
+# Generator
+self.gru_generator     = nn.GRUCell(input_size= self.u_dim, hidden_size= self.g_dim)
+</code>    
 </p>
 
 <!--<h3>Dicussion: What Confused Me</h3>
@@ -61,8 +85,15 @@ Let's look at the plot I made of the dynamical system hypothesis above and let's
 <br>
 <img src="./rev1.png" alt="Revision 1" style="width:80%;max-width:80%;"/>
 
-<!--<img src="./schematic_v1.png" alt="Initial Schematic" style="max-width:80%;"/>-->
+<p>
+Firstly, let's play with LFADS some before we try and add anything new. I used Pytorch code for LFADS I found <a href="https://github.com/lyprince/lfads_demo">here</a> which has an easy to use notebook that trains on a Lorenz attractor task. Here are the results for a randomized batch of testing data comparing firing rate for the inferred and real outputs. This was using 200 epochs of training. 
+</p>
 
+<img src="./Traces.png" alt="Traces"/>
+
+<p>
+As we can see, it seems to a decent job of capturing when the firing rate drops or peaks and captures the general shape although it is clearly not perfect. 
+</p>
 
 
 </div>

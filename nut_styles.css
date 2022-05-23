@@ -5,6 +5,20 @@ html {
     background-color: green;
 }
 
+
+code {
+  display: block;
+  white-space: pre-wrap;
+  max-width: 50%;
+  margin: auto;
+  font-size: 0.4cm;
+  border: 3px dashed black;
+  padding: 7px;
+  border-radius: 25px;
+  background: url(https://astro.uni-frankfurt.de/wp-content/uploads/2014/01/White-Paper-Texture-Background-520x390.jpg);
+  background-size: cover;
+}
+
 .main_text {
     border: 5px solid brown;
     background-color: white;
