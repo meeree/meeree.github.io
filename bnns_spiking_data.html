@@ -24,7 +24,7 @@
 <hr>
 <h2>Overview</h2>
 <p>
-Inspired by my work on training biological neural networks (BNNs) and many recent papers training, for example, variational autoencoders (VAEs) on spiking data from real animals, I wanted to try and combine these two tasks. This work is kind of a long shot because I have only been succesful in training BNNs on MNIST which is one of the dumbest tasks in deep learning. I made the unfotunate decision to do this work as a final project for my one class, requiring me to double down and try and get it done in a very short amount of time (around two weeks). This article will take the form of my thoughts as I think them up on the topic, with the hope of forming some coherent approach. 
+Inspired by my work on training biological neural networks (BNNs) and papers training neural networks on spiking data from real animals to infer the structure underlying the data, I wanted to try and combine these two approaches. This work is kind of a long shot because I have only been succesful in training BNNs on MNIST which is one of the dumbest tasks in deep learning. I made the unfotunate decision to do this work as a final project for my one class, requiring me to double down and try and get it done in a very short amount of time (around two weeks). This article will take the form of my thoughts as I think them up on the topic, with the hope of forming some coherent approach. 
 </p>
 <h2>Inspiration: LFADS</h2>
 <img src="./41592_2018_109_Fig1_HTML.webp" style="max-width:80%;" alt="Schematic from LFADS Paper"/>
@@ -86,19 +86,44 @@ Let's look at the plot I made of the dynamical system hypothesis above and let's
 <img src="./rev1.png" alt="Revision 1" style="width:80%;max-width:80%;"/>
 
 <p>
-Firstly, let's play with LFADS some before we try and add anything new. I used Pytorch code for LFADS I found <a href="https://github.com/lyprince/lfads_demo">here</a> which has an easy to use notebook that trains on a Lorenz attractor task. Here are the results for a randomized batch of testing data comparing firing rate for the inferred and real outputs. This was using 200 epochs of training. 
+Firstly, let's play with LFADS some before we try and add anything new. I used Pytorch code for LFADS I found <a href="https://github.com/lyprince/lfads_demo">here</a> which has an easy to use notebook that trains on a Lorenz attractor task. Below are the results for a randomized batch of testing data comparing firing rate for the inferred and real outputs. This was using 200 epochs of training and using a latent space encoding dimension of 1 (i.e., \(u_t \in \mathbb{R}\) for all \(t\)). It's pretty surprising to me that we can use such a small \(u_t\).
 </p>
 
 <img src="./Traces.png" alt="Traces"/>
 
 <p>
-As we can see, it seems to a decent job of capturing when the firing rate drops or peaks and captures the general shape although it is clearly not perfect. 
+As we can see, it seems to a decent job of capturing when the firing rate drops or peaks and captures the general shape although it is clearly not perfect. It is more like a downsampled version with some of the short-term behavior missing. 
 </p>
+<p>
+Now, let's start to add a BNN layer replacing the generator. There are some details to work out that I will include here as I go. One detail is fitting fixed physiological parameters such as maximum firing rate and input scalars to neurons. To help facilitate this, I will compute the F-I curve of one of the BNN neurons. This is a useful curve telling us how the firing rate increases based on input current to the neuron. Next, another detail is the loss function. We need to consider the loss function used for the generator for LFADS and see if this applies to the BNN or if we need to make modifications.
+</p>
+
+
+<h3>Digression: BNN Neuron Model</h3>
+
+<p>
+First, let's just look at the behavior of a typical HH neuron. We usually will get something like this:
+</p>
+
+<br>
+<img src="./hh_playground_1.png" alt="Voltages"/>
+
+<p>
+We can measure when the neurons fire by checking when they are above some threshold (e.g. in this case -40 mV) and the voltage at the previous timestep is not above this threshold. Then, we can measure the firing rate over the entire interval. Below, is a plot of the "f-i curve" for this neuron model.
+</p>
+
+<img src="./f_i_curve.png" alt="FI Curve"/>
+<br>
+
+<p> 
+Firstly, note the big jump at around 0.15. This is a so-called bifurcations, where the model transitions from no firing to constant firing at a pretty much fixed rate. Note this is a discontinuous jump so the bifurcation is called a "Hopf bifurcation". Another bifurcation occurs around 1.8. After this bifurcation, the neurons oscillate and rapidly decay to a fixed value. Note that before this the firing rate is 70 Hz. In this regime, the neuron is firing extremely fast and it is impossible to make the neuron fire more because I am using a fixed numerical timestep and method. This is likely why there is this second bifurcation in behavior which should not exist in the real idealistic HH model.
+</p>
+
+<h3>Back to the Task at Hand</h3>
+
 
 
 </div>
 
 </body>
-
 </html>
-

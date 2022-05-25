@@ -40,6 +40,11 @@ h1,h2,h3,h4,h5 {
     margin-bottom: 0px;
 }
 
+h3 {
+    font-size: 0.7cm;
+    margin-bottom: 0.3cm;
+}
+
 h2 {
     font-size: 1cm;
     text-decoration: underline;
