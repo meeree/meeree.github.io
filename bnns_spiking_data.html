@@ -99,7 +99,7 @@ Now, let's start to add a BNN layer replacing the generator. There are some deta
 </p>
 
 
-<h3>Digression: BNN Neuron Model</h3>
+<h3>BNN Neuron Model</h3>
 
 <p>
 First, let's just look at the behavior of a typical HH neuron. We usually will get something like this:
@@ -122,18 +122,31 @@ Firstly, note the big jump at around 0.15. This is a so-called bifurcation, wher
 <h3>Reconstruction Loss</h3>
 
 <p>
-The loss function code from the repository linked above is given below. This is taken at time \(t\). The parameter \(r\) is the rate inferred by the generator network at time \(t\) and the array \(x\) is the inputted spiketrain training data. Note that we keep subtracting from recon_loss because the loss is counted over all timesteps \(t\) (recon_loss is initially zero.)
+The loss function code from the repository linked above is given below. This is taken at time \(t\). The variable \(r\) is the rate inferred by the generator network at time \(t\) and the array \(x\) is the inputted spiketrain training sample. Note that we keep subtracting from recon_loss because the loss is counted over all timesteps \(t\) (recon_loss is initially zero). Subtraction is used, not addition, because the log-likelihood is maximized, not minimized. 
 </p>
 <br>
 
-<code># Reconstruction loss for specific t#
+<code># Reconstruction loss for at time t #
 lam = self.r * self.dt
 logLikelihood = (x[:, t-1] * torch.log(lam) - lam - torch.lgamma(x[:, t-1] + 1)).sum()
 self.recon_loss = self.recon_loss - logLikelihood / x.shape[0]
 </code>
 
+<br> 
+<p>
+My intuition for the code above is that it is penalizing the generator if the inferred rate does not match the real rate of the spiketrain, under the assumption that the spiking activity is distributed according to a Poisson distribution. Note that the probability density of Poisson distribution is:
+$$Pr(X = k) = \frac{\lambda^k e^{-\lambda}}{k!}.$$
+So, 
+$$\log(Pr(X = k)) = k \log(\lambda) - \lambda - \log(k!)$$
+$$= k \log(\lambda) - \lambda - \log(\Gamma(k+1)).$$
+Thus, we get the exact same thing as in the code above, which is measuring the probability of observing \(x\) spikes given a rate \(r\) at time \(t\) for each individual batch and neuron.
+</p>
+<p>
+To really nail down how the loss looks, here's a plot of a particular spiketrain for a single neuron, the inferred rate, and the log likelihood loss compute in the code:
+</p>
 
-
+<br> 
+<img src="./logLikelihood.png" alt="Log Likelihood"/>
 
 </div>
 
