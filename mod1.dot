@@ -1,0 +1,15 @@
+digraph D { 
+    dpi=300
+    rankdir=LR
+    n0 [style=invis]
+    n1 [shape=circle,label="Rate r(t)"]
+    n2 [shape=circle,label="Neuron η(t)"]
+    n3 [style=invis]
+
+    n0 -> n1 [label="Generator"]
+    n1 -> n2 [label="Linear T(x)"]
+    n2 -> n3 [label="Activation a(t)"]
+
+    labelloc="t";
+    label=<<B>Removing Poisson Assumption (4)</B>>;
+}

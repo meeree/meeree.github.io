@@ -92,7 +92,7 @@ Firstly, let's play with LFADS some before we try and add anything new. I used P
 <img src="./Traces.png" alt="Traces"/>
 
 <p>
-As we can see, it seems to a decent job of capturing when the firing rate drops or peaks and captures the general shape although it is clearly not perfect. It is more like a downsampled version with some of the short-term behavior missing. 
+Note these rates are after z-score normalization (the actual max firing rate is like 20 Hz). As we can see, it seems to a decent job of capturing when the firing rate drops or peaks and captures the general shape although it is clearly not perfect. It is more like a downsampled version with some of the short-term behavior missing. 
 </p>
 <p>
 Now, let's start to add a BNN layer replacing the generator. There are some details to work out that I will include here as I go. One detail is fitting fixed physiological parameters such as maximum firing rate and input scalars to neurons. To help facilitate this, I will compute the F-I curve of one of the BNN neurons. This is a useful curve telling us how the firing rate increases based on input current to the neuron. Next, another detail is the loss function. We need to consider the loss function used for the generator for LFADS and see if this applies to the BNN or if we need to make modifications.
@@ -108,6 +108,7 @@ First, let's just look at the behavior of a typical HH neuron. We usually will g
 <br>
 <img src="./hh_playground_1.png" alt="Voltages"/>
 
+<br>
 <p>
 We can measure when the neurons fire by checking when they are above some threshold (e.g. in this case -40 mV) and the voltage at the previous timestep is not above this threshold. Then, we can measure the firing rate over the entire interval. Below, is a plot of the "f-i curve" for this neuron model.
 </p>
@@ -147,6 +148,35 @@ To really nail down how the loss looks, here's a plot of a particular spiketrain
 
 <br> 
 <img src="./logLikelihood.png" alt="Log Likelihood"/>
+
+<h3>Loss Function for BNN generator</h3>
+ 
+<p>
+Firstly, let's start with the simplest modification possible to LFADS. In particular let's remove the Poisson assumption and replace the loss function with something based on a BNN. The idea is this: add a final BNN layer after the inferred rates and make the loss meaure the discrepancy between the neuron firings and the training input spiketrain. Below is a schematic of this for a single rate \(r(t)\) and the corresponding single neuron \(\eta(t)\). 
+</p>
+
+<img src="./mod1.png" alt="First Modification"/>
+<p>
+The linear function \(T\) can be chosen based on the F-I curve above. In particular, we can see that a rate of around 70 should correspond to an input of around 1.8. Therefore, let's set 
+$$T(r) = \text{min}(\frac{1.8}{70} r, 1.8).$$
+Note, the min is just so that the applied current does not go past the bifurcation in the plot above. This should not be an issue since the inferred rates seem to never go past around 45 Hz. I think there may be some small loss in the method due to the first bifurcation in the F-I curve, but let's not worry about that for now.
+</p>
+
+<p>
+One final small detail before going to coding is timeframes. The original data has around 100 samples per 1 second but with our neuron model we will have many more timesteps (e.g. if dt = 0.1 ms, 10,000 timsteps), so we need to scale up the rates \(r(t)\) in dimension. I did this simply by a linear interpolation to the bigger dimension using torchvision.
+</p>
+
+<h3>Putting Methods to the Test</h3>
+
+<p>
+Here are the results of all this deliberation. Below is a plot of a layer of biological neurons' reaction to the rates, after inputting them through the function \(T\) given above.
+</p>
+
+<img src="./mod1_result.png" alt="First Modification Results"/>
+
+
+
+
 
 </div>
 
