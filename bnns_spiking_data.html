@@ -49,7 +49,8 @@ Here are some of the more internal details of LFADS. They use a bidirectional RN
 Below is some Pytorch code I found to initialize the RNN components for LFADS which gives a more clear picture of the architecture. They use GRUs instead of vanilla RNNs to avoid some of the pitfalls in vanilla RNNs such as vanishing gradients. 
 <br>
 <br>
-<code>                      # LFADS Construction #
+</p>
+<code># LFADS Construction #
 # Generator Forward Encoder
 self.gru_Egen_forward  = nn.GRUCell(input_size= self.inputs_dim, hidden_size= self.g0_encoder_dim)
 
@@ -68,7 +69,6 @@ self.gru_controller    = nn.GRUCell(input_size= self.c_encoder_dim * 2 + self.fa
 # Generator
 self.gru_generator     = nn.GRUCell(input_size= self.u_dim, hidden_size= self.g_dim)
 </code>    
-</p>
 
 <!--<h3>Dicussion: What Confused Me</h3>
 <br>
@@ -119,7 +119,19 @@ We can measure when the neurons fire by checking when they are above some thresh
 Firstly, note the big jump at around 0.15. This is a so-called bifurcation, where the model transitions from no firing to constant firing at a pretty much fixed rate. Note this is a discontinuous jump so the bifurcation is called a "Hopf bifurcation". Another bifurcation occurs around 1.8. After this bifurcation, the neurons oscillate and rapidly decay to a fixed value. Note that before this the firing rate is 70 Hz. In this regime, the neuron is firing extremely fast and it is impossible to make the neuron fire more because I am using a fixed numerical timestep and method. This is likely why there is this second bifurcation in behavior which should not exist in the real idealistic HH model.
 </p>
 
-<h3>Back to the Task at Hand</h3>
+<h3>Reconstruction Loss</h3>
+
+<p>
+The loss function code from the repository linked above is given below. This is taken at time \(t\). The parameter \(r\) is the rate inferred by the generator network at time \(t\) and the array \(x\) is the inputted spiketrain training data. Note that we keep subtracting from recon_loss because the loss is counted over all timesteps \(t\) (recon_loss is initially zero.)
+</p>
+<br>
+
+<code># Reconstruction loss for specific t#
+lam = self.r * self.dt
+logLikelihood = (x[:, t-1] * torch.log(lam) - lam - torch.lgamma(x[:, t-1] + 1)).sum()
+self.recon_loss = self.recon_loss - logLikelihood / x.shape[0]
+</code>
+
 
 
 
