@@ -19,6 +19,11 @@ code {
   background-size: cover;
 }
 
+.links_list  {
+    text-align: center;
+    font-size: 1cm;
+}
+
 .main_text {
     border: 5px solid brown;
     background-color: white;
