@@ -2,7 +2,9 @@
 }
 
 html {
-    background-color: green;
+    background: url(https://opengameart.org/sites/default/files/seamless%20space_0.PNG);
+  background-size: repeat; 
+  zoom: 75%;
 }
 
 
@@ -25,11 +27,12 @@ code {
 }
 
 .main_text {
-    border: 5px solid brown;
+    border: 5px solid grey;
     background-color: white;
-    width: 80%;
+    width: 40cm;
     margin: auto;
     padding-bottom: 5cm;
+    border-radius: 25px;
 }
 
 body {
@@ -45,8 +48,13 @@ h1,h2,h3,h4,h5 {
     margin-bottom: 0px;
 }
 
-h3 {
+h4 {
     font-size: 0.7cm;
+    margin-bottom: 0.1cm;
+}
+
+h3 {
+    font-size: 1.0cm;
     margin-bottom: 0.3cm;
 }
 
@@ -65,10 +73,40 @@ hr {
 }
 
 p {
-    font-size: 0.6cm;
+    font-size: 0.8cm;
     width: 95%;
     margin: auto;
     text-indent: 50px;
+}
+
+ol {
+  display: block;
+  max-width: 70%;
+  margin: auto;
+  font-size: 0.6cm;
+  border: 3px dashed black;
+  border-radius: 25px;
+  background: url(https://astro.uni-frankfurt.de/wp-content/uploads/2014/01/White-Paper-Texture-Background-520x390.jpg);
+  background-size: cover;
+  padding-bottom: 2px;
+  padding-top: 2px;
+  counter-reset: item;
+}
+li {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    counter-increment: item;
+}
+ol ol {
+  border: none;
+}
+ol ol > li {
+    display: block;
+}
+
+ol ol > li:before {
+    content: counters(item, ".") ". ";
+    margin-left: -100px;
 }
 
 img {
@@ -77,3 +115,30 @@ img {
     margin-right: auto;
     max-width: 50%; 
 }
+
+video {
+    margin: auto;
+    display: block;
+    max-width: 70%;
+    margin-bottom: 10px;
+}
+u {
+  border-bottom:2px dotted red;
+}
+
+div.top_bar {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 200px;
+  border: 5px solid grey;
+  background: white;
+  border-radius: 25px;
+  text-align: center;
+  font-size: 0.9cm;
+}
+
+div.top_bar:hover {
+  background: pink;
+}
+
