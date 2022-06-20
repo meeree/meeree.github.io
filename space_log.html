@@ -38,6 +38,7 @@ Recently, I've been watching loads of cool space videos, especially those from <
     <ol>
         <li> <a href="#maxwell">Maxwell's Equations</a></li> 
         <li> <a href="#emwaves">EM Waves</a></li> 
+        <li> <a href="#solve1_em">Simple Maxwell Case</a></li>
     </ol>
     </li>
     <li> <a href="">Collision detection </a></li> 
@@ -67,7 +68,7 @@ We also need a matrix of products of each pair of masses. This can just be compu
 $$M = m \cdot m^T$$
 Note that if no bodies are added to the system \(M\) is constant and only needs to be computed once. Finally, the matrix of forces is just:
 $$F = G M \oslash R_2,$$
-where \(\oslash\) denotes componentwise division and I'm using it because it looks cool. Note that the force will become infinite in the diagonal entires which are zero in \(R_2\). In this case, the force can just be set to 0. Finally, the force on a paticular planet is given by 
+where \(\oslash\) denotes componentwise division and I'm using it because it looks cool. Note that the force will become infinite in the diagonal entries which are zero in \(R_2\). In this case, the force can just be set to 0. Finally, the force on a paticular planet is given by 
 $$F_p = \sum_{p' \text{planet}} F_{p, p'} (p' - p).$$
 If we let \(f_x, f_y\) be the component vectors of the forces, then, 
 $$f_x = \text{sum_rows}(F \odot \Delta x), f_y = \text{sum_rows}(F \odot \Delta y)$$
@@ -170,6 +171,43 @@ A derivation of electro-magnetic wave's orthogonal dynamics from Maxwell's equat
 </p>
 <img src="https://us.123rf.com/450wm/petrroudny/petrroudny2101/petrroudny210101068/162431141-vector-scientific-illustration-of-electromagnetic-wave-consisting-of-electric-and-magnetic-fields-an.jpg?ver=6" alt="EMR" style="width: 50%;"/>
 
+<h3>Solving EM Wave Equation</h3>
+
+<p>
+Let's continue on the elecromagnetism detour. The eventual goal is solve Maxwell's equations with the goal after that of simulating a planet's magnetosphere. As a first step to Maxwell, let's try simulating EM waves. These are given by a 2D system of second order differential equations that are identical for the two fields (electric \(E\) and magnetic \(B\)):
+$$(\nu^2 \nabla^2 - \frac{\partial^2}{\partial t^2}) E = 0,$$
+$$(\nu^2 \nabla^2 - \frac{\partial^2}{\partial t^2}) B = 0,$$
+where \(\nu\) is the speed of light in the chosen medium (in a vacuum it is 299,792,458 m/s). \(\nabla^2\) is some obscure physics notation for the "vector Laplacian" but, on a vector field \(\phi \in \mathbb{R}^3\), it is simply given by applying Laplacians to each element:
+$$\nabla^2 \phi = \nabla^2 \begin{pmatrix} \phi_1 \\ \phi_2 \\ \phi_3 \end{pmatrix} = \begin{pmatrix} \nabla^2 \phi_1 \\ \nabla^2 \phi_2 \\ \nabla^2 \phi_3 \end{pmatrix} = \begin{pmatrix} \frac{\partial^2 \phi_1}{\partial x^2} + \frac{\partial^2 \phi_1}{\partial y^2} + \frac{\partial^2 \phi_1}{\partial z^2} \\ \frac{\partial^2 \phi_2}{\partial x^2} + \frac{\partial^2 \phi_2}{\partial y^2} + \frac{\partial^2 \phi_2}{\partial z^2} \\ \frac{\partial^2 \phi_3}{\partial x^2} + \frac{\partial^2 \phi_3}{\partial y^2} + \frac{\partial^2 \phi_3}{\partial z^2} \\ \end{pmatrix}.$$
+I found out that the solutions are actually very general, we can use almost any set of orthogonal functions that are not even that wave like. For a simple example that everyone always considers when drawing EM waves, let's verify the following works (where \(p(t)\) is the position at time \(t\)):
+$$p(t) = (\nu t, 0, 0),$$
+$$E(t) = (0, \sin(\nu t), 0),$$
+$$B(t) = (0, 0, \sin(\nu t)).$$
+This is shown by the figure I put above of EM waves. Since \(x(t) = \nabla t\), we have that
+$$\nabla^2 E(t) = (0, \frac{\partial^2 \sin(x)}{\partial x^2}, 0) = (0, -\sin(x), 0).$$
+On the other hand, 
+$$\frac{\partial E(t)}{\partial t^2} = (0, -\nu^2 \sin(\nu t), 0) = \nu^2 (0, -\sin(x), 0).$$
+Thus, the difference \((\nu^2 \nabla^2 - \partial^2 / \partial t^2) E\) is zero! The same is obviously also true for \(B(t)\), so this verifies this is a valid EM wave.
+</p>
+<p>
+I will mention another cool example (that admittedly I don't really understand super well). Let's make \(p(t)\) travel along a helix. In particular, let's make it travel on a circular path in the X-Y plane and linearly go fowards in the Z direction:
+$$p(t) = (\sin(t), \cos(t), \nu t).$$
+Let's consider just creating the electric field \(E(t)\) and disregard \(B(t)\). Let TODO:FINSIH
+</p>
+<br>
+<img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Wave_Polarisation.gif" alt="EMR2"/>
+
+<h3 id="solve1_em">Maxwell Equations Simple Case</h3>
+
+<p>
+Suppose we have some 2D system on the unit square \(S = [0,1] \times [0, 1]\). Let's make some assumptions to simplify Maxwell's equations a ton and get a pretty general solution. In particular, let's assume:
+</p>
+<p>1. No time variation</p>
+<p>2. No current in \(S\)</p>
+<p>3. \(n\) charges in \(S\) given by \(C = \{c_1, ..., c_n\}\), so the density function is the Dirac delta \(\rho = \delta_C\)</p>
+<p>
+TODO: NOTE THAT CONJUGATE OF HOLOMORPHIC FUNCTION HAS ZERO DIV AND HAS HARMONIC COMPONENTS!
+</p>
 
 </div>
 

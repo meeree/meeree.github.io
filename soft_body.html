@@ -1,0 +1,77 @@
+<html style="background: url(shapes2.png);
+      background-size: 25%;">
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text">
+<h1>Soft Body Physics</h1>
+<hr>
+
+<ol style="max-width:45%; font-size: 0.8cm;">
+    <li> <a href="#overview">Overview</a> 
+    <li> <a href="#math">Vectorized Math</a> 
+    <li> <a href="#python">Python Results</a> 
+    <li> <a href="#cuda">Re-implementing in CUDA and OpenGL</a> 
+    <li> <a href="#cuda_res">CUDA Results</a> 
+</ol>
+<br>
+
+<h2 id="overview">Overview</h2>
+<p>
+Soft body physics is a topic that I first worked on when I was in highschool learning to code and have not touched them since. At that time, I implemented some simple examples, such as this cloth made of springs (which was my first ever youtube video):
+<br>
+<iframe src="https://www.youtube.com/embed/nMUyOSfwJ2Y" title="Cloth Sim" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</p>
+<p>
+In this blog post, I have returned to the topic of soft body physics. I work through the mathematics involved in a very simple case where an object is modelled as a system of point masses with springs and implement this math in Python. Some cool examples, such as a 2D ball and stiff beam are shown. Next, I re-implemented the soft body physics in CUDA with OpenGL graphics causing a massive speedup. The ultimate goal of this re-implementation was to simulate some complex 3D soft bodies, such as a 3D jello or 3D cloth. 
+</p>
+
+
+<h2 id="math">Vectorized Math</h2>
+<p>
+text here
+</p>
+
+<h2 id="python">Python Results</h2>
+<p>
+<video controls>
+  <source src="./beam.mp4" type="video/mp4">
+</video>
+<video controls>
+  <source src="./ball.mp4" type="video/mp4">
+</video>
+</p>
+
+<h2 id="cuda">Re-implementing in CUDA and OpenGL</h2>
+<p>
+text here
+</p>
+
+<h2 id="cuda_res">CUDA Results</h2>
+<p>
+text here
+</p>
+
+<div class="top_bar">
+<a href="" style="text-decoration: none;">goto: top</a>
+</div>
+
+</body>
+</html>

@@ -2,7 +2,7 @@
 }
 
 html {
-    background: url(https://opengameart.org/sites/default/files/seamless%20space_0.PNG);
+  background: url(https://opengameart.org/sites/default/files/seamless%20space_0.PNG);
   background-size: repeat; 
   zoom: 75%;
 }
@@ -122,6 +122,16 @@ video {
     max-width: 70%;
     margin-bottom: 10px;
 }
+
+iframe {
+    margin: auto;
+    display: block;
+    max-width: 70%;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    width: 50%;
+    height: 40%;
+}
 u {
   border-bottom:2px dotted red;
 }
@@ -141,4 +151,3 @@ div.top_bar {
 div.top_bar:hover {
   background: pink;
 }
-
