@@ -2,9 +2,8 @@
 }
 
 html {
-  background: url(https://opengameart.org/sites/default/files/seamless%20space_0.PNG);
-  background-size: repeat; 
-  zoom: 75%;
+	background-color: black;	
+	zoom: 75%;
 }
 
 
@@ -139,7 +138,6 @@ u {
 div.top_bar {
   position: fixed;
   bottom: 30px;
-  right: 30px;
   width: 200px;
   border: 5px solid grey;
   background: white;
@@ -150,4 +148,11 @@ div.top_bar {
 
 div.top_bar:hover {
   background: pink;
+}
+
+a.main_page {
+    color:#0090FF;
+}
+a.main_page:hover{ 
+    color:pink; 
 }

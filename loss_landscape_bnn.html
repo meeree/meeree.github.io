@@ -1,0 +1,74 @@
+<html>
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text">
+<h1>Loss Landscapes Emerging from BNNs</h1>
+<hr>
+
+<ol style="max-width:45%;">
+    <li> <a href="#intro">Introduction</a> 
+    <li> <a href="#simple">Most Simple Case</a> 
+    <ol>
+        <li> <a href="#loss_simple">Loss Landscape</a></li> 
+    </ol>
+</ol>
+<br>
+
+<h2 id="intro">Introduction</h2>
+<p>
+My research is currently focused on training network of biological neurons (BNNs) on machine learning (ML) tasks. In <a href="./bnns_spiking_data.html">another post</a>, I dive into a specific task well suited for BNNs: training BNNs on spiking data. In that work, I encountered a number of issues. One issue was designing a clear loss reflecting the desired solution of the BNN. I found that the <a href="#loss_landscape_def">loss landscape*</a> exhibited discontinuities and very chaotic gradients at the micro scale but had structure at the macro scale. This blog post focuses on analyzing loss landscapes for some simple examples with the aim of building up some understanding and proposing solutions to facilitate training in such contexts.
+</p>
+
+<br>
+
+<p style="font-size: 0.55cm;"><u id="loss_landscape_def">* The loss landscape</u> is a surface of losses on a subset of the data resulting from small perturbations in network parameters. For example, if the network, \(N_w\), just has one parameter, \(w\), then the loss landscape is the set \(\{\text{loss}(N_{w'}(X),Y^*) | w - \delta w \leq w' \leq w + \delta w\},\) where \(\delta w\) is specified and \(X, Y^*\) are the inputs and targets, respectively, for the subset of samples.
+</p>
+
+
+<h2 id="simple">Most Simple Case</h2>
+<p>
+The simplest case I considered here was simply turning a single <a href="https://en.wikipedia.org/wiki/Hodgkin%E2%80%93Huxley_model">Hodgkin-Huxley</a> (HH) neuron off, so that it does not spike anymore. Let \(\eta = (V, m, n, h)\) denote the neuron state which is composed of voltage and gating variables. If \(a(t)\) is the output of the neuron at time \(t\), then we can let the loss just be the average output over some time interval \(\tau\):
+$$L(\eta) = \frac{1}{\tau} \int_0^\tau a(t) dt.$$
+Ultimately, we aim to minimize \(L\), meaning that the neuron outputs as little as possible.
+</p>
+<h3 id="loss_simple">Loss Landscape</h3> 
+<p>
+
+<img src="./simple_no_grad.png" style="max-width:100%; width:50%; float:left;" alt="Simple"/>
+<img src="./simple_0_2_10_trials.png" style="max-width:100%; width:50%; float:right;" alt="Simple"/>
+<br>
+<img src="./simple_no_grad_0.5_0.75_30.png" style="max-width:100%; width:50%; float:left;" alt="Simple Zoom"/>
+<img src="./simple_0.5_0.75_10_trials.png" style="max-width:100%; width:50%; float:right;" alt="Simple Zoom"/>
+<br>
+<img src="./voltage.png" style="max-width:100%; width:100%;" alt="Voltage"/>
+
+</p>
+
+<div class="top_bar" style="left: 30px;">
+<a href="index.html" style="text-decoration: none;">goto: main</a>
+</div>
+
+<div class="top_bar" style="right: 30px;">
+<a href="" style="text-decoration: none;">goto: top</a>
+</div>
+
+</body>
+</html>
