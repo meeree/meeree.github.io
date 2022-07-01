@@ -1,0 +1,130 @@
+<html style="background: url(./voronoi_bg.jpg);
+      background-size: 20%;">
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text">
+<h1>Voronoi and Delaunay Partitioning of 2- and 3-D</h1>
+<hr>
+
+<ol style="max-width:45%; font-size: 0.8cm;">
+    <li> <a href="#overview">Overview and Motivation</a> 
+    <li> <a href="#theory">Voronoi/Delaunay Theory</a> 
+    <li> <a href="#generation">Python Results</a> 
+    <li> <a href="#3d">Working with 3-D Models</a> 
+</ol>
+<br>
+
+<h2 id="overview">Overview and Motivation</h2>
+<p>
+Voronoi diagrams are useful in a number of applications in graphics, crystallography, geometric modeling, among many others. They provide an algorithmic way of partitioning a region. Furthermore, they are intertwined with Delaunay triangulation which is a very useful technique for triangulating regions. Personally, my current motivation is to use Voronoi partitions and Delaunay triangulation in my soft body physics engine, documented <a href="./soft_body.html">here</a>. It would be useful to be able to break a general 3-D model up into tetrahedrons or polyhedra algorithmically. Naturally occurring materials such as crystals have structures based on these sorts of partitions that are very stable (see the blog for more details). This article will give a general introduction to Voronoi diagrams (which I will be learning myself).
+</p>
+
+<h2 id="theory">Voronoi Diagram Theory</h2>
+<p>
+The math behind a Voronoi diagram is very simple. Suppose we have (possibly infinitely many) "sites", which are subsets \(P_1,P_2,...\) of a metric space \(M\) (think \(\mathbb{R}^n\), some discrete space like a grid, or a manifold), with a distance function \(d\). For a set \(A \subset M\), define the distance to the set from a point \(x \in M\) to be the minimum distance to a point in \(A\):
+$$d(x, A) := \min\{d(x, a) | a \in A\},$$
+(formally you actually use an infimum, not minimum, but the idea is the same). Then, the Voronoi cell associated with a cite \(P_k\) is the set of points: 
+$$R_k := \{x \in M | d(x, P_k) \leq d(x, P_j), \forall j=1,2,...\}.$$
+The Voronoi diagram is the tuple of all Voronoi cells and it partitions the space \(M\) into as many parts as there are sites.
+</p>
+<p>
+To form the Voronoi diagram we can use the fact that is the dual of the Delaunay triangulation. Dual means that if we place a point at the center of every circumcircle of a triangle from Delaunay and a line between each point we get the Voronoi diagram: 
+</p>
+<br>
+<center>
+<div style="max-width:50%; width:30%; display:inline-block; ">
+<b style="font-size:0.7cm;">Delaunay triangulation</b>
+<img src="./vor.png" style="max-width:100%;" alt="Delaunay"/>
+</div>
+<div  style="max-width:50%; width:30%;  display:inline-block;">
+<b style="font-size:0.7cm;">Voronoi Diagram</b>
+<img src="./vor2.png" style="max-width:100%;" alt="Voronoi"/>
+</div>
+</center>
+<br>
+
+<p>
+So, we can construct the Delaunay triangulation then take the dual. To construct a Delaunay triangulation most of the algorithms are based on a "flipping" principle that simple iteratively flips triangle edges as we triangulate. I am too lazy to implement these algorithms so I will use built in functions, but the algorithm is explained <a href="https://en.wikipedia.org/wiki/Delaunay_triangulation">here</a>.
+
+<h2 id="generation">Python Results</h2>
+<p>
+Below is some simple code in Python to get and plot a Delaunay triangulation of 100 random points:
+</p>
+<br>
+
+<code style="width:60%;">from scipy.spatial import Delaunay
+points = np.random.rand(100, 2)
+tri = Delaunay(points)
+plt.triplot(points[:, 0], points[:, 1], tri.simplices)
+</code>
+<br>
+
+<p>
+Likewise, here is some code for Voronoi partitioning:
+</p>
+
+<br>
+<code style="width:60%;">from scipy.spatial import Voronoi, voronoi_plot_2d
+vor = Voronoi(points)
+voronoi_plot_2d(vor)
+</code>
+<br>
+
+<br>
+<p>
+Here are some example results:
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<img src="./delaunay.png" style="max-width:100%;" alt="Delaunay"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<img src="./voronoi_python.png" style="max-width:100%;" alt="Voronoi"/>
+</div>
+</center>
+<br>
+
+<p>
+Here are both of the plots overlayed:
+</p>
+
+<img src="./voronoi_delaunay_python.png" style="max-width:100%; width:60%;" alt="Voronoi"/>
+
+
+<h2 id="3d">Working with 3-D Models</h2>
+<p>
+text here
+</p>
+
+<div class="top_bar" style="left: 30px;">
+<a href="index.html" style="text-decoration: none;">goto: main</a>
+</div>
+
+
+<div class="top_bar" style="right: 30px;">
+<a href="" style="text-decoration: none;">goto: top</a>
+</div>
+
+</body>
+</html>

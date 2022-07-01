@@ -29,7 +29,12 @@
     <li> <a href="#simple">Most Simple Case</a> 
     <ol>
         <li> <a href="#loss_simple">Loss Landscape</a></li> 
+        <li> <a href="#gradients_simple">Gradient Descent on This Landscape</a></li> 
     </ol>
+    <li> <a href="#signal">Signal Processing Approaches</a>
+    <ol>
+    </ol>
+    <li> <a href="#refs">Useful References</a>
 </ol>
 <br>
 
@@ -50,18 +55,99 @@ The simplest case I considered here was simply turning a single <a href="https:/
 $$L(\eta) = \frac{1}{\tau} \int_0^\tau a(t) dt.$$
 Ultimately, we aim to minimize \(L\), meaning that the neuron outputs as little as possible.
 </p>
-<h3 id="loss_simple">Loss Landscape</h3> 
+
+<h2 id="loss_simple">Loss Landscape</h2> 
 <p>
 
-<img src="./simple_no_grad.png" style="max-width:100%; width:50%; float:left;" alt="Simple"/>
-<img src="./simple_0_2_10_trials.png" style="max-width:100%; width:50%; float:right;" alt="Simple"/>
-<br>
-<img src="./simple_no_grad_0.5_0.75_30.png" style="max-width:100%; width:50%; float:left;" alt="Simple Zoom"/>
-<img src="./simple_0.5_0.75_10_trials.png" style="max-width:100%; width:50%; float:right;" alt="Simple Zoom"/>
-<br>
-<img src="./voltage.png" style="max-width:100%; width:100%;" alt="Voltage"/>
-
+First, let's generate the loss landscape by running a single neuron trial with a time interval \(\tau = 1\) second, and evaluating the final loss. Varying the single weight parameter \(w\) gives the following results, where blue denotes loss and orange denotes number of firings:
+<img src="./simple_no_grad.png" style="max-width:80%; width:60%;" alt="Full Single Trial"/>
+Note that around \(w = 1.8\) is where the neuron undergoes a bifurcation and the behavior changes, leading to no firing. This is due to the fact that a neuron can only fire so many times within a given interval. 
 </p>
+<p>
+We can also look at a subset of the plot for more clear detail. Here is a zoom in on the range \(w \in [0.5, 0.75]\):
+<img src="./simple_no_grad_0.5_0.75.png" style="max-width:80%; width:60%;" alt="Zoom Single Trial"/>
+</p>
+<br>
+<p>
+These plots demonstrate some key problems with the task and performing gradient descent. In particular, the zoom in shows that the loss changes chaotically on the micro scale and any approximate gradients would have to be almost infinite to approximate these changes. Furthermore, there are large discontinuous jumps in the loss when a the number of firings changes. Regarding the former problem, it might seem that we can increase the resolution very high so that the micro changes are more smooth. However, increasing the resolution cannot fix the latter problem because changes in firing still cause discontinuous jumps no matter what the resolution because this is an integer valued discontinuous function itself.
+</p>
+<p>
+At this point, the goal may seem hopeless. How can we get gradients from something so chaotic? Let's understand what is causing the issues. Note that we are using a fixed timeframe \(\tau\) which may not be sufficiently long. Even worse, we are only using a single neuron to evaluate the loss curve. If we let \(N_{trials}\) denote the number of neurons we use to sample the loss, in the limit \(\tau, N_{trials} \rightarrow \infty\) the big varied jumps in the loss curve should go away. So, let's add noise to each neuron (with fixed initial conditions for now) and increase \(N_{trials}\). If we let \(N_{trials} = 10\), below is the resulting loss curve:
+</p>
+<img src="./simple_0_2_10_trials.png" style="max-width:80%; width:60%;" alt="Full Single Trial"/>
+<p>
+As can be seen, the discontinuities are much less extreme. Let's also zoom in as we did above:
+</p>
+<img src="./simple_0.5_0.75_10_trials.png" style="max-width:80%; width:60%;" alt="Full Single Trial"/>
+<p>
+Wow! A curve that previously looked like a discontinuous mess now appears to be almost completely straight! This makes sense because each of the 10 trial neurons fires at different times and so the effects of firings are much less abrupt for a single trial. We can still see some high frequency noise in the curve but otherwise it looks much better.
+</p>
+
+<h2 id="gradients_simple">Gradient Descent on This Landscape</h2>
+
+<h3>Approximate Approach</h3>
+
+<p>
+The next step in analysis of this very simple case is actually trying out gradient descent as an optimization method. Firstly, let's try a finite difference approach based on the precomputed loss curve. Suppose we are given the loss curve as a set:
+$$\{(w_i, L(w_i)) | w_{i+1} = w_i + \Delta w, i=1...n\}.$$
+Instead of automatically differentiating to compute gradients of \(L\) with respect to \(w\), we can just use a centered difference approximation:
+$$\frac{\partial L}{\partial w_i} \approx \frac{L(w_{i+1}) - L(w_{i-1})}{2 \Delta w}.$$
+We can then use this approximate derivative to do a gradient descent step:
+$$w \mapsto w - \eta \frac{\partial L}{\partial w}.$$
+Finally, since we are operating on the set of points \(w_i\), we can round to the nearest gridpoint (which should not be a big change with a high resolution grid). 
+</p>
+<p>
+Let's see what happens with varied initial values of \(w\) and learning rates \(\eta\). First, below is a plot with initial \(w = 1.5, \eta = 0.1\):
+<img src="./approx_grad_descent_1.5_0.1.png" style="max-width:50%; width:50%;" alt="Grad Approx 1"/>
+Note that the gradient descent gets "stuck" because it keeps jumping between two values. Here is the same case but with \(\eta = 0.2\):
+<img src="./approx_grad_descent_1.5_0.2.png" style="max-width:50%; width:50%;" alt="Grad Approx 2"/>
+In this case, one of the approximate gradients is simple 0 (i.e. the curve is flat at this point) so it gets stuck again. 
+</p>
+<p>
+Things are not looking that good. The issue is that at the micro scale there is a lot of noise in the curve even though it posses a tangent that is quite clear without the noise. This suggests a possible fix: <i>let's try using multiple sample points to compute the approximate tangent</i>. To do so, we can select points locally to the left and right of the sample point then use a linear regression fit to approximate the tangent. Here is an example of such fitting at a point on the loss plot with 5 neighbors sampled to both the left and right:
+<img src="./idea.png" style="max-width:50%; width:50%;" alt="Idea"/>
+</p>
+<p>
+If we use an adaptive value of \(\eta\) that grows over learning (so that we don't get stuck as above) and the linear regression approach with 10 local neighbors, we get convergence:
+<img src="./approx_grad_descent_1.5_0.05_True.png" style="max-width:50%; width:50%;" alt="Grad Approx Linear Regression"/>
+</p>
+
+<h3>Automatic Approach</h3>
+<p>text here</p>
+
+<h3 id="signal">Signal Processing Approach</h3>
+
+<p>
+This research is very open and I am considering a number of approaches. One that seems like a promising approach is using signal processing methods for training BNNs. This section will explore this.
+</p>
+
+<h4>Cross-Correlation</h4>
+
+<p>
+For real or complex functions \(f, g\) on some domain \(D\), their cross-correlation is defined as:
+$$(f \star g)(\tau) := \int_D \overline{f(t)} g(t + \tau) dt = \int_D \overline{f(t - \tau)} g(t) dt,$$
+where \(\overline{f}\) is the complex conjugate and \(\tau\) is called the "lag". To understand this definition, if \(g(t)\) is a discrete signal and is just \(f(t)\) but shifted to the right by \(\tau\), then \(f \star g\) will be zero everywhere except at \(\tau = 1\), where it will be the integral of \(|f(t)|^2\), which is the squared <a href="https://mathworld.wolfram.com/L2-Norm.html">L^2 norm</a> of \(f(t)\). Note that if \(g, f\) are not signals and are continuously varying, then the cross-correlation will not be zero outside but will decay outside 1 and have a max at 1.
+</p>
+
+<p>
+Cross-correlation loss:
+$$\text{Loss} = \int_0^T y(t) y^*(t + \tau) dt.$$
+</p>
+
+<h3 id="refs">Useful References</h3>
+<ol>
+    <li><a href="https://arxiv.org/pdf/1706.04698.pdf">Gradient Descent for Spiking Neural Networks</a></li>
+    <li><a href="https://arxiv.org/pdf/1901.09948.pdf">Surrogate Gradient Learning in Spiking Neural Networks</a></li>
+    <li><a href="https://nowak.ece.wisc.edu/ece830/ece830_spring13_adaptive_filtering.pdf">Adaptive Filtering</a></li>
+</ol>
+
+
+
+
+
+
+<!--<img src="./voltage.png" style="max-width:100%; width:100%;" alt="Voltage"/>-->
+
 
 <div class="top_bar" style="left: 30px;">
 <a href="index.html" style="text-decoration: none;">goto: main</a>
