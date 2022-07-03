@@ -31,6 +31,11 @@
         <li> <a href="#loss_simple">Loss Landscape</a></li> 
         <li> <a href="#gradients_simple">Gradient Descent on This Landscape</a></li> 
     </ol>
+    <li> <a href="#molification">Molification</a> 
+    <ol>
+        <li> <a href="#molify_loss">Molifying Loss Curve</a></li> 
+        <li> <a href="#molify_voltage">Molifying Volages</a></li> 
+    </ol>
     <li> <a href="#signal">Signal Processing Approaches</a>
     <ol>
     </ol>
@@ -115,7 +120,7 @@ If we use an adaptive value of \(\eta\) that grows over learning (so that we don
 <h3>Automatic Approach</h3>
 <p>text here</p>
 
-<h3>Molification</h3>
+<h3 id="molification">Molification</h3>
 
 <p>
 One possible avenue for generating loss landscapes that are more easy to do gradient descent on is "molification." Molification is the application of a "molifier" to a badly behaving function (e.g. very jagged with discontinuities) through an operation such as convolution. A molifier is defined by the following criteria:
@@ -146,26 +151,64 @@ where \(k_n\) is chosen to be one over the volume so that condition (2) above is
 Note that is might be tempting to use a function like a Gaussian blob as a molifier, but such a function is not compactly supported even though is gets very small as we let \(x\) grow. 
 </p>
 
-<h3>Applying to BNN loss</h3>
+<h3 id="molify_loss">Applying to BNN</h3>
 
 <p> 
-There are two conceivable ways of applying molification to our task. Firstly, we can simply apply molification to the final loss function. This has a more straight-forward effect on the loss but it has the disadvantage of requiring us to compute all losses in a local neighborhood to perform molification at one point. Secondly, we could apply molification over time to the voltage trace outputted from a particular neuron. The idea with this is to "smooth" out the spikes leading to better gradients and is very related to the <a href="https://arxiv.org/pdf/1901.09948.pdf">surrogate-gradients</a> approach. The main difference is that in these approaches they are working with discontinuous neurons (leaky-integrate-and-fire) and most of the papers I have seen using this approach make LIFT neurons continuous by completely disregarding gradients when spikes occur. 
+There are two conceivable ways of applying molification to our task. Firstly, we can simply apply molification to the final loss function. This has a more straight-forward effect on the loss but it has the disadvantage of requiring us to compute all losses in a local neighborhood to perform molification at one point. Secondly, we could apply molification over time to the voltage trace outputted from a particular neuron. The idea with this is to "smooth" out the spikes leading to better gradients and is very related to the <a href="https://arxiv.org/pdf/1901.09948.pdf">surrogate-gradients</a> approach. The main difference is that in these approaches they are working with discontinuous neurons (leaky-integrate-and-fire) and most of the papers I have seen using this approach make LIF neurons continuous by completely disregarding gradients when spikes occur. 
 </p>
 
 <h3>Approach 1: Molifying Loss</h3>
 
-<p>TODO: Explore</p>
-<img src="./losses_molified.png" alt="Loss Molified" style="width:50%;"/>
+<p>
+Here is a molifier using the scaled bump from above, where \(c\) is chosen to be some small value:
+</p>
 
-<h3>Approach 2: Molifying Voltage</h3>
+<img src="./molifier_voltage.png" alt="Voltage Molifier" style="width:40%;"/>
 
-<p>Here is a raster plot of 1000 neuron voltages with random noise and no transient and with the same input weight</p>
+<p>If we molify the loss directly it removes the noise at the small scale and makes the loss curve much more tractable for gradient descent:</p>
 
-<img src="./voltages_imshow.png" alt="Voltages Raster"/>
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<b style="font-size:0.7cm;">Molified Loss Curve</b>
+<img src="losses_molified.png" style="max-width:100%;" alt="Molified Loss Curve"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<b style="font-size:0.7cm;">Zoom (Orange=Molified, Blue=Original)</b>
+<img src="losses_molified_zoom.png" style="max-width:100%;" alt="Zoom "/>
+</div>
+</center>
+<br>
 
-<p>Here are some examples of these voltage traces:</p>
+<p>If we apply gradient descent as above to this, we get convergence faster and much more clear gradients. This is seen below. Approximate gradients with a finite difference are used (no linear regression unlike above), and the learning rate is adaptively scaled up over epochs:
 
-<img src="./voltages_example.png" alt="Voltages"/>
+</p>
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<b style="font-size:0.7cm;">Without Molification</b>
+<img src="approx_grad_descent_1.5_0.05_False_False.png" style="max-width:100%;" alt="Without Molification"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<b style="font-size:0.7cm;">With Molification</b>
+<img src="approx_grad_descent_1.5_0.05_False_True.png" style="max-width:100%;" alt="With Molification"/>
+</div>
+</center>
+<br>
+
+<h3 id="molify_voltage">Approach 2: Molifying Voltage</h3>
+
+<p>Here is a raster plot and some example traces of 1000 neuron voltages with random noise and no transient and with the same input weight. 10,000 timesteps were used for simulation:</p>
+
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<img src="./voltages_imshow.png" style="max-width:100%;"  alt="Voltages Raster"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<img src="./voltages_example.png" style="max-width:100%;"  alt="Voltages Raster"/>
+</div>
+</center>
+<br>
 
 <p>
 Let's try molifying the voltages. First, let \(t_0\) denote the time of the first spike occurence for the first voltage trace above. Let's zoom in around \(t_0\) for this voltage:
@@ -174,11 +217,14 @@ Let's try molifying the voltages. First, let \(t_0\) denote the time of the firs
 <img src="./voltage_zoom.png" alt="Voltage Zoom"/>
 
 <p>
-Here is a molifier using the scaled bump from above, where \(c\) is chosen to be some small value \(\lt \delta\) in the figure above:
+If we apply the same molifier as above with appropriate \(c\) (I chose it to be 10 timesteps), repeated application gives these results: 
 </p>
 
-<img src="./molifier_voltage.png" alt="Voltage Molifier"/>
 <img src="./molified_voltage.png" alt="Voltage Molified"/>
+
+<p>
+Note there is an issue at the borders because at these edges we are trying to do a convolution so we need to use "ghost points" that do not exist. This is not an issue in practice because we can just molify the full voltage trace over many timesteps and truncate the transient and final few timesteps. 
+</p>
 
 <h3 id="signal">Signal Processing Approach</h3>
 
