@@ -115,6 +115,71 @@ If we use an adaptive value of \(\eta\) that grows over learning (so that we don
 <h3>Automatic Approach</h3>
 <p>text here</p>
 
+<h3>Molification</h3>
+
+<p>
+One possible avenue for generating loss landscapes that are more easy to do gradient descent on is "molification." Molification is the application of a "molifier" to a badly behaving function (e.g. very jagged with discontinuities) through an operation such as convolution. A molifier is defined by the following criteria:
+</p>
+
+<br>
+<center style="font-size: 0.6cm;">
+$$\text{Definition (molifier): } \phi \text{ is a smooth function on } \mathbb{R}^n \text{ satisfying: }$$
+1. <a href="https://en.wikipedia.org/wiki/Support_(mathematics)">Compact support</a>, which essentially just guarantees that is is only locally applied, 
+$$2. \int_{\mathbb{R}^n} \phi(x) dx = 1, \text{ so it is like a distribution and it does not change scaling when we convolve it,}$$
+$$3. \lim_{\epsilon \rightarrow 0} \epsilon^{-n} \phi(x/\epsilon) = \delta(x) \text{ (dirac delta function)}.$$
+</center>
+<br>
+
+<p>
+I intuitively think of the final criteria as requiring that the function "looks like" a discontinuous jump at the \(n\)th derivative scale. Here is an example of a function undergoing progressive molification from Wikipedia (which, incidentally, I think they used ray-tracing to produce):
+</p>
+<br>
+<img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Heat_eqn.gif" alt="Molificiation" style="width:40%;"/>
+<br>
+<p>
+The canonical molifier is the bump function \(\phi(x)\) on \(\mathbb{R}^n\) defined by 
+$$ \phi(x) = \begin{cases} k_n e^{\frac{1}{|x|^2 - 1}} & |x| \lt 1 \\ 0 & |x| \geq 1 \end{cases},$$
+where \(k_n\) is chosen to be one over the volume so that condition (2) above is satisfied:
+</p>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Mollifier_Illustration.svg/1920px-Mollifier_Illustration.svg.png" alt="Bump 1d"/>
+<p>
+Note that is might be tempting to use a function like a Gaussian blob as a molifier, but such a function is not compactly supported even though is gets very small as we let \(x\) grow. 
+</p>
+
+<h3>Applying to BNN loss</h3>
+
+<p> 
+There are two conceivable ways of applying molification to our task. Firstly, we can simply apply molification to the final loss function. This has a more straight-forward effect on the loss but it has the disadvantage of requiring us to compute all losses in a local neighborhood to perform molification at one point. Secondly, we could apply molification over time to the voltage trace outputted from a particular neuron. The idea with this is to "smooth" out the spikes leading to better gradients and is very related to the <a href="https://arxiv.org/pdf/1901.09948.pdf">surrogate-gradients</a> approach. The main difference is that in these approaches they are working with discontinuous neurons (leaky-integrate-and-fire) and most of the papers I have seen using this approach make LIFT neurons continuous by completely disregarding gradients when spikes occur. 
+</p>
+
+<h3>Approach 1: Molifying Loss</h3>
+
+<p>TODO: Explore</p>
+<img src="./losses_molified.png" alt="Loss Molified" style="width:50%;"/>
+
+<h3>Approach 2: Molifying Voltage</h3>
+
+<p>Here is a raster plot of 1000 neuron voltages with random noise and no transient and with the same input weight</p>
+
+<img src="./voltages_imshow.png" alt="Voltages Raster"/>
+
+<p>Here are some examples of these voltage traces:</p>
+
+<img src="./voltages_example.png" alt="Voltages"/>
+
+<p>
+Let's try molifying the voltages. First, let \(t_0\) denote the time of the first spike occurence for the first voltage trace above. Let's zoom in around \(t_0\) for this voltage:
+</p>
+
+<img src="./voltage_zoom.png" alt="Voltage Zoom"/>
+
+<p>
+Here is a molifier using the scaled bump from above, where \(c\) is chosen to be some small value \(\lt \delta\) in the figure above:
+</p>
+
+<img src="./molifier_voltage.png" alt="Voltage Molifier"/>
+<img src="./molified_voltage.png" alt="Voltage Molified"/>
+
 <h3 id="signal">Signal Processing Approach</h3>
 
 <p>
