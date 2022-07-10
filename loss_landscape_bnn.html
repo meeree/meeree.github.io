@@ -36,6 +36,8 @@
         <li> <a href="#molify_loss">Molifying Loss Curve</a></li> 
         <li> <a href="#molify_voltage">Molifying Volages</a></li> 
     </ol>
+    <li> <a href="#xor">XOR Task</a> 
+    <li> <a href="#compute_mollified">Backpropogation on Molified Loss</a>
     <li> <a href="#signal">Signal Processing Approaches</a>
     <ol>
     </ol>
@@ -171,11 +173,11 @@ Here is a molifier using the scaled bump from above, where \(c\) is chosen to be
 <center>
 <div style="max-width:50%; width:40%; display:inline-block; ">
 <b style="font-size:0.7cm;">Molified Loss Curve</b>
-<img src="losses_molified.png" style="max-width:100%;" alt="Molified Loss Curve"/>
+<img src="losses_mollified.png" style="max-width:100%;" alt="Molified Loss Curve"/>
 </div>
 <div  style="max-width:50%; width:40%;  display:inline-block;">
 <b style="font-size:0.7cm;">Zoom (Orange=Molified, Blue=Original)</b>
-<img src="losses_molified_zoom.png" style="max-width:100%;" alt="Zoom "/>
+<img src="losses_mollified_zoom.png" style="max-width:100%;" alt="Zoom "/>
 </div>
 </center>
 <br>
@@ -195,6 +197,8 @@ Here is a molifier using the scaled bump from above, where \(c\) is chosen to be
 </div>
 </center>
 <br>
+
+<img src="./molifier_2d.png" style="max-width:50%; width:50%;" alt="Idea"/>
 
 <h3 id="molify_voltage">Approach 2: Molifying Voltage</h3>
 
@@ -220,11 +224,50 @@ Let's try molifying the voltages. First, let \(t_0\) denote the time of the firs
 If we apply the same molifier as above with appropriate \(c\) (I chose it to be 10 timesteps), repeated application gives these results: 
 </p>
 
-<img src="./molified_voltage.png" alt="Voltage Molified"/>
+<img src="./mollified_voltage.png" alt="Voltage Molified"/>
 
 <p>
 Note there is an issue at the borders because at these edges we are trying to do a convolution so we need to use "ghost points" that do not exist. This is not an issue in practice because we can just molify the full voltage trace over many timesteps and truncate the transient and final few timesteps. 
 </p>
+
+<h3 id="xor">XOR Task</h3>
+
+<img src="./xor.png" alt="XOR Net" style="width:50%;"/>
+
+<h3 id="compute_mollified">Backpropogation on Molified Loss</h3>
+
+<p>
+I was suggested to look at the "log-likelihood trick" outlined <a href="https://blog.shakirm.com/2015/11/machine-learning-trick-of-the-day-5-log-derivative-trick/">here</a> to compute the mollified loss gradient. I will work through the math here; it seems very promising. 
+</p>
+<br>
+<hr>
+<h4 style="margin-top: 0px;">Notation</h4>
+<p>
+Firstly, some notation. Let's denote the parameters of the network by \(\theta\) and the network as a function \(N_\theta(x)\), where \(x\) is the input sample or mini-batch of samples. Next, let's denote a distribution (e.g. Gaussian blob) at \(\theta\) in the parameter space by \(p_\theta(v)\). We draw parameters \(v \in \mathbb{R}^m\) for the network from this distribution, where \(m\) is the number of parameters (weights).
+</p>
+<br>
+<hr>
+<p>
+Now, the smoothed loss can be expressed as an expected value over the distribution, or in simpler words, a weighted sum in some neighborhood. In particular, the smoothed loss looks like:
+$$\mathcal{L}^{smooth}_\theta(x) = \int_{v \in \mathbb{R}^m} p_\theta(v) f(N_v(x)) dv.$$
+</p>
+<p>
+Then, let's differentiate with respect to the parameters $\theta$. Since we are thinking of parameters as lying in \(\mathbb{R}^m\), then the derivative we need for gradient descent is just a vector in \(\mathbb{R}^m\) and is the gradient: 
+$$\nabla_\theta \text{ } \mathcal{L}^{smooth}_\theta(x) = \nabla_\theta \text{ } \int_{v \in \mathbb{R}^m} p_\theta(v) f(N_v(x)) dv.$$
+Assuming Leibniz rule holds, this is 
+$$= \int_{v \in \mathbb{R}^m} (\nabla_\theta \text{ } p_\theta(v)) f(N_v(x)) dv$$
+It might seem like we need to gradient the second term also, but if you look at Leibniz rule this is not the case since \(f(N_v(x))\) depends on \(v\), not \(\theta\). Note the advantage of the above term: <i>we do not need to backpropogate on the network to compute it!!</i>. This means we can avoid any complexity involved with backpropogation on the network such as non-differentiability, etc! This seems like a massive advantage in my opinion.  
+</p>
+<p>
+Finally, let's finish up by making the above integral more feasible to compute. In particular, let's multiply by one then use the log derivative identity: 
+$$= \int_{v \in \mathbb{R}^m} \frac{p_\theta(v)}{p_\theta(v)} (\nabla_\theta \text{ } p_\theta(v)) f(N_v(x)) dv$$ 
+$$= \int_{v \in \mathbb{R}^m} p_\theta(v) \cdot [\nabla_\theta \log(p_\theta(v)) f(N_v(x))] dv$$ 
+$$= \mathbb{E}_{p_\theta(v)}[f(N_v(x)) \nabla_\theta \log(p_\theta(v))].$$
+To compute this, we can use a Monte-Carlo estimate like in the blog I linked above: 
+$$\approx \frac{1}{S} \sum_{s=0}^S f(N_{v^{(s)}}(x)) \nabla_\theta \log(p_\theta(v^{(s)})),$$
+where we draw the random parameters \(v^{(s)}\) from this Gaussian blob (this can be done practically by just adding a noise term to weights in each layer of the network!).
+</p>
+
 
 <h3 id="signal">Signal Processing Approach</h3>
 
@@ -250,6 +293,8 @@ $$\text{Loss} = \int_0^T y(t) y^*(t + \tau) dt.$$
     <li><a href="https://arxiv.org/pdf/1706.04698.pdf">Gradient Descent for Spiking Neural Networks</a></li>
     <li><a href="https://arxiv.org/pdf/1901.09948.pdf">Surrogate Gradient Learning in Spiking Neural Networks</a></li>
     <li><a href="https://nowak.ece.wisc.edu/ece830/ece830_spring13_adaptive_filtering.pdf">Adaptive Filtering</a></li>
+    <li><a href="https://arxiv.org/pdf/1712.09913.pdf">Visualizing the Loss Landscape of Neural Networks</a></li>
+    <li><a href="https://blog.shakirm.com/2015/11/machine-learning-trick-of-the-day-5-log-derivative-trick/">Machine Learning Trick of the Day (5): Log Derivative Trick</a></li>
 </ol>
 
 
