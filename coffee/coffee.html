@@ -1,0 +1,128 @@
+<html style="background-color: saddlebrown;">
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="../nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="../koch-snowflake.png" type="image/x-icon">
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text">
+<h1>Coffee Brightness as a Function of Time</h1>
+<hr>
+
+<p>
+I was making coffee today and I came up with the following waste of time experiment: what would the darkness of coffee look like as a function of time as we brew it using a pour over method. I decided to record my Keurig for one brew and a second brew with the same beans with a white background and use OpenCV in python to make the plots.
+</p>
+
+<p>
+Here are some snippets from the recording of the first brew: 
+</p>
+<img src="./full1_example_frames.png" style="max-width:80%; width:60%;" alt="Full Single Trial"/>
+
+<p>
+We can see that the coffee stream is pretty much constant throughout brewing. Thus, although it might seem like we might want to use image segmentation or something complicated to extract the coffee stream (which I tried), in this case it is enough to zoom in on a sufficiently large rectangle inside the stream. 
+</p>
+
+<p>
+Here are two levels of magnification:
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<b style="font-size:0.7cm;">Zoomed</b>
+<img src="./widebox1_example_frames.png" style="max-width:100%;" alt="Zoomed"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<b style="font-size:0.7cm;">More Zoomed</b>
+<img src="./narrowbox1_example_frames.png" style="max-width:100%;" alt="More Zoomed"/>
+</div>
+</center>
+<br>
+
+<p>
+It is clear that the stream gets less brown over time because less beans are extracted. It's quite surprising how quickly the coffee is done extracting in the Keurig: we go from brown coffee to bland bean water in about 5-8 seconds! If we can understand how the lightness changes over time, we could set a threshold on how light we want the stream to be and only run the Keurig for that duration so that we ensure all our coffee is extracted.
+</p>
+
+<p>
+To calculate the trend, I converted each of the frames (30 per second) to the HSL (Hue-Saturation-Lightness) space in cv2 and plotted the mean lightness over time. Here are the results:
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<b style="font-size:0.7cm;">Zoomed</b>
+<img src="./widebox1_means.png" style="max-width:100%;" alt="Zoomed"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<b style="font-size:0.7cm;">More Zoomed</b>
+<img src="./narrowbox1_means.png" style="max-width:100%;" alt="More Zoomed"/>
+</div>
+</center>
+<br>
+
+<p>
+Note that if we had an idea of the light reflectance of the coffee beans we could convert the above plots to get an idea of concentration of beans in the water. I couldn't find anything with a quick Google search though. 
+</p>
+<p>
+In any case, we can see that the water starts out dark and gets lighter and plateaus near the end.
+</p>
+<p>
+Let's finally look at the plots for the second brewing:
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<b style="font-size:0.7cm;">Zoomed</b>
+<img src="./widebox2_example_frames.png" style="max-width:100%;" alt="Zoomed"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<b style="font-size:0.7cm;">More Zoomed</b>
+<img src="./narrowbox2_example_frames.png" style="max-width:100%;" alt="More Zoomed"/>
+</div>
+</center>
+<br>
+
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<b style="font-size:0.7cm;">Zoomed</b>
+<img src="./widebox2_means.png" style="max-width:100%;" alt="Zoomed"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<b style="font-size:0.7cm;">More Zoomed</b>
+<img src="./narrowbox2_means.png" style="max-width:100%;" alt="More Zoomed"/>
+</div>
+</center>
+<br>
+
+<p>
+Here we can see that the light fluctuates between two values that are in the top end range of the first brewing for both zoom levels. There is no clear trend. This makes sense because the water has very little saturation of coffee at this point and so there is not much change to observe. 
+</p>
+
+
+<div class="top_bar" style="left: 30px;">
+<a href="../index.html" style="text-decoration: none;">goto: main</a>
+</div>
+
+<div class="top_bar" style="right: 30px;">
+<a href="" style="text-decoration: none;">goto: top</a>
+</div>
+
+</body>
+</html>
