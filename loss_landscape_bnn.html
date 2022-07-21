@@ -252,7 +252,7 @@ Now, the smoothed loss can be expressed as an expected value over the distributi
 $$\mathcal{L}^{smooth}_\theta(x) = \int_{v \in \mathbb{R}^m} p_\theta(v) f(N_v(x)) dv.$$
 </p>
 <p>
-Then, let's differentiate with respect to the parameters $\theta$. Since we are thinking of parameters as lying in \(\mathbb{R}^m\), then the derivative we need for gradient descent is just a vector in \(\mathbb{R}^m\) and is the gradient: 
+Then, let's differentiate with respect to the parameters \(\theta\). Since we are thinking of parameters as lying in \(\mathbb{R}^m\), then the derivative we need for gradient descent is just a vector in \(\mathbb{R}^m\) and is the gradient: 
 $$\nabla_\theta \text{ } \mathcal{L}^{smooth}_\theta(x) = \nabla_\theta \text{ } \int_{v \in \mathbb{R}^m} p_\theta(v) f(N_v(x)) dv.$$
 Assuming Leibniz rule holds, this is 
 $$= \int_{v \in \mathbb{R}^m} (\nabla_\theta \text{ } p_\theta(v)) f(N_v(x)) dv$$
@@ -261,11 +261,70 @@ It might seem like we need to gradient the second term also, but if you look at 
 <p>
 Finally, let's finish up by making the above integral more feasible to compute. In particular, let's multiply by one then use the log derivative identity: 
 $$= \int_{v \in \mathbb{R}^m} \frac{p_\theta(v)}{p_\theta(v)} (\nabla_\theta \text{ } p_\theta(v)) f(N_v(x)) dv$$ 
-$$= \int_{v \in \mathbb{R}^m} p_\theta(v) \cdot [\nabla_\theta \log(p_\theta(v)) f(N_v(x))] dv$$ 
+$$= \int_{v \in \mathbb{R}^m} p_\theta(v) \cdot [\nabla_\theta \log(p_\theta(v))] f(N_v(x)) dv$$ 
 $$= \mathbb{E}_{p_\theta(v)}[f(N_v(x)) \nabla_\theta \log(p_\theta(v))].$$
 To compute this, we can use a Monte-Carlo estimate like in the blog I linked above: 
 $$\approx \frac{1}{S} \sum_{s=0}^S f(N_{v^{(s)}}(x)) \nabla_\theta \log(p_\theta(v^{(s)})),$$
 where we draw the random parameters \(v^{(s)}\) from this Gaussian blob (this can be done practically by just adding a noise term to weights in each layer of the network!).
+</p>
+
+<h4>Quick Note: Computing Log of Distribution is Usually Nicer</h4>
+
+<p> 
+This is not particularly important in the case of BNNs, because computing the BNN is much harder than computing a single distribution, but it should be noted that one reason why the log trick is used is because the log derivative term is usually much simpler than the original distribution computation. This is very clear in the example of a 1 dimensional normal distribution given by:
+$$p_\theta(v) = \frac{1}{\sigma \sqrt{2 \pi}} e^{-\frac{1}{2} (\frac{v - \theta}{\sigma})^2}.$$
+When we take a log of this, the exponential cancel out:
+$$\log p_\theta(v) = \log(-\sigma \sqrt{2 \pi}) -\frac{1}{2} (\frac{v - \theta}{\sigma})^2.$$
+Finally, when we take the derivative with respect to \(\theta\), we get the really simple term:
+$$\frac{\partial}{\partial \theta} \log p_\theta(v) = \frac{v - \theta}{\sigma^2}.$$
+So, this elegant term is just a linear function measuring the signed distance from the mean \(\theta\) divided by the variance.
+
+<h3>Related References for Monte-Carlo</h3>
+
+<p> 
+The next step with the Monte-Carlo approach or integration approach is to compare them and see which works better. It appears that the integration approach is more accurate for smaller number of samples in 1D. For example, the plot below uses the same number of samples (100) for the integration approach and Monte-Carlo log approach to compute the smoothed gradients at each points from -10 to 10 of some toy example loss. As can be seen, the fact that the loss grows quadratically on the borders makes the Monte-Carlo also blow up in these regions but does not affect the integral approach.
+
+<b style="font-size: 2cm;">NOTE: It seems like what we are computing is a value function</b>
+</p>
+
+<br>
+<hr style="margin-bottom:0px;">
+<img src="./smoothed_log_trick.png" style="max-width:100%; width:100%; margin-top:0px;" alt="Computing Gradients"/>
+
+<br>
+
+<img src="./log_trick_distributions.png" style="max-width:100%; width:100%;" alt="Distributions"/>
+
+<br>
+
+<img src="./log_trick_convergence.png" style="max-width:100%; width:80%;" alt="Error"/>
+
+<br>
+<hr>
+
+
+<p>
+I did find that if we increase the number of samples \(S\) for the log trick sufficiently high (e.g. 1,000 samples) it does converge to the right thing. The above might suggest that integration methods are better in this case. However, the integration approach does not generalize well when we use a real network parameter set that could be millions of dimensions. On the other hand, it appears from my preliminary search of what is available around that Monte-Carlo avoids the "curse of dimensionality" meaning hopefully that we can use it in many dimensions. We will still have to figure out a way of using less samples, but if the number of samples does not depend on the dimension this is certainly very promising. I also found that there are methods called <i>sparse grid methods</i> that do integration in a way that avoids dimensionality issues. Here are some random sources from the internet, mostly just so I don't lose them:
+</p>
+<br>
+<ol>
+    <li><a href="http://www.cs.toronto.edu/~tang/papers/sfnn.pdf">Stochastic Neural Networks</a></li>
+    <li><a href="https://math.stackexchange.com/questions/88262/why-monte-carlo-integration-is-not-affected-by-curse-of-dimensionality">Why Monte Carlo not affected by curse of dimensionality Stack Overflow post</a></li>
+    <li><a href="https://math.stackexchange.com/questions/49655/pde-feynman-kac-vs-finite-difference-methods/49835#49835">A similar Stack Overflow post with sources</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Sparse_grid">Sparse Grid Wikipedia</a></li>
+</ol>
+
+<h4>Todo Investigation Topics for This Approach</h4>
+
+<p>
+<ol>
+	<li>Monte-Carlo sampling and error bounds</li>
+	<li>Importance sampling</li>
+	<li>Sparse grid</li>
+    <li>Reinforce algorithm and policy gradients</li>
+    <li>Q-learning</li>
+    <li>Applying to: BNN, LIF network, binary network, stochastic network</li>
+</ol>
 </p>
 
 

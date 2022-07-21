@@ -31,6 +31,8 @@
     <li> <a href="#python">Python Results</a> 
     <li> <a href="#cuda">Re-implementing in CUDA and OpenGL</a> 
     <li> <a href="#cuda_res">CUDA Results</a> 
+    <li> <a href="#meshes">Adding Meshes</a> 
+    <li> <a href="#voronoi">Using Other Triangulations</a> 
 </ol>
 <br>
 
@@ -62,13 +64,98 @@ text here
 
 <h2 id="cuda">Re-implementing in CUDA and OpenGL</h2>
 <p>
-text here
+The next goal was to transition to using 3D soft bodies. This, however, required a much faster implementation. The graphics was especially slow but the math also got slow when the number of points is scaled up. I thus decided to implement the soft body physics in CUDA which allows very fast parallel execution with graphics in OpenGL which allows us to visualize very fast because it is low level. 
+</p>
+
+<p>
+Instead of using vectorized math for the CUDA implementation, I used a straightforward approach based on <a href="https://en.wikipedia.org/wiki/Adjacency_list">adjacency lists</a> to represent the spring connections. In the CUDA implementation I just pick a point per thread and loop over all downstream springs (which is a row in the adjacency list) and apply the spring forces. I used Euler's method to simulate numerically and this is very easy to paralellize over all points. 
+</p>
+
+<p>
+The graphics code used some old point code I wrote for my research in OpenGL along with wireframe rendering. The full code is available here: <b><a href="https://en.wikipedia.org/wiki/Adjacency_list">SoftBodyCU</a></b>.
 </p>
 
 <h2 id="cuda_res">CUDA Results</h2>
 <p>
-text here
+Let's look at the results! Firstly, here is a simple example of a cloth simulation using springs in a 1D grid with gravity and with the edges fixed on each side. As before, I colored the points based on its speed. We can see some cool symmetrical patterns. I recorded all these videos with my phone because I was too lazy to record them with a screen recorder. 
 </p>
+<br>
+
+<video controls>
+    <source src="./cloth.mp4">
+</video>
+
+<p>
+I'll mention that the video looks slow because the OpenGL visualizes the results after the full simulation and I can play it back at any speed. The actual simulation took on the order of a few milliseconds for 10 full seconds!
+</p>
+<p>
+Now let's try making 3D solid structures which is a lot harder than a cloth. Firstly, let's try just fill a cylinder with a grid of springs. 
+</p>
+<br>
+
+<video controls>
+    <source src="./collapse.mp4">
+</video>
+<p>
+The structure immediately collapses because some of the base springs flatten! This suggests that we need a more solid structure for the soft body grid. It turns out that tetrahedrons are far more stable than cubes. How can we break the grid into tetrahedrons? A simple solution is to just add cross beams on each side of the cube. Let's see how effective this is:
+</p>
+
+<video controls>
+  <source src="./torus.mp4">
+</video>
+
+<p>
+Wow, much better results! the torus is very stable. I'll note that the way I implemented the collisions with the ground was just by zeroing velocities of points that hit the ground. The wireframe in the video shows the spring system with cross beams.
+</p>
+
+<h2 id="meshes">Adding Meshes</h2>
+
+<p>
+Let's now discuss how to use more cool structures and visualize them using a mesh, instead of a simple wireframe or point cloud like above. I chose to use a <a href="https://en.wikipedia.org/wiki/Implicit_surface">Implicit Surface</a> approach for creating solids. This models surfaces as the "zero set" of an implicit equation:
+$$S = F^{-1}(\{0\}) = \{(x,y,z) \in \mathbb{R}^3 | F(x,y,z) = 0\},$$
+for some function \(F(x,y,z)\). These solids can be quite general such as multi-genus surfaces and support constructive-solid geometry like union, intersection, etc. by simple operations on implicit functions such as max, sum, multiplication, etc. 
+</p>
+
+<p>
+The way we construct the spring system like in the torus above is by constructing a grid within the implicit surface. This interior set is given as the set of points where \(F(x,y,z)\) is less than 0, whereas the exterior is the set of points that are greater than 0. So, we can just select all grid points that are less than 0 and make a grid system with cross bars for the soft body.
+</p>
+
+<p>
+What is nice about implicit surfaces as well is that we can visualize the exterior with a mesh by a process known as "polygonization" which constructs a triangle mesh for the surface. I wrote a library in CUDA for doing this a long time ago (about 7 years) and I was able to just use the code directly! I implemented two methods, "dual contouring" and "marching cubes" for polygonization, the former of which is usually much crisper looking. In the future I plan to write a blog post on this topic so I won't go into detail here. 
+</p>
+
+<p>
+Anyways, let's have a look at some resulting meshes visualized. Firstly, below is an example of a genus 3 solid hitting the ground.
+</p>
+
+<br>
+
+<video controls>
+  <source src="./genus_3.mp4">
+</video>
+
+<p>
+Here is another example of a simple cube.
+</p>
+<br>
+
+<video controls>
+  <source src="./cube.mp4">
+</video>
+
+<h3 id="voronoi">Using Other Triangulations</h3>
+
+<p> 
+Because we found that using triangulation or tetrahedrons in 3D is most optimal for creating stable soft bodies, I wanted to play with different triangulations. In particular, I used the "Delaunay triangulation" by placing randomized points inside a 2D solid and triangulating them. If you want to learn about this, I have another blog post on Delaunay and Voronoi partitions: <a href="./voronoi.html">here</a>. Here is an example of a "bouncy ball" created with this method. The bouncing was implemented by flipping negative velocities once the ball passes below the ground in the y component.
+</p>
+
+<br>
+
+<video controls>
+  <source src="./bouncy_ball.mp4">
+</video>
+
+
 
 <div class="top_bar" style="left: 30px;">
 <a href="index.html" style="text-decoration: none;">goto: main</a>
