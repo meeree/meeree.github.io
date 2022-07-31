@@ -36,11 +36,14 @@
         <li> <a href="#molify_loss">Molifying Loss Curve</a></li> 
         <li> <a href="#molify_voltage">Molifying Volages</a></li> 
     </ol>
+    <li> <a href="#complete">Training Complete Graph</a> 
+    <ol>
+        <li> <a href="#multi_function">Loss Curves Multi Function</a></li> 
+    </ol>
     <li> <a href="#xor">XOR Task</a> 
     <li> <a href="#compute_mollified">Backpropogation on Molified Loss</a>
+    <li> <a href="#mnist">Real Application: MNIST</a>
     <li> <a href="#signal">Signal Processing Approaches</a>
-    <ol>
-    </ol>
     <li> <a href="#refs">Useful References</a>
 </ol>
 <br>
@@ -326,6 +329,108 @@ I did find that if we increase the number of samples \(S\) for the log trick suf
     <li>Applying to: BNN, LIF network, binary network, stochastic network</li>
 </ol>
 </p>
+
+<h3 id="complete">Training Complete Graph</h3>
+
+<p>
+Above we looked at the simple task of turning off a single neuron. We can extend this to many neurons in a number of different architectural ways. For example, we can create a feedforward network, a chain of \(n\) neurons, \(n\) independent neurons with input, or, in perhaps the most complex case, a complete graph on \(n\) neurons. Let's consider the latter case in this section. Here is what I mean by a complete graph (on 5 nodes in this case): 
+</p>
+
+<img src="./dot_1.png" alt="Net 1"/>
+
+<p>
+Note that we include connections from a neuron to itself. We can connect up multiple complete graphs and add input output neurons to make things more complex, but for now, let's just consider an isolated complete graph with no input output. As above, let's consider the task of turning of the neurons, so we can let the loss be the mean output of all the neurons averaged over the timeframe. 
+</p>
+
+<p>
+One advantage I will mention related to the complete graph case is that the loss landscape is quite easy to visualize. In particular, if we have a lot of neurons and randomized connections from some distribution, because of the symmetry inherent in the complete graph, <i>the loss landscape is essentially one dimensional</i> with noisiness in each individual weight. 
+</p>
+
+<h3 id="multi_function">Loss Curves Multi Function</h3> 
+
+<p>
+Let's analyze the loss in this more complex case. Even in the single neuron "complete graph" the loss is much more complicated. This case different from the case above because instead of the neuron getting a uniform input, it gets input from itself in a feedback loop:
+</p>
+<br>
+
+<img src="./dot_2.png" alt="Single Complete Graph" style="width:10%;"/>
+
+<p>
+Here is the loss curve:
+</p>
+
+<img src="./loss_full_complete_5TRIAL.png" alt="Single Complete Graph Loss" style="width:50%;"/>
+
+<p> 
+As we can see, it appears extremely noisy. It turns out that the noise is due to multiple different "bands" of loss curves, which is clear if we zoom in and sample a 1000 points:
+</p>
+
+<img src="./loss_snapshot_complete_std_1.0.png" alt="Single Complete Graph Loss" style="width:50%;"/>
+
+<p>
+In this case, the loss really takes the form of a <a href="https://en.wikipedia.org/wiki/Multivalued_function">"multi function"</a> and the notion of a derivative is essentially useless in its most direct form because the loss may jump between one of many different curves discontinuously! We can fit a linear regression, like above, to get a better estimate of a gradient (like the orange line shown), but this also doesn't work particularly well to capture the curve.
+</p>
+
+<h3 id="mnist">Real Application: MNIST</h3>
+
+<h3>Convergence of Linear Regression Method</h3>
+
+<p>
+As a first pass I'll use the linear regression method (which is easier to implement because there are multiple alternate ways to implement the Gaussian smoothing approach). On my first pass directly comparing this method to autodiff in the case of a smooth loss, autodiff worked perfectly and the regression method did not work at all. Thus, it is necessary to look at why the latter fails. 
+</p>
+
+<h4>Linear Classifier</h4>
+
+<p>
+Let's first remove the dependence on a BNN and just use a linear classifier (i.e. a neural network with no activation functions). The architecture I used is as follows:
+</p>
+<br>
+<img src="./mnist_arch.png" style="max-width:80%; width:40%;" alt="MNIST Arch"/>
+<p>
+Note that we cannot easily visualize the full loss landscape in this setting. However, we can predict exact gradients using automatic differentiation and compare these to those computed using linear regression. This should allow us to get an idea of how the linear regression method can converge for different sample sizes and standard deviations. 
+</p>
+<p>
+Let's first work on an extremely simple case: let the input to the network be uniformly 1 and the loss function just be the mean output, so we want an output that is as negative as possible. In this case, the loss can be computed directly:
+$$z_1 = W_1 \cdot \mathbb{1},$$
+$$z_2 = W_2 \cdot z_1,$$
+$$L(z_2) = \text{avg}(z_2).$$
+Note then that the Jacobian of the loss with respect to \(W_2\) is just a matrix where each column is equal to the average of \(z_2\) (this can be derived by hand by looking at the derivative with respect to an individual weight in \(W_2\)). Here's some empirical proof:
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:49%; display:inline-block; ">
+<b style="font-size:0.7cm;">Start of Autodiff Learning</b>
+<img src="grad_True_0.png" style="max-width:100%;" alt="Start"/>
+</div>
+<div  style="max-width:50%; width:49%;  display:inline-block;">
+<b style="font-size:0.7cm;">End of Autodiff Learning</b>
+<img src="grad_True_40.png" style="max-width:100%;" alt="End"/>
+</div>
+</center>
+<br>
+
+<p>
+When we apply the regression method, the gradients have no such structure: they appear to be essentially drawn from a random distribution (this figure uses S = 2000, and a very small standard deviation of 0.00001):
+</p>
+
+<img src="./grad_naive_regression.png" style="max-width:80%; width:60%;" alt="Naive Regression"/>
+
+<p>
+I also noted that there seems to be an issue with scaling: as we increase \(S\), the standard deviation of the gradient seems to increase as well, which should not be the case when we use sufficiently large \(S\). Let's first focus on the more glaring issue of the lack of structure in the gradient. We should see that along each row the gradient is essentially constant. One hypothesis might be that we are using too small of an \(S\) parameter and thus the structure is not captured. One way to test these ideas is to isolate paricualr parameters and only look in these paramter directions. For example, we can look at the 2d curve formed by the loss given by varying two parameters (e.g on the same row versus on seperate rows). We could also try "coordinate descent" which is a variant of gradient descent that isolates different coordinate subsets each learning step and only works on these. Using a sufficiently small number of coordinates would allow us to have a more well-conditioned regression. 
+</p>
+
+<p>
+Let's first look at how the loss varies along parciular parameter directions. Let's look along the first two entires in the first row of \(W_2\) and along the first two entires of the first column. In the former case, we should see that both parameters behave essentially the same, whereas in the the second case they should be independent. Let's look at the sampled loss for where we isolate one of the three parameters as the x-axis:
+</p>
+
+
+<img src="./losses_00_01_10.png" style="max-width:80%; width:60%;" alt="Naive Regression"/>
+
+<p>
+Wow, these results are terrible! Note that there is very little structure between the loss and the parameter suggesting that the choice of parameter has essentially zero effect on the loss! I hypothesize that this is likely due to the fact that we are adding noise to all the network parameters for each sample, so this noise might be making the sample loss very noisy and hides the actual structure. Let's try just vary the three parameters above in our regression:
+</p>
+
 
 
 <h3 id="signal">Signal Processing Approach</h3>
