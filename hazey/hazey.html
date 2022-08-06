@@ -1,0 +1,140 @@
+<html style="background-color: 22150b;">
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="../nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="../koch-snowflake.png" type="image/x-icon">
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+<img src="./mural_logo.png" style="max-width:80%; width:30%;" alt="Logo"/>
+<br>
+
+
+<div class="main_text">
+<h1>Hazey: Designing a GUI Builder</h1>
+<hr>
+
+<ol style="max-width:45%;">
+    <li> <a href="#intro">Introduction</a> 
+    <li> <a href="#phase_1">Phase 1: Windows and Widgets</a> 
+    <ol>
+        <li> <a href="#prototype_1">Prototype</a></li> 
+        <li> <a href="#build_1">Build</a></li> 
+        <li> <a href="#demonstrate_1">Demonstrate</a></li> 
+        <li> <a href="#refine_1">Refine</a></li> 
+    </ol>
+
+    <li> <a href="#phase_2">Phase 2: Building Specific Widgets and Adding Responsiveness</a> 
+    <ol>
+        <li> <a href="#prototype_2">Prototype</a></li> 
+        <li> <a href="#build_2">Build</a></li> 
+        <li> <a href="#demonstrate_2">Demonstrate</a></li> 
+        <li> <a href="#refine_2">Refine</a></li> 
+    </ol>
+</ol>
+<br>
+
+<h2 id="intro">Introduction</h2>
+
+<p>
+Many times in my programming career I have wanted to create a simple GUI for running an application I coded. In these cases, I have tried out things like HTML with PHP and wxWidgets but I never really liked these options. In this blog post I thought it would be fun to create my own simple library for building GUIs based on OpenGL with very minimal external dependencies. The aim is to make something efficient and easy to expand. I want GUI elements to only update when necessary to make the overhead as small as possible. I came up with the name and logo "Hazey" by putting my last name Hazelden in a brand name generator. 
+</p>
+
+<h3>Rapid Development Approach</h3>
+
+<p>
+As an experiment, I am going to try use the "rapid development" approach for designing this software. I will implement this by working in phases of "prototype, build, demonstrate, and refine." I will organize this blog post into each phase. 
+</p>
+
+<h2 id="phase_1">Phase 1: Windows and Widgets</h2>
+<h3 id="prototype_1">Prototype</h3>
+
+<p>
+In this phase, I want to implement the basic functionality including window management with support for multiple windows, a generic widget class, and functionality for rendering and transforming widgets.
+</p>
+
+
+<h3 id="build_1">Build</h3>
+
+<p>
+I decided to implement the basic UI features by having a Window class and a Widget class. The Window class has a pointer to the root of a tree of Widgets. The tree is implemented by giving Widgets a list of children which are Widget pointers. The reason why I used a tree is because it makes transforming easier. For example, if we have two sliders insider a bigger Widget and we scale and translate the bigger Widget, these transformations should also be applied to the sliders. I think having a tree may also help with responsiveness later along the line.
+</p>
+
+<br>
+<img src="./hazey_1.png" style="max-width:80%; width:40%;" alt="Phase 1 Prototype"/>
+
+<p>
+One final detail I added was allowing Widgets to set their positioning to fixed or relative. In the latter case the inherit their parents' transformation and in the former they do not. I am trying to explicitly mimic how HTML implements this kind of thing.
+</p>
+
+<p>
+Rendering of the Widgets is handled through a call to the window render function. This in turn calls render on the root Widget node. Each Widget contains a 2D modifiable texture representing the graphical output of the Widget. The Widget render function first renders the texture and then call render on all of its children.
+</p>
+
+<h3 id="demonstrate_1">Demonstrate</h3>
+
+<p>
+Below is a demonstration of the first phase. I created three windows with different widgets. One contains a single widget black ellipse, one contains a widget with the logo above, and the final window has two widgets: one for the border outline and a sub-widget representing a slider that is moving back and forth based on time.
+</p>
+
+<br>
+
+<video controls>
+  <source src="./mural_1.mp4" type="video/mp4">
+</video>
+
+<h3 id="refine_1">Refine</h3>
+
+<p>
+This phase implemented the most basic functionality to get started. There are many refinements that will be done in future. These include making the scaling and transforming possible while in the application, implementing specific Widget types using polymorphism or composition, adding functionality for more easily interacting with Widgets and creating custom ones, etc.
+</p>
+
+<h2 id="phase_2">Phase 2: Building Specific Widgets and Adding Responsiveness</h2>
+<h3 id="prototype_2">Prototype</h3>
+
+<p>
+In this phase, I want to design some specific widgets such as sliders, buttons, text boxes, etc. This will first require some work to make creation of widgets in the current code easier and to support custom widgets through a mechanism such as polymorphism or composition. Another thing I will need to think about is how to build in responsiveness. I think this will be done through callback functions.
+</p>
+
+<br>
+<img src="./hazey_2.png" style="max-width:80%; width:40%;" alt="Phase 2 Prototype"/>
+
+<p>
+Above is a very ugly and confusing diagram encapsulating how I plan on implementing the responsiveness. Essentially, each widget instance will have widget IDs attached to them such as "onclick" or "onenterbuttonpress." The use can make other widget instances "subscribe" to these events by providing a callback function. This function should take both the original widget and the subscribed widget as parameters and can modify both of these widgets. 
+</p>
+<p>
+For example, suppose we have a clock that measures the current time and displays it and a button. Suppose that when we click the button we want the current time to display on it. What we could do is have a callback subscribed to the click event that gets the time from the time widget and copies it into the button widget. 
+</p>
+
+<br>
+<img src="./hazey_example_2.png" style="max-width:80%; width:60%;" alt="Phase 2 Prototype"/>
+
+<h3 id="build_2">Build</h3>
+
+<h3 id="demonstrate_2">Demonstrate</h3>
+
+<h3 id="refine_2">Refine</h3>
+
+<div class="top_bar" style="left: 30px;">
+<a href="../index.html" style="text-decoration: none;">goto: main</a>
+</div>
+
+<div class="top_bar" style="right: 30px;">
+<a href="" style="text-decoration: none;">goto: top</a>
+</div>
+
+</body>
+</html>

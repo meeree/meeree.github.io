@@ -411,6 +411,25 @@ Note then that the Jacobian of the loss with respect to \(W_2\) is just a matrix
 <br>
 
 <p>
+Let's see what happens when we apply the regression method with a very small standard deviation and a specific choice of \(S\). As \(S\) grows very larger (greater than or equal to the number of parameters), the approximation should be almost exactly the same. Below is an example where we isolate the first 10 rows of \(W_2\) and only fit the regression to these parameters, where we set \(S = 500\).
+</p>
+
+<img src="first_10_w2_S=500.png" style="max-width:100%; width:70%;" alt="Comparison"/>
+<br>
+
+<p>
+We can see that the results are almost perfect! One important thing to note that I found is that changing weights in all layers at once with noise gives bad results but when we apply noise to isolated weight layers one at a time, the results are much less noisy. This isn't a big deal, it just means we need to be a bit more careful about we distribute \(S\) between layers. For now, I will just look at fitting the gradient for \(W_2\).
+</p>
+
+<p>
+To understand what is happening in the above figure, let's also try plot the losses isolated along particular parameters. Below I plotted the losses with respect to the value of a paricular weight. I isolated the weights in the first column and first row, second column and first row, first column and second row. As can be seen, the structure is almost identical for the former two but different for the latter. This explains why the gradient does not change between values in the same row, as expected! 
+</p>
+
+<img src="scatters.png" style="max-width:100%; width:70%;" alt="Scatters"/>
+
+
+<!--
+<p>
 When we apply the regression method, the gradients have no such structure: they appear to be essentially drawn from a random distribution (this figure uses S = 2000, and a very small standard deviation of 0.00001):
 </p>
 
@@ -430,6 +449,7 @@ Let's first look at how the loss varies along parciular parameter directions. Le
 <p>
 Wow, these results are terrible! Note that there is very little structure between the loss and the parameter suggesting that the choice of parameter has essentially zero effect on the loss! I hypothesize that this is likely due to the fact that we are adding noise to all the network parameters for each sample, so this noise might be making the sample loss very noisy and hides the actual structure. Let's try just vary the three parameters above in our regression:
 </p>
+-->
 
 
 
