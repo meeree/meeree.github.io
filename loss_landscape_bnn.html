@@ -43,6 +43,11 @@
     <li> <a href="#xor">XOR Task</a> 
     <li> <a href="#compute_mollified">Backpropogation on Molified Loss</a>
     <li> <a href="#mnist">Real Application: MNIST</a>
+    <ol>
+        <li> <a href="#linear_classifier">Linear Classifier</a></li> 
+        <li> <a href="#ann">ANN</a></li> 
+        <li> <a href="#bnn">BNN</a></li> 
+    </ol>
     <li> <a href="#signal">Signal Processing Approaches</a>
     <li> <a href="#refs">Useful References</a>
 </ol>
@@ -379,13 +384,14 @@ In this case, the loss really takes the form of a <a href="https://en.wikipedia.
 As a first pass I'll use the linear regression method (which is easier to implement because there are multiple alternate ways to implement the Gaussian smoothing approach). On my first pass directly comparing this method to autodiff in the case of a smooth loss, autodiff worked perfectly and the regression method did not work at all. Thus, it is necessary to look at why the latter fails. 
 </p>
 
-<h4>Linear Classifier</h4>
+<h4 id="linear_classifier">Linear Classifier</h4>
 
 <p>
 Let's first remove the dependence on a BNN and just use a linear classifier (i.e. a neural network with no activation functions). The architecture I used is as follows:
 </p>
 <br>
 <img src="./mnist_arch.png" style="max-width:80%; width:40%;" alt="MNIST Arch"/>
+<br>
 <p>
 Note that we cannot easily visualize the full loss landscape in this setting. However, we can predict exact gradients using automatic differentiation and compare these to those computed using linear regression. This should allow us to get an idea of how the linear regression method can converge for different sample sizes and standard deviations. 
 </p>
@@ -427,29 +433,120 @@ To understand what is happening in the above figure, let's also try plot the los
 
 <img src="scatters.png" style="max-width:100%; width:70%;" alt="Scatters"/>
 
-
-<!--
 <p>
-When we apply the regression method, the gradients have no such structure: they appear to be essentially drawn from a random distribution (this figure uses S = 2000, and a very small standard deviation of 0.00001):
+Let's now move to the MNIST benchmark, where things are a little more complex. In this case, instead of the loss being the mean output of the neuron, it is based on the target desired digit and we use MSE loss. As can be seen, with sufficiently many samples, we can perfectly match the gradient: 
 </p>
 
-<img src="./grad_naive_regression.png" style="max-width:80%; width:60%;" alt="Naive Regression"/>
+<img src="mnist_perfect_match.png" style="max-width:100%; width:70%;" alt="MNIST Linear Classifier"/>
+
+<p> 
+We might now ask how the method converges to the autodiff result for this particular case. As it turns out, in this case we need \(S\) to be greater than or equal to the number of parameters being trained, unforunately. This is clear in the figure below:
+</p>
+
+<br>
+<img src="fit_s.png" style="max-width:100%; width:70%;" alt="FIT S"/>
 
 <p>
-I also noted that there seems to be an issue with scaling: as we increase \(S\), the standard deviation of the gradient seems to increase as well, which should not be the case when we use sufficiently large \(S\). Let's first focus on the more glaring issue of the lack of structure in the gradient. We should see that along each row the gradient is essentially constant. One hypothesis might be that we are using too small of an \(S\) parameter and thus the structure is not captured. One way to test these ideas is to isolate paricualr parameters and only look in these paramter directions. For example, we can look at the 2d curve formed by the loss given by varying two parameters (e.g on the same row versus on seperate rows). We could also try "coordinate descent" which is a variant of gradient descent that isolates different coordinate subsets each learning step and only works on these. Using a sufficiently small number of coordinates would allow us to have a more well-conditioned regression. 
+This figure shows the L2 error between the autodiff gradient and the approximate gradient for the output layer isolated only. Since the hidden layer has 100 neurons and output layer has 10, there are 1000 parameters. As can be seen, after 1000 parameters we get good accuracy. I think the spike around 1000 samples may be due to some numerical instability around this value in the method, but I'm not entirely sure. What is most important is that we need a very large and infeasible \(S\) value in this case. Note however that the linear classifier is not a typical case. Because the function is strictly linear, it makes sense that we cannot perform a perfect inversion to get the gradient unless we have a well-conditioned setup. 
 </p>
 
 <p>
-Let's first look at how the loss varies along parciular parameter directions. Let's look along the first two entires in the first row of \(W_2\) and along the first two entires of the first column. In the former case, we should see that both parameters behave essentially the same, whereas in the the second case they should be independent. Let's look at the sampled loss for where we isolate one of the three parameters as the x-axis:
+Although this case may seem disheartening because we need such a large \(S\), for more practical cases I have found this is definitely not the case. To see this, let's move to an artificial neural network (ANN) on MNIST. 
 </p>
 
-
-<img src="./losses_00_01_10.png" style="max-width:80%; width:60%;" alt="Naive Regression"/>
+<h4 id="ann">ANN</h4>
 
 <p>
-Wow, these results are terrible! Note that there is very little structure between the loss and the parameter suggesting that the choice of parameter has essentially zero effect on the loss! I hypothesize that this is likely due to the fact that we are adding noise to all the network parameters for each sample, so this noise might be making the sample loss very noisy and hides the actual structure. Let's try just vary the three parameters above in our regression:
+Let's now see the results with an ANN. In this case, I just inserted a sigmoid layer after the hidden and output layers of the network. Below is an example where we compute the output layer gradient as above. 
 </p>
--->
+
+<br>
+<img src="ann_result.png" style="max-width:100%; width:70%;" alt="MNIST ANN"/>
+
+<p>
+As can be seen, the results are pretty good. Let's now look at convergence:
+</p>
+
+<br>
+<img src="ann_fit_s.png" style="max-width:100%; width:70%;" alt="ANN Fit S"/>
+
+<p>
+It seems like the gradient fitting still is not very good unless we use an \(S\) that approaches the number of parameters of the network. <b>TODO: TEXT HERE</b>.
+</p>
+
+<p>
+Let's try fitting the network to MNIST now. I used a batch size of 10 and \(S = 100\) and alternated between the input and hidden layers for optimization in the regression method. Alternating like this is important because, as noted above, when we add noise in both layers at once it can skew the observed gradient in the output layer substantially. 
+</p>
+
+<p>
+Although \(S = 100\) is much lower than the number of parameters in each of the two layers (1000 parameters in \(W_2\) and 78,400 in \(W_1\)), optimization seemed to work pretty comparably well to the autodiff approach:
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:49%; display:inline-block; ">
+<b style="font-size:0.7cm;">50 batches (500 samples)</b>
+<img src="results_100timesteps.png" style="max-width:100%;" alt="50 batches (500 samples)"/>
+</div>
+<div  style="max-width:50%; width:49%;  display:inline-block;">
+<b style="font-size:0.7cm;">500 batches (5000 samples)</b>
+<img src="results_1000timesteps.png" style="max-width:100%;" alt="500 batches (5000 samples)"/>
+</div>
+</center>
+<br>
+
+<p>
+Success! We finally got something to actually work somewhat correctly! 
+</p>
+
+<p>
+The next step is to apply these principles to more complex scenarios we are actually interested in. Firstly, we need to prove the method can converge with a BNN in a circumstance where the network IS trainable with the vanilla autodiff method. Next--what we really care about--we need to show that the method can generalize and train the network in a circumstance where a BNN is NOT trainable with autodiff. These two circumstances are actually easy to create:
+</p>
+<br>
+<p>
+<b>1.</b> If we use a very small timeframe (e.g. 30ms), autodiff works effectively because only a few numbers of spikes can occur and the loss landscape is effectively smooth, 
+</p>
+<p>
+<b>2.</b> If we use a larger timeframe (e.g. 1 second), autodiff does not work because the loss landscape is very discontinous without a clear notion of derivative (see the many examples of this above). 
+</p>
+
+<h4 id="bnn">BNN</h4>
+
+<p>
+First, we will work on case 1 above: simulating a BNN for a very short timeframe. This has the advantage that the loss landscape is quite smooth and autodiff works for training normally. For details on how to train in this regime with MNIST, you can see my first paper (ADD CITATION). 
+</p>
+
+<p>
+In this circumstance, it turns out that training is quite a lot harder than with the ANN. Let's look at the results. Here's how the predicted second layer (1000 parameters) gradient looks with \(S = 1,100\):
+</p>
+
+<br>
+<img src="bnn_results_all.png" style="max-width:100%; width:60%;" alt="BNN Results"/>
+
+<p>
+As can be seen, even though \(S\) should be sufficiently large, the gradient prediction is terrible! Let's look at how the error depends on \(S\):
+</p>
+
+<br>
+<img src="bnn_fit_s_1100.png" style="max-width:100%; width:60%;" alt="BNN Fit S"/>
+
+<p>
+We can understand the trend before the peak at 1000 (the number of parameters by zooming in:
+</p>
+
+<br>
+<img src="bnn_fit_s_800.png" style="max-width:100%; width:60%;" alt="BNN Fit S Zoom"/>
+
+<p>
+These results are very weird. They seem to suggest that using a smaller \(S\) actually gives better results! 
+</p>
+
+<p>
+One possible cause for this weird discrepancy could be that the loss I used in these cases was evaluated for a single trial of the BNN. Averaging over samples should potentially fix this as a side effect however. Another possible cause could be our choice of standard deviation. We can see that the method is somewhat succesful with the gradient prediction along the column with nonzero entries above, but there is a lot of noise that should be zero in the other columns. Let's see how the error varies with standard deviation:
+</p>
+
+<br>
+<img src="varying_std_bnn.png" style="max-width:100%; width:60%;" alt="Vary STD BNN"/>
 
 
 
