@@ -31,10 +31,10 @@
         <li> <a href="#loss_simple">Loss Landscape</a></li> 
         <li> <a href="#gradients_simple">Gradient Descent on This Landscape</a></li> 
     </ol>
-    <li> <a href="#molification">Molification</a> 
+    <li> <a href="#molification">Mollification</a> 
     <ol>
-        <li> <a href="#molify_loss">Molifying Loss Curve</a></li> 
-        <li> <a href="#molify_voltage">Molifying Volages</a></li> 
+        <li> <a href="#molify_loss">Mollifying Loss Curve</a></li> 
+        <li> <a href="#molify_voltage">Mollifying Volages</a></li> 
     </ol>
     <li> <a href="#complete">Training Complete Graph</a> 
     <ol>
@@ -131,13 +131,10 @@ If we use an adaptive value of \(\eta\) that grows over learning (so that we don
 <img src="./approx_grad_descent_1.5_0.05_True.png" style="max-width:50%; width:50%;" alt="Grad Approx Linear Regression"/>
 </p>
 
-<h3>Automatic Approach</h3>
-<p>text here</p>
-
-<h3 id="molification">Molification</h3>
+<h3 id="molification">Mollification</h3>
 
 <p>
-One possible avenue for generating loss landscapes that are more easy to do gradient descent on is "molification." Molification is the application of a "molifier" to a badly behaving function (e.g. very jagged with discontinuities) through an operation such as convolution. A molifier is defined by the following criteria:
+One possible avenue for generating loss landscapes that are more easy to do gradient descent on is "molification." Mollification is the application of a "molifier" to a badly behaving function (e.g. very jagged with discontinuities) through an operation such as convolution. A molifier is defined by the following criteria:
 </p>
 
 <br>
@@ -153,7 +150,7 @@ $$3. \lim_{\epsilon \rightarrow 0} \epsilon^{-n} \phi(x/\epsilon) = \delta(x) \t
 I intuitively think of the final criteria as requiring that the function "looks like" a discontinuous jump at the \(n\)th derivative scale. Here is an example of a function undergoing progressive molification from Wikipedia (which, incidentally, I think they used ray-tracing to produce):
 </p>
 <br>
-<img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Heat_eqn.gif" alt="Molificiation" style="width:40%;"/>
+<img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Heat_eqn.gif" alt="Mollificiation" style="width:40%;"/>
 <br>
 <p>
 The canonical molifier is the bump function \(\phi(x)\) on \(\mathbb{R}^n\) defined by 
@@ -171,25 +168,25 @@ Note that is might be tempting to use a function like a Gaussian blob as a molif
 There are two conceivable ways of applying molification to our task. Firstly, we can simply apply molification to the final loss function. This has a more straight-forward effect on the loss but it has the disadvantage of requiring us to compute all losses in a local neighborhood to perform molification at one point. Secondly, we could apply molification over time to the voltage trace outputted from a particular neuron. The idea with this is to "smooth" out the spikes leading to better gradients and is very related to the <a href="https://arxiv.org/pdf/1901.09948.pdf">surrogate-gradients</a> approach. The main difference is that in these approaches they are working with discontinuous neurons (leaky-integrate-and-fire) and most of the papers I have seen using this approach make LIF neurons continuous by completely disregarding gradients when spikes occur. 
 </p>
 
-<h3>Approach 1: Molifying Loss</h3>
+<h3>Approach 1: Mollifying Loss</h3>
 
 <p>
 Here is a molifier using the scaled bump from above, where \(c\) is chosen to be some small value:
 </p>
 
-<img src="./molifier_voltage.png" alt="Voltage Molifier" style="width:40%;"/>
+<img src="./molifier_voltage.png" alt="Voltage Mollifier" style="width:40%;"/>
 
 <p>If we molify the loss directly it removes the noise at the small scale and makes the loss curve much more tractable for gradient descent:</p>
 
 <br>
 <center>
 <div style="max-width:50%; width:40%; display:inline-block; ">
-<b style="font-size:0.7cm;">Molified Loss Curve</b>
-<img src="losses_mollified.png" style="max-width:100%;" alt="Molified Loss Curve"/>
+<b style="font-size:0.7cm;">Mollified Loss Curve</b>
+<img src="losses_molified.png" style="max-width:100%;" alt="Mollified Loss Curve"/>
 </div>
 <div  style="max-width:50%; width:40%;  display:inline-block;">
-<b style="font-size:0.7cm;">Zoom (Orange=Molified, Blue=Original)</b>
-<img src="losses_mollified_zoom.png" style="max-width:100%;" alt="Zoom "/>
+<b style="font-size:0.7cm;">Zoom (Orange=Mollified, Blue=Original)</b>
+<img src="losses_molified_zoom.png" style="max-width:100%;" alt="Zoom "/>
 </div>
 </center>
 <br>
@@ -200,19 +197,23 @@ Here is a molifier using the scaled bump from above, where \(c\) is chosen to be
 <br>
 <center>
 <div style="max-width:50%; width:40%; display:inline-block; ">
-<b style="font-size:0.7cm;">Without Molification</b>
-<img src="approx_grad_descent_1.5_0.05_False_False.png" style="max-width:100%;" alt="Without Molification"/>
+<b style="font-size:0.7cm;">Without Mollification</b>
+<img src="approx_grad_descent_1.5_0.05_False_False.png" style="max-width:100%;" alt="Without Mollification"/>
 </div>
 <div  style="max-width:50%; width:40%;  display:inline-block;">
-<b style="font-size:0.7cm;">With Molification</b>
-<img src="approx_grad_descent_1.5_0.05_False_True.png" style="max-width:100%;" alt="With Molification"/>
+<b style="font-size:0.7cm;">With Mollification</b>
+<img src="approx_grad_descent_1.5_0.05_False_True.png" style="max-width:100%;" alt="With Mollification"/>
 </div>
 </center>
 <br>
 
+<p>
+Another approximate notion of mollification is bluring is a distribution. This is not real mollification because some distributions (e.g. Gaussian) do not have compact support. However, outside of a sufficiently large sphere, they are almost exactly zero and so we can think of them as mollifying functions. Below is an example of a 2D Gaussian blob. As we will see below, using a distribution for mollification allows us to neatly mathematically work with the loss using expected values.
+</p>
+
 <img src="./molifier_2d.png" style="max-width:50%; width:50%;" alt="Idea"/>
 
-<h3 id="molify_voltage">Approach 2: Molifying Voltage</h3>
+<h3 id="molify_voltage">Approach 2: Mollifying Voltage</h3>
 
 <p>Here is a raster plot and some example traces of 1000 neuron voltages with random noise and no transient and with the same input weight. 10,000 timesteps were used for simulation:</p>
 
@@ -236,7 +237,7 @@ Let's try molifying the voltages. First, let \(t_0\) denote the time of the firs
 If we apply the same molifier as above with appropriate \(c\) (I chose it to be 10 timesteps), repeated application gives these results: 
 </p>
 
-<img src="./mollified_voltage.png" alt="Voltage Molified"/>
+<img src="./molified_voltage.png" alt="Voltage Mollified"/>
 
 <p>
 Note there is an issue at the borders because at these edges we are trying to do a convolution so we need to use "ghost points" that do not exist. This is not an issue in practice because we can just molify the full voltage trace over many timesteps and truncate the transient and final few timesteps. 
