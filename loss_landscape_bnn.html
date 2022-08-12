@@ -40,13 +40,17 @@
     <ol>
         <li> <a href="#multi_function">Loss Curves Multi Function</a></li> 
     </ol>
-    <li> <a href="#xor">XOR Task</a> 
-    <li> <a href="#compute_mollified">Backpropogation on Molified Loss</a>
+    <!--    <li> <a href="#xor">XOR Task</a> -->
+    <li> <a href="#compute_mollified">Computing Gradient of Molified Loss</a>
     <li> <a href="#mnist">Real Application: MNIST</a>
     <ol>
         <li> <a href="#linear_classifier">Linear Classifier</a></li> 
         <li> <a href="#ann">ANN</a></li> 
         <li> <a href="#bnn">BNN</a></li> 
+        <ol>
+            <li> <a href="#case_1_bnn">Case 1: Short Timeframe</a></li> 
+            <li> <a href="#case_2_bnn">Case 2: Long Timeframe</a></li> 
+        </ol>
     </ol>
     <li> <a href="#signal">Signal Processing Approaches</a>
     <li> <a href="#refs">Useful References</a>
@@ -238,11 +242,11 @@ If we apply the same molifier as above with appropriate \(c\) (I chose it to be 
 Note there is an issue at the borders because at these edges we are trying to do a convolution so we need to use "ghost points" that do not exist. This is not an issue in practice because we can just molify the full voltage trace over many timesteps and truncate the transient and final few timesteps. 
 </p>
 
-<h3 id="xor">XOR Task</h3>
+<!--<h3 id="xor">XOR Task</h3>
 
-<img src="./xor.png" alt="XOR Net" style="width:50%;"/>
+<img src="./xor.png" alt="XOR Net" style="width:50%;"/>-->
 
-<h3 id="compute_mollified">Backpropogation on Molified Loss</h3>
+<h3 id="compute_mollified">Computing Gradient of Molified Loss</h3>
 
 <p>
 I was suggested to look at the "log-likelihood trick" outlined <a href="https://blog.shakirm.com/2015/11/machine-learning-trick-of-the-day-5-log-derivative-trick/">here</a> to compute the mollified loss gradient. I will work through the math here; it seems very promising. 
@@ -512,6 +516,8 @@ The next step is to apply these principles to more complex scenarios we are actu
 
 <h4 id="bnn">BNN</h4>
 
+<h4 id="case_1_bnn">Case 1: Small Timeframe</h4>
+
 <p>
 First, we will work on case 1 above: simulating a BNN for a very short timeframe. This has the advantage that the loss landscape is quite smooth and autodiff works for training normally. For details on how to train in this regime with MNIST, you can see my first paper (ADD CITATION). 
 </p>
@@ -548,7 +554,18 @@ One possible cause for this weird discrepancy could be that the loss I used in t
 <br>
 <img src="varying_std_bnn.png" style="max-width:100%; width:60%;" alt="Vary STD BNN"/>
 
+<p>
+From the plots above it appears that using a larger standard deviation actually gives significantly better results! I intuitively understand this as the larger standard deviation makes it so that high frequency noise around the paramter point has less of an impact on the predicted gradient. This can be seen in the plot below, where the only change was using a standard deviation of 0.15:
+</p>
 
+<br>
+<img src="grads_match.png" style="max-width:100%; width:60%;" alt="Higher STD"/>
+
+<p>
+As can be seen, the entries that should be zero are now almost all zero, i.e. there is less of the small noise changing the prediction in the columns where the true gradient is zero. We can see that the gradient along this column is also well matched.
+</p>
+
+<h4 id="case_2_bnn">Case 2: Long Timeframe</h4>
 
 <h3 id="signal">Signal Processing Approach</h3>
 
@@ -571,6 +588,8 @@ $$\text{Loss} = \int_0^T y(t) y^*(t + \tau) dt.$$
 
 <h3 id="refs">Useful References</h3>
 <ol>
+	
+    <li><a href="www.gatsby.ucl.ac.uk/~pel/tn/notes/node_perturbation.pdf">Node perturbation in vanilla deep networks</a></li>
     <li><a href="https://arxiv.org/pdf/1706.04698.pdf">Gradient Descent for Spiking Neural Networks</a></li>
     <li><a href="https://arxiv.org/pdf/1901.09948.pdf">Surrogate Gradient Learning in Spiking Neural Networks</a></li>
     <li><a href="https://nowak.ece.wisc.edu/ece830/ece830_spring13_adaptive_filtering.pdf">Adaptive Filtering</a></li>
