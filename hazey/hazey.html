@@ -30,20 +30,8 @@
 <ol style="max-width:45%;">
     <li> <a href="#intro">Introduction</a> 
     <li> <a href="#phase_1">Phase 1: Windows and Widgets</a> 
-    <ol>
-        <li> <a href="#prototype_1">Prototype</a></li> 
-        <li> <a href="#build_1">Build</a></li> 
-        <li> <a href="#demonstrate_1">Demonstrate</a></li> 
-        <li> <a href="#refine_1">Refine</a></li> 
-    </ol>
-
     <li> <a href="#phase_2">Phase 2: Building Specific Widgets and Adding Responsiveness</a> 
-    <ol>
-        <li> <a href="#prototype_2">Prototype</a></li> 
-        <li> <a href="#build_2">Build</a></li> 
-        <li> <a href="#demonstrate_2">Demonstrate</a></li> 
-        <li> <a href="#refine_2">Refine</a></li> 
-    </ol>
+    <li> <a href="#phase_3">Phase 3: Publisher-Subscriber Event Management and Optimization</a> 
 </ol>
 <br>
 
@@ -102,7 +90,48 @@ Below is a demonstration of the first phase. I created three windows with differ
 This phase implemented the most basic functionality to get started. There are many refinements that will be done in future. These include making the scaling and transforming possible while in the application, implementing specific Widget types using polymorphism or composition, adding functionality for more easily interacting with Widgets and creating custom ones, etc.
 </p>
 
-<h2 id="phase_2">Phase 2: Building Specific Widgets and Adding Responsiveness</h2>
+<h2 id="phase_2">Phase 2: Building Specific Widgets</h2>
+<h3 id="prototype_2">Prototype</h3>
+
+<p>
+In this phase, I want to design some specific widgets such as sliders, buttons, text boxes, etc. This will first require some work to make creation of widgets in the current code easier and to support custom widgets through a mechanism such as polymorphism or composition. Another thing I will need to think about is how to build in responsiveness. I think this will be done through callback functions.
+</p>
+
+<h3 id="build_2">Build</h3>
+
+<p>
+I created slider, group, colorbar, and drawing widgets. To make these widgets responsive, I made it so that widgets have a callback which handles inputs such as mouse and keyboard. Each widget checks for a mouse click inside of its region and will update accordingly. The inputs are handled hierarchically like rendering. 
+</p>
+
+<h3 id="demonstrate_2">Demonstrate</h3>
+
+<p>
+Below is a video demonstrating the new basic widgets. The slider and color selector control the pen width and color, respectively.
+</p>
+
+<video controls>
+  <source src="./ui_2.mp4" type="video/mp4">
+</video>
+
+<h3 id="refine_2">Refine</h3>
+
+<p>
+Some redundancy was introduced in this pass. In particular, each widget does an in bounds check. In the future, it makes more sense for a class up the food chain to handle collisions and delegate to the particular widgets that are effected. I think all of this will eventually be framed in the sense of an event-based paradigm: events will trigger certain widgets to handle the inputs. Furthermore, widgets will be able to send events like "button click" events and other widgets will be able to listen for the event. I will likely use something similar to the <a href="https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern">publisher-subscriber paradigm</a>.
+</p>
+
+<h2 id="phase_3">Phase 3: Publisher-Subscriber Event Management and Optimization</h2>
+
+<h3 id="prototype_3">Prototype</h3>
+
+<h3 id="build_3">Build</h3>
+
+<h3 id="demonstrate_3">Demonstrate</h3>
+
+<h3 id="refine_3">Refine</h3>
+
+
+
+<!--<h2 id="phase_2">Phase 2: Building Specific Widgets and Adding Responsiveness</h2>
 <h3 id="prototype_2">Prototype</h3>
 
 <p>
@@ -126,7 +155,7 @@ For example, suppose we have a clock that measures the current time and displays
 
 <h3 id="demonstrate_2">Demonstrate</h3>
 
-<h3 id="refine_2">Refine</h3>
+<h3 id="refine_2">Refine</h3>-->
 
 <div class="top_bar" style="left: 30px;">
 <a href="../index.html" style="text-decoration: none;">goto: main</a>

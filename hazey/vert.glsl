@@ -7,7 +7,11 @@ out vec2 tex_coords;
 
 void main(void)
 {
-    // [-1, 1] -> [0, 1].
-    tex_coords = 0.5 * (position + 1.0);
-    gl_Position = vec4(scale * position + translation, 0.0, 1.0);
+    tex_coords = position;
+
+    vec2 pos = scale * position + translation;
+
+    // [0, 1] -> [-1, 1].
+    pos = 2 * pos - 1;
+    gl_Position = vec4(pos, 0.0, 1.0);
 }
