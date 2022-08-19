@@ -119,15 +119,29 @@ Below is a video demonstrating the new basic widgets. The slider and color selec
 Some redundancy was introduced in this pass. In particular, each widget does an in bounds check. In the future, it makes more sense for a class up the food chain to handle collisions and delegate to the particular widgets that are effected. I think all of this will eventually be framed in the sense of an event-based paradigm: events will trigger certain widgets to handle the inputs. Furthermore, widgets will be able to send events like "button click" events and other widgets will be able to listen for the event. I will likely use something similar to the <a href="https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern">publisher-subscriber paradigm</a>.
 </p>
 
-<h2 id="phase_3">Phase 3: Publisher-Subscriber Event Management and Optimization</h2>
+<h2 id="phase_3">Phase 3: Adding Text</h2>
 
 <h3 id="prototype_3">Prototype</h3>
+
+<p>
+The aim of this phase is simple in principle but hard to implement in practice: adding text. Because I am working in OpenGL, adding text is actually quite difficult and involve a lot of little details to get it to look good. In this phase, I aim to eventually have fonts with custom "glyph" sizes and spacing (i.e. the letter i has a smaller glyph than the letter a). Adding text will allow me to then implement most of the important widgets used in practice for UIs. Thus, this simple phase should contribute very significantly to completing this UI framework.
+</p>
 
 <h3 id="build_3">Build</h3>
 
 <h3 id="demonstrate_3">Demonstrate</h3>
 
 <h3 id="refine_3">Refine</h3>
+
+<h2 id="phase_4">Phase 4: Publisher-Subscriber Event Management and Optimization</h2>
+
+<h3 id="prototype_4">Prototype</h3>
+
+<h3 id="build_4">Build</h3>
+
+<h3 id="demonstrate_4">Demonstrate</h3>
+
+<h3 id="refine_4">Refine</h3>
 
 
 
