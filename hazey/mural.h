@@ -14,6 +14,13 @@ struct Vec2
 	Vec2(float x_, float y_) : x{x_}, y{y_} {}
 };
 
+struct IVec2 
+{
+	int x, y;
+	IVec2(int v = 0) : x{v}, y{v} {}
+	IVec2(int x_, int y_) : x{x_}, y{y_} {}
+};
+
 struct Widget;
 
 struct Window
@@ -42,6 +49,7 @@ protected:
     virtual void input_callback(Window&) {}
 
 public:
+    bool visible = true;
 	Vec2 offset, scale;
 	Positioning positioning = eRelative;
     Vec2 uv_min, uv_max; // Extents of window in UV space. Updated during rendering.
@@ -52,8 +60,8 @@ public:
 	Widget(int tex_width, int tex_height, int buffer, int sampler_loc);
 	std::vector<Widget*> children;
 	bool render(Widget* parent);
-    void update_texture();
-    void set_color(float r, float g, float b);
+    void update_texture(bool interpolate=true);
+    void set_color(float r, float g, float b, float a=1.0);
 
     ///! Handle inputs e.g. mouse, keyboard by calling input_callback if it is not NULL and then delegating to children.
     void handle_inputs(Window& window);
