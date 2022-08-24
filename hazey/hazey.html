@@ -31,7 +31,8 @@
     <li> <a href="#intro">Introduction</a> 
     <li> <a href="#phase_1">Phase 1: Windows and Widgets</a> 
     <li> <a href="#phase_2">Phase 2: Building Specific Widgets and Adding Responsiveness</a> 
-    <li> <a href="#phase_3">Phase 3: Publisher-Subscriber Event Management and Optimization</a> 
+    <li> <a href="#phase_3">Phase 3: Adding Text</a> 
+    <li> <a href="#phase_4">Phase 4: Publisher-Subscriber Event Management and Optimization</a> 
 </ol>
 <br>
 
@@ -81,7 +82,7 @@ Below is a demonstration of the first phase. I created three windows with differ
 <br>
 
 <video controls>
-  <source src="./mural_1.mp4" type="video/mp4">
+  <source src="./ui_1.mp4" type="video/mp4">
 </video>
 
 <h3 id="refine_1">Refine</h3>
@@ -129,9 +130,42 @@ The aim of this phase is simple in principle but hard to implement in practice: 
 
 <h3 id="build_3">Build</h3>
 
+<p>
+I used the Freetype package to handle text which allows for custom "glyph" sizes and distances between glyphs. Glyphs have a couple variables determining their spacing shown in the picture below:
+</p>
+
+<br>
+<img src="./metrics.png" style="max-width:80%; width:40%;" alt="Metrics"/>
+
+<p>
+I referenced <a href="https://learnopengl.com/In-Practice/Text-Rendering">this tutorial</a> a lot because I've never implemented text in OpenGL before.
+</p>
+
 <h3 id="demonstrate_3">Demonstrate</h3>
 
+<p>
+The new text system allows for loading of custom fonts with custom font sizes. The video below has an example of some text in the UI shown in phase 2. Note that I also added an alpha channel in this phase so that UI elements can overlap each-other. Some of the text is quite small in the recording, so try view in fullscreen. 
+</p>
+
+<br>
+
+<video controls>
+  <source src="./ui_3.mp4" type="video/mp4">
+</video>
+
+<p>
+The picture below which turns off transparency of the text container and glyph background illustrates that glyphs can be dynamically sized (e.g. a 'p' glyph is longer vertically than an 'a' glyph):
+</p>
+
+<br>
+<img src="./glyphs.png" style="max-width:80%; width:60%;" alt="Glyph"/>
+
+
 <h3 id="refine_3">Refine</h3>
+
+<p>
+There is not much that needs to be added in terms of text. Perhaps adding vector based text rendering could be useful in future but I do not think it necessary. Being able to highlight, underline or bold text in the UI is something I need to add. Unrelated to text, I also need to add some sort of layer mechanism so that UI elements can always be on top or bottom regardless of where they are in the widget tree.
+</p>
 
 <h2 id="phase_4">Phase 4: Publisher-Subscriber Event Management and Optimization</h2>
 
@@ -142,34 +176,6 @@ The aim of this phase is simple in principle but hard to implement in practice: 
 <h3 id="demonstrate_4">Demonstrate</h3>
 
 <h3 id="refine_4">Refine</h3>
-
-
-
-<!--<h2 id="phase_2">Phase 2: Building Specific Widgets and Adding Responsiveness</h2>
-<h3 id="prototype_2">Prototype</h3>
-
-<p>
-In this phase, I want to design some specific widgets such as sliders, buttons, text boxes, etc. This will first require some work to make creation of widgets in the current code easier and to support custom widgets through a mechanism such as polymorphism or composition. Another thing I will need to think about is how to build in responsiveness. I think this will be done through callback functions.
-</p>
-
-<br>
-<img src="./hazey_2.png" style="max-width:80%; width:40%;" alt="Phase 2 Prototype"/>
-
-<p>
-Above is a very ugly and confusing diagram encapsulating how I plan on implementing the responsiveness. Essentially, each widget instance will have widget IDs attached to them such as "onclick" or "onenterbuttonpress." The use can make other widget instances "subscribe" to these events by providing a callback function. This function should take both the original widget and the subscribed widget as parameters and can modify both of these widgets. 
-</p>
-<p>
-For example, suppose we have a clock that measures the current time and displays it and a button. Suppose that when we click the button we want the current time to display on it. What we could do is have a callback subscribed to the click event that gets the time from the time widget and copies it into the button widget. 
-</p>
-
-<br>
-<img src="./hazey_example_2.png" style="max-width:80%; width:60%;" alt="Phase 2 Prototype"/>
-
-<h3 id="build_2">Build</h3>
-
-<h3 id="demonstrate_2">Demonstrate</h3>
-
-<h3 id="refine_2">Refine</h3>-->
 
 <div class="top_bar" style="left: 30px;">
 <a href="../index.html" style="text-decoration: none;">goto: main</a>
