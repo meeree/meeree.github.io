@@ -25,6 +25,7 @@
 <hr>
 
 <ol style="max-width:45%;">
+    <li> <a href="./bnns_spiking_data.html">Previous Article</a> 
     <li> <a href="#intro">Introduction</a> 
     <li> <a href="#simple">Most Simple Case</a> 
     <ol>
@@ -54,6 +55,7 @@
     </ol>
     <li> <a href="#signal">Signal Processing Approaches</a>
     <li> <a href="#refs">Useful References</a>
+	<li> <a href="#todo"><b>TODO LIST</b></a>
 </ol>
 <br>
 
@@ -515,9 +517,11 @@ The next step is to apply these principles to more complex scenarios we are actu
 <b>2.</b> If we use a larger timeframe (e.g. 1 second), autodiff does not work because the loss landscape is very discontinous without a clear notion of derivative (see the many examples of this above). 
 </p>
 
-<h4 id="bnn">BNN</h4>
+<h3 id="bnn">BNN</h3>
 
 <h4 id="case_1_bnn">Case 1: Short Timeframe</h4>
+
+<h4>Analysis</h4>
 
 <p>
 First, we will work on case 1 above: simulating a BNN for a very short timeframe. This has the advantage that the loss landscape is quite smooth and autodiff works for training normally. For details on how to train in this regime with MNIST, you can see my first paper (ADD CITATION). 
@@ -566,11 +570,16 @@ From the plots above it appears that using a larger standard deviation actually 
 As can be seen, the entries that should be zero are now almost all zero, i.e. there is less of the small noise changing the prediction in the columns where the true gradient is zero. We can see that the gradient along this column is also well matched.
 </p>
 
+<h4>Training</h4>
+
 <p>
-Let's now try actually training. Below is an example loss curve resulting from training with regression and autodiff.
+Let's now try actually training. Below is an example loss curve resulting from training with regression over 2000 samples (batch size of 10, so 200 batches):
 </p>
 
 <br>
+<img src="loss_bnn_regression.png" style="max-width:50%;" alt="BNN Regression Learning"/>
+
+<!--<br>
 <center>
 <div style="max-width:50%; width:49%; display:inline-block; ">
 <b style="font-size:0.7cm;">BNN Autodiff Learning</b>
@@ -581,29 +590,73 @@ Let's now try actually training. Below is an example loss curve resulting from t
 <img src="loss_bnn_regression.png" style="max-width:100%;" alt="BNN Regression Learning"/>
 </div>
 </center>
-<br>
+<br>-->
 
 <p>
-TODO: text here
+As can be seen, although there is a lot of fluctuation, the loss curve does actually go down. However, I find that a loss curve is only so good for quantifying how well our method works: we could, for example, turn off all the outputs of a network and potentially minimize the loss a lot in doing so, but this will likely have no impact on accuracy on the actual task we want to solve. So, let's now look at an accuracy plot on the MNIST validation set over epochs (2000 samples per epoch). Here, I am using a "guessed" set of hyperparameters (finding good hyperparameters requires a lot of tuning which will be done later). Here are the results:
 </p>
 
+<br>
+<img src="./10_ms_train.png" style="max-width:70%;" alt="10 MS Train"/>
 
+<p>
+As can be seen, although the accuracy is not high in comparison to conventional ML, we achieve an accuracy far better than just guessing. 
+</p>
 
 <h4 id="case_2_bnn">Case 2: Long Timeframe</h4>
 
+<h4>Analysis</h4>
+
+<p>
+Let's now move to the case where we have a longer timeframe and autodiff seems to break down. Below is an example of some traces showing the weighted input and corresponding output voltage traces over a 100 ms timeframe from the MNIST network.
+</p>
+
 <br>
 <center>
-<div style="max-width:50%; width:49%; display:inline-block; ">
+<div style="max-width:100%; width:100%; display:inline-block; ">
 <b style="font-size:0.7cm;">First Layer</b>
-<img src="layer1_0.1dt.png" style="max-width:100%;" alt="First Layer"/>
+<img src="layer2_0.1dt.png" style="max-width:100%; width: 80%;" alt="First Layer"/>
 </div>
-<div  style="max-width:50%; width:49%;  display:inline-block;">
+<br><br>
+<div  style="max-width:100%; width:100%;  display:inline-block;">
 <b style="font-size:0.7cm;">Second Layer</b>
-<img src="layer2_0.1dt.png" style="max-width:100%;" alt="Second Layer"/>
+<img src="layer1_0.1dt.png" style="max-width:100%; width: 80%;" alt="Second Layer"/>
 </div>
 </center>
 <br>
 
+<p>
+Let's first get an idea about why autodiff breaks down in this situation. To get a 1D snapshot of the loss, we can plot the loss along a particular direction in 1D space. For example, we can vary all weights in the network uniformly by a fixed amount from 0 to 1. Below shows the loss landscape along this direction for different choices of timestep. When we use a bigger timestep we get a bigger timeframe, e.g. a dt of 0.1 in the case below gives a 100 ms timeframe while a dt of 0.01 gives a 10 ms timeframe. 
+</p>
+
+<br>
+<img src="./loss_along_dir.png" style="max-width:70%;" alt="Loss Along Dir"/>
+
+<p>
+As can be seen, as we increase the timeframe used to evaluate the loss function, we have a much more chaotic loss curve that is almost discontinuous at certain points. When we try to train this with conventional autodiff, the discontinuities and other features make the gradients blow up at certain points. Maybe using something like gradient clipping could work. However, as can be seen <a href="#complete">above</a> in the most basic single self-coupled neuron case, discontinuities are the norm and proliferate throughout the loss curve, meaning that with autodiff we would almost always require clipping and autodiff would be completely useless. 
+</p>
+
+<h4>Training</h4>
+
+<p>
+Now, let's see how the regression technique works on the case of a longer timeframe, where naive autodiff does not work. Below is an accuracy curve in the case dt=0.1:
+</p>
+
+<br>
+<img src="./100_ms_train.png" style="max-width:70%;" alt="100 MS Train"/>
+
+<p>
+As can be seen, the regression method can work similarly to the case of a smaller timeframe! Unlike autodiff, we can still train with decent results (these can be improved a lot with hyperparameter tuning). Thus, this is our first big win in the battle of beating autodiff!
+</p>
+
+<p>
+Below is another accuracy plot with dt=0.05, where autodiff still does not work. In this case, we get higher accuracy than the plot above where dt=0.01:
+</p>
+
+<br>
+<img src="./50_ms_train.png" style="max-width:80%;" alt="50 MS Train"/>
+
+<!--
 <br>
 <img src="varying_std_0.1dt.png" style="max-width:100%; width:50%;" alt="Varying STD 0.1 DT"/>
 
@@ -619,14 +672,7 @@ TODO: text here
 </div>
 </center>
 <br>
-
-<p>
-TODO: text here
-</p>
-
-<p>
-Let's try and train in the more difficult regime of a long timeframe now. In this case, the autodiff does not appear to work correctly for optimizing with conventional gradient descent. Because of this, although we can compare structural features such as which column or row has the most significant gradient change with the one suggested by autodiff for sanity checks, <i>we don't want the gradient predicted by regression to match the autodiff gradient</i>!
-</p>
+-->
 
 <h3 id="signal">Signal Processing Approach</h3>
 
@@ -656,6 +702,15 @@ $$\text{Loss} = \int_0^T y(t) y^*(t + \tau) dt.$$
     <li><a href="https://nowak.ece.wisc.edu/ece830/ece830_spring13_adaptive_filtering.pdf">Adaptive Filtering</a></li>
     <li><a href="https://arxiv.org/pdf/1712.09913.pdf">Visualizing the Loss Landscape of Neural Networks</a></li>
     <li><a href="https://blog.shakirm.com/2015/11/machine-learning-trick-of-the-day-5-log-derivative-trick/">Machine Learning Trick of the Day (5): Log Derivative Trick</a></li>
+</ol>
+
+<h3 id="todo">Todo</h3>
+<ol style="max-width:50%;">
+	<li>Train to higher accuracy on MNIST on cluster</li>
+	<li>Try gradient clipping with autodiff so we can compare autodiff to regression in accuracy plots</li>
+	<li>Look for cases where BNN/SNN fail with autodiff</li>
+	<li>Work more on NLB and write up initial results</li>
+	<li>Look for more SNN applications</li>
 </ol>
 
 
