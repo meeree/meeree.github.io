@@ -517,7 +517,7 @@ The next step is to apply these principles to more complex scenarios we are actu
 
 <h4 id="bnn">BNN</h4>
 
-<h4 id="case_1_bnn">Case 1: Small Timeframe</h4>
+<h4 id="case_1_bnn">Case 1: Short Timeframe</h4>
 
 <p>
 First, we will work on case 1 above: simulating a BNN for a very short timeframe. This has the advantage that the loss landscape is quite smooth and autodiff works for training normally. For details on how to train in this regime with MNIST, you can see my first paper (ADD CITATION). 
@@ -566,7 +566,67 @@ From the plots above it appears that using a larger standard deviation actually 
 As can be seen, the entries that should be zero are now almost all zero, i.e. there is less of the small noise changing the prediction in the columns where the true gradient is zero. We can see that the gradient along this column is also well matched.
 </p>
 
+<p>
+Let's now try actually training. Below is an example loss curve resulting from training with regression and autodiff.
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:49%; display:inline-block; ">
+<b style="font-size:0.7cm;">BNN Autodiff Learning</b>
+<img src="loss_bnn_autodiff.png" style="max-width:100%;" alt="BNN Autodiff Learning"/>
+</div>
+<div  style="max-width:50%; width:49%;  display:inline-block;">
+<b style="font-size:0.7cm;">BNN Regression Learning</b>
+<img src="loss_bnn_regression.png" style="max-width:100%;" alt="BNN Regression Learning"/>
+</div>
+</center>
+<br>
+
+<p>
+TODO: text here
+</p>
+
+
+
 <h4 id="case_2_bnn">Case 2: Long Timeframe</h4>
+
+<br>
+<center>
+<div style="max-width:50%; width:49%; display:inline-block; ">
+<b style="font-size:0.7cm;">First Layer</b>
+<img src="layer1_0.1dt.png" style="max-width:100%;" alt="First Layer"/>
+</div>
+<div  style="max-width:50%; width:49%;  display:inline-block;">
+<b style="font-size:0.7cm;">Second Layer</b>
+<img src="layer2_0.1dt.png" style="max-width:100%;" alt="Second Layer"/>
+</div>
+</center>
+<br>
+
+<br>
+<img src="varying_std_0.1dt.png" style="max-width:100%; width:50%;" alt="Varying STD 0.1 DT"/>
+
+<br>
+<center>
+<div style="max-width:50%; width:49%; display:inline-block; ">
+<b style="font-size:0.7cm;">BNN Autodiff Learning</b>
+<img src="autodiff_0.1dt_learn.png" style="max-width:100%;" alt="BNN Autodiff Learning"/>
+</div>
+<div  style="max-width:50%; width:49%;  display:inline-block;">
+<b style="font-size:0.7cm;">BNN Regression Learning</b>
+<img src="regression_0.1dt_learn.png" style="max-width:100%;" alt="BNN Regression Learning"/>
+</div>
+</center>
+<br>
+
+<p>
+TODO: text here
+</p>
+
+<p>
+Let's try and train in the more difficult regime of a long timeframe now. In this case, the autodiff does not appear to work correctly for optimizing with conventional gradient descent. Because of this, although we can compare structural features such as which column or row has the most significant gradient change with the one suggested by autodiff for sanity checks, <i>we don't want the gradient predicted by regression to match the autodiff gradient</i>!
+</p>
 
 <h3 id="signal">Signal Processing Approach</h3>
 
