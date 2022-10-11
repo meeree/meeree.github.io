@@ -173,3 +173,34 @@ a.main_page:hover{
   left: 30px;
   border: 1px green solid;
 }
+
+table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.8cm;
+    font-family: sans-serif;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    background: url(https://astro.uni-frankfurt.de/wp-content/uploads/2014/01/White-Paper-Texture-Background-520x390.jpg);
+    border-radius: 10px;
+	text-align: center;
+}
+
+thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+
+th {
+    padding: 12px 15px;
+}
+td {
+    padding: 12px 15px;
+    border: 3px solid black;
+}
+
+tbody tr {
+    border: 3px solid black;
+}
+

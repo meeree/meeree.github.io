@@ -1,0 +1,21 @@
+digraph D {
+    rankdir=LR;
+    l11 [shape=square, label=<x<SUB>1</SUB>∈0,1>, color=none, fillcolor=grey, style=filled]
+    l12 [shape=square, label=<x<SUB>2</SUB>∈0,1>, color=none, fillcolor=grey, style=filled]
+
+	l2 [shape=square, label=<y∈0,1>, color=none, fillcolor=grey, style=filled]
+    n1 [shape=circle, label=<η<SUB>11</SUB>>]
+    n2 [shape=circle, label=<η<SUB>12</SUB>>]
+    n3 [shape=circle, label=<η<SUB>21</SUB>>]
+
+    l11 -> n1 [label=<W<SUB>1</SUB>>, fontsize="20pt"]; 
+    l11 -> n2;
+    l12 -> n1; 
+    l12 -> n2;
+
+    n1 -> n3 [label=<W<SUB>2</SUB>>, fontsize="20pt"];
+    n2 -> n3;
+
+	n3 -> l2;
+
+}

@@ -43,6 +43,7 @@
     </ol>
     <!--    <li> <a href="#xor">XOR Task</a> -->
     <li> <a href="#compute_mollified">Computing Gradient of Molified Loss</a>
+    <li> <a href="#optimizing">Optimizing Methods to Make Them VIABLE</a>
     <li> <a href="#mnist">Real Application: MNIST</a>
     <ol>
         <li> <a href="#linear_classifier">Linear Classifier</a></li> 
@@ -340,6 +341,34 @@ I did find that if we increase the number of samples \(S\) for the log trick suf
     <li>Q-learning</li>
     <li>Applying to: BNN, LIF network, binary network, stochastic network</li>
 </ol>
+</p>
+
+<h2 id="optimizing">Optimizing Methods to Make Them VIABLE</h2>
+
+<h3>ANN Case</h3>
+<p>
+We have something like:
+$$\alpha_i(x_{i-1}) = W_i \cdot \sigma(x_{i-1}) + b_i$$
+Let's use the chain rule:
+$$\nabla_{W_i} L = \frac{d L}{d W_i} = \frac{d L}{d \alpha_i} \frac{d \alpha_i}{d W_i} = \frac{d L}{d \alpha_i} \frac{d (W_i \sigma(x_{i-1}) + b_i)}{d W_i} = \frac{d L}{d \alpha_i} \sigma(x_{i-1})^T.$$
+So, instead of calculating the gradient approximately by sampling random values in the neighborhood of \(W_i\), we can sample random values in the neighborhood of \(\alpha_i\) (which is done by inserting some noise into the output of \(z_i\)). Note this is a major optimization! If \(W_i\) has shape \((d_1, d_2)\), \(z_i\) has shape only \(d_2\), so instead of needing to vary \(d_1 \cdot d_2\) parameters, we need to vary \(d_2\)!
+</p>
+
+<h3>SNN/BNN/Time-Varying Case</h3>
+<p>
+In this case, things are a bitter harder because time is involved. In the typical case, we integrate the output over time evaluated by some loss function. For example, here is a typical situation:
+$$L(y, y^*) = \int_0^\tau \ell(y(t), y^*(t)).$$
+So, we can pass derivatives inside to get:
+$$\nabla_{W_i} L(y, y^*) = \nabla_{W_i} \int_0^\tau \ell(y(t), y^*(t)) = \int_0^\tau \nabla_{W_i} \ell(y(t), y^*(t)).$$
+Now, things can continue similarly to the ANN case, except at a specific time snapshot:
+$$\nabla_{W_i} \ell^{(t)} = \frac{d \ell^{(t)}}{d W_i} = \frac{d \ell^{(t)}}{d \alpha_i^{(t)}} \frac{d \alpha_i^{(t)}}{d W_i} = \frac{d \ell^{(t)}}{d \alpha_i^{(t)}} \frac{d (W_i \sigma^{(t)}(x_{i-1}^{(t)}) + b_i)}{d W_i} = \frac{d \ell^{(t)}}{d \alpha_i^{(t)}} \sigma^{(t)}(x_{i-1}^{(t)})^T.$$
+Note that \(\sigma\) has a \((t)\) on it because it has a state dependent on time. So, we can evaluate the loss at this timestep approximately using our sampling methods by adding some noisiness to the output. Then, because the overall loss gradient is the integral of all the loss gradients, if we just average the approximate loss gradients this gives us a notion of approximate loss gradient over the whole timeframe! 
+</p>
+<p>
+I think there is a little more complexity involved in the sampling. In particular, because we are looking at the same neuron state at the instant in time, we should return all the neurons to the same state every timestep for sampling. This is different to inserting noise and letting the neurons run their own course over time, causing their traces to diverge from one another. We can think of this as looking at how the network behaves at a particular timestep as a dynamic process when we inject current into a particular layer.
+</p>
+<p>
+Another way to do things that is not as mathematically justifiable is just injecting random current every timestep without returning the network to its state without the random injections every timestep. This will make it so that the neurons drift away from eachother over time.
 </p>
 
 <h3 id="complete">Training Complete Graph</h3>

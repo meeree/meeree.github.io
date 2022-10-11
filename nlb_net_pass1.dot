@@ -1,0 +1,10 @@
+digraph D { 
+    dpi=300
+    rankdir=LR
+    n1 [shape=square,style=filled,fillcolor=green,label="Input Layer\n10 Neurons", width=1.4]
+    n2 [shape=square,style=filled,fillcolor=grey,label="Hidden Layer 1\n30 Neurons", width=1.4]
+    n3 [shape=square,style=filled,fillcolor=grey,label="Hidden Layer 2\n30 Neurons", width=1.4]
+    n4 [shape=square,style=filled,fillcolor=grey,label="Output Layer\n10 Neurons", width=1.4]
+
+    n1 -> n2 -> n3 -> n4 [penwidth=2];
+}

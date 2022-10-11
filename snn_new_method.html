@@ -1,0 +1,171 @@
+<html>
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text">
+<h1>New Techniques on SNNs</h1>
+<hr>
+
+<ol style="max-width:45%;">
+    <li> <a href="./loss_landscape_bnn.html">Previous Article</a> 
+    <li> <a href="#intro">Introduction</a> 
+    <li> <a href="#simple">Simple Cases</a> 
+    <ol>
+        <li> <a href="#single">Single Neuron</a> </li>
+        <li> <a href="#self_coupled">Self-Coupled Neuron</a> </li>
+    </ol>
+    <li> <a href="#mnist">MNIST</a> 
+    <ol>
+        <li> <a href="#mnist_loss_landscape">Loss Landscape</a> </li>
+    </ol>
+    <li> <a href="#refs">Useful References</a>
+	<li> <a href="#todo"><b>TODO LIST</b></a>
+</ol>
+<br>
+
+<h2 id="intro">Introduction</h2>
+<p>
+My previous work has been focused on training Biological Neural Networks (BNNs). In this work, we have developed a number of new techniques aimed at extending backpropogation to these more complex cases where the loss landscape may be very unstructured or discontinuous (see <a href="loss_landscape_bnns.html">this article</a>).
+</p>
+<p>
+In this article, I will try to use similar analysis to garner insight into SNNs and attempt to apply the methods I developed for BNNs to SNNs. There are a number of possible applications of these methods to SNNs. For example, the neuron models in SNNs technically posses discontinuities so a notion of approximate gradient is usually used, but the methods I developed that do not backpropogate directly could alternately be used without having to address the discontinuity. Another application: I believe there are likely many situations in which LIF neurons will demonstrate a very chaotic loss landscape as in the case of BNNs, which is the case my smoothed gradient methods attempt to solve. Finally, after a quick look, it appears that vanishing gradients is an issue in very deep SNNs. My approximate gradient notion could be used potentially to solve this issue.
+</p>
+<p>
+Unlike conventional backpropogation, which scales well with width of neural network but not necessarilly with depth (number of layers), my methods scale the complete opposite way: increase width puts a high demand on number of samples for the methods to work, but increasing depth has zero effect. Leveraging this relationship could elucidate some possible uses of my techniques. 
+</p>
+
+<h2 id="simple">Simple Cases</h2> 
+
+<p>
+My first aim will be to reproduce the analysis I did for a BNN with spiking neurons instead of biological ones. In this section, I will do this for the simple first cases: a single neuron that we try to turn off, a self-coupled neuron we try to turn off, where in both cases we also analyze how things change when we add or remove noise.
+</p>
+
+<h3 id="single">Single Neuron</h3>
+
+<p>
+We define the loss to be the mean activity over a simulation timeframe (2000 timesteps in this case, as with the BNN), so that we are trying to turn the neuron off. Here is the resulting loss landscape if we have an input that is uniformly 1 scaled by a single weight parameter \(w\). In the LIF model, there is a parameter \(\beta\) that is regulated by the ratio of how fast neurons fire relative to the timescale setup by the dt used.
+</p>
+
+<p>
+Let's have a look at the loss results and some representative traces with varied \(\beta\) values (0.3, 0.6, 0.9; it should be between 0 and 1):
+</p>
+
+<br>
+<br>
+<hr>
+<img src="./beta_0.3_snn_single_loss.png" style="max-width:80%; width:40%;" alt="Varied Beta Plot"/>
+<img src="./beta_0.3_snn_traces.png" style="max-width:100%; width:100%;" alt="Varied Beta Plot"/>
+
+<img src="./beta_0.6_snn_single_loss.png" style="max-width:80%; width:40%;" alt="Varied Beta Plot"/>
+<img src="./beta_0.6_snn_traces.png" style="max-width:100%; width:100%;" alt="Varied Beta Plot"/>
+
+<img src="./beta_0.9_snn_single_loss.png" style="max-width:80%; width:40%;" alt="Varied Beta Plot"/>
+<img src="./beta_0.9_snn_traces.png" style="max-width:100%; width:100%;" alt="Varied Beta Plot"/>
+<br>
+<hr>
+
+<p>
+As we can see, the loss is more unstructured in the case where we have a longer time between spikes. This makes sense to me because in this case we see less spikes, so each individual spike can have more of an impact on the loss. When we are integrating the output of the neurons over time, it is clear that neuron spikes will induce discontinuous spikes in the loss. In the case of Hodgkin-Huxley, we still see substantially less spiking than in LIF because the duration of spikes is longer and they occur less regularly. 
+</p>
+<p>
+We can see in some plots that the loss is completely flat. For example, in the case \(\beta = 0.3\) between \(w = 0.8\) and \(w = 0.9\). This should theoretically impede training. <b>REPEAT MANY NOISY TRIALS TO FIX THIS FOR REGRESSION, NOT FOR AUTODIFF</b>
+</p>
+
+<p>
+Let's have a look what happens when we try to train the neuron to turn off using autodiff and the regression method from my previous article. I set \(\beta = 0.3\) here because this case seems to have a more difficult loss landscape (batch size is 1).
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<img src="./turn_off_snn_comparison_grads.png" style="max-width:100%;" alt="Single Grads"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<img src="./turn_off_snn_comparison_loss.png" style="max-width:100%;" alt="Single Losses"/>
+</div>
+</center>
+<br>
+
+
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<img src="./turn_off_snn_comparison_w.png" style="max-width:100%;" alt="Single Values"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<img src="./beta_0.3_snn_single_loss.png" style="max-width:100%;" alt="Varied Beta Plot"/>
+</div>
+</center>
+<br>
+
+<p>
+These results, after some careful consideration, appear very weird! If we look at the loss curve in the bottom right corner, at certain points like 0.8-0.9 the gradient appears to be 0. However, when \(w\) is in this range during training the gradient proposed is non-zero (it's actually around 2.0 at batch index 100). We might think that maybe the gradient is just more clear if we zoom in a lot and it only appears flat locally. However, if we zoom in this is clearly not true:
+</p>
+
+<img src="./weird_grad_snn.png" style="max-width:80%; width:60%;" alt="Weird Gradient"/>
+
+<p>
+As can be seen, the curve is completely flat and if we compute the gradient manually by finite difference it is completely zero, no matter how much we zoom in! However, note that the gradient computed with the method in snn-torch is 0.184! This is a very big discrepancy suggesting that something weird is happening. In particular, snn-torch used a surrogate method to compute the gradient, so it is not exactly the same as if we manually compute the gradient by eye looking at the loss curve.
+</p>
+
+<p>
+<b>TODO: Investigate more</b>
+</p>
+
+<h3 id="self_coupled">Self-Coupled Neuron</h3>
+
+<h2 id="mnist">MNIST</h2>
+
+<p>
+I used the useful <a href="https://snntorch.readthedocs.io/en/latest/">snn torch</a> package to train the SNNs. This package supports a number of different gradient methods such as zeroing gradient when neurons spike or using the surrogate gradient method which uses a smoothed differentiable model of the neuronto compute gradients. With this, we can directly compare between the sampling methods I introduced and backpropogation based learning. In all the MNIST stuff below, I am using a network with 28*28 input neurons, 100 hidden neurons and 10 output neurons.
+</p>
+
+<h3 id="mnist_loss_landscape">Loss Landscape</h3>
+
+<p>
+First, we will start by doing a step that I think is far too overlooked in most machine learning papers: analyzing, even to just to a high level, the loss landscape that emerges from the SNN applied to MNIST. 
+</p>
+
+<h3 id="refs">Useful References</h3>
+<ol>
+</ol>
+
+<h3 id="todo">Todo</h3>
+<ol style="max-width:50%;">
+	<li>Train to higher accuracy on MNIST on cluster</li>
+	<li>Try gradient clipping with autodiff so we can compare autodiff to regression in accuracy plots</li>
+	<li>Look for cases where BNN/SNN fail with autodiff</li>
+	<li>Work more on NLB and write up initial results</li>
+	<li>Look for more SNN applications</li>
+</ol>
+
+
+
+<div class="top_bar" style="left: 30px;">
+<a href="index.html" style="text-decoration: none;">goto: main</a>
+</div>
+
+<div class="top_bar" style="right: 30px;">
+<a href="" style="text-decoration: none;">goto: top</a>
+</div>
+
+</body>
+</html>
