@@ -117,7 +117,11 @@ Let's have a look what happens when we try to train the neuron to turn off using
 <br>
 
 <p>
-These results, after some careful consideration, appear very weird! If we look at the loss curve in the bottom right corner, at certain points like 0.8-0.9 the gradient appears to be 0. However, when \(w\) is in this range during training the gradient proposed is non-zero (it's actually around 2.0 at batch index 100). We might think that maybe the gradient is just more clear if we zoom in a lot and it only appears flat locally. However, if we zoom in this is clearly not true:
+In the above, we can see that regression seems to converge better because the gradients are larger leading to faster convergence. The gradients are more noisy which makes sense because the method is based on random sampling. 
+</p>
+
+<p>
+The autodiff results, after some careful consideration, appear very weird! If we look at the loss curve in the bottom right corner, at certain points like 0.8-0.9 the gradient appears to be 0. However, when \(w\) is in this range during training the gradient proposed is non-zero (it's actually around 2.0 at batch index 100). We might think that maybe the gradient is just more clear if we zoom in a lot and it only appears flat locally. However, if we zoom in this is clearly not true:
 </p>
 
 <img src="./weird_grad_snn.png" style="max-width:80%; width:60%;" alt="Weird Gradient"/>
@@ -126,9 +130,50 @@ These results, after some careful consideration, appear very weird! If we look a
 As can be seen, the curve is completely flat and if we compute the gradient manually by finite difference it is completely zero, no matter how much we zoom in! However, note that the gradient computed with the method in snn-torch is 0.184! This is a very big discrepancy suggesting that something weird is happening. In particular, snn-torch used a surrogate method to compute the gradient, so it is not exactly the same as if we manually compute the gradient by eye looking at the loss curve.
 </p>
 
+<h4>Investigating Surrogate Gradient</h4>
+
 <p>
-<b>TODO: Investigate more</b>
+Let's try and understand how the surrogate gradient seems to work so effecitvely in the case above even though using the actual gradient should cause the neuron to be completely untrainable. The surrogate gradient method I am using is "fast sigmoid." Details are in this paper: <a href="https://direct.mit.edu/neco/article-abstract/30/6/1514/8378/SuperSpike-Supervised-Learning-in-Multilayer">SuperSpike: Supervised Learning in Multilayer Spiking Neural Networks</a>. Below is a plot of the voltage of the neuron and the corresponding surrogate gradient derivative:
 </p>
+
+<br>
+<img src="./surrogate.png" style="max-width:80%; width:60%;" alt="Surrogate"/>
+
+<p>
+One thing we can do is look at the loss landscape using the surrogate neuron model for evaluating loss integrals instead of the original model. Here's what we get:
+</p>
+
+<br>
+<img src="./surrogate_loss_curve.png" style="max-width:80%; width:60%;" alt="Surrogate"/>
+
+<p>
+This gives a pretty clear answer to how the surrogate gradient is fixing things. In particular, we can see that instead of having flat loss nearly everywhere the loss curve is smooth with a positive slope! This means that when we use it for gradients we can do gradient descent correctly with autodiff.
+</p>
+
+<h3 id="noise_single">Adding Noise</h3>
+
+<p>
+My goal with exploration of the SNN case is to identify places where our method outperforms or complements autodiff with surrogate gradients. One of the most clear applications in my view is using noisy neurons in the SNN. In particular, adding white noise to each LIF neuron unit in the network. This is quite a motivated change for biological applications as one example. In real biological contexts, neurons are noisy and do not have simple deterministic firing patters. Thus, if we were, for example, to learn how to reproduce spiketrain data from biological recordings with SNNs, we would need to incorporate noise into the SNN and train the mean activity of the network (I think of this as fitting the distribution of all behaviors of the SNN to the distribution of the spiking data). In contrast, if we trained a non-noisy SNN to the data we are not accounting for the fact that small fluctuations in the recordings is typical and expected and instead trying to fit a deterministic stiff SNN to noisy data, which I believe would be less interpretable for things like latent space analysis and would likely do worse. 
+</p>
+
+<p>
+It turns out that autodiff does not do very well with noisy temporal neurons because there is no way to factor the noise into the chain rule over time, so small fluctuations at every timestep can lead to very different gradients than we should expect. 
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:40%; display:inline-block; ">
+<img src="./noise_0.5_loss.png" style="max-width:100%;" alt="Single Grads"/>
+</div>
+<div  style="max-width:50%; width:40%;  display:inline-block;">
+<img src="./noise_0.5_grad.png" style="max-width:100%;" alt="Single Losses"/>
+</div>
+</center>
+<br>
+
+<img src="./noise_0.5_w.png" style="max-width:50%; width:60%;" alt="Surrogate"/>
+
+<h3 id="more_layers">More Layers</h3>
 
 <h3 id="self_coupled">Self-Coupled Neuron</h3>
 

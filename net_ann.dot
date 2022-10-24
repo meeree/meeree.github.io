@@ -1,0 +1,11 @@
+digraph D {
+  dpi=300
+  rankdir=LR
+  ratio=0.63
+  n1 [shape=none,label="..."]
+  n2 [shape=circle,style=filled,fillcolor=grey,label=<σ<SUB>i</SUB>>]
+  n3 [shape=none,label="..."]
+
+  n1 -> n2 [label =<z<SUB>i-1</SUB>>];
+  n2 -> n3 [label =<z<SUB>i</SUB>>];
+}

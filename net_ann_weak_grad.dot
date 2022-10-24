@@ -1,0 +1,24 @@
+digraph D {
+  dpi=300
+  rankdir=LR
+  n1 [shape=none,label="..."]
+  n2 [shape=circle,style=filled,fillcolor=grey,label=<σ<SUB>i</SUB>>]
+  n3 [shape=circle,style=filled,fillcolor=grey,label="WeakGrad", fontsize=10]
+
+  {n31 [shape=none,label="..."]
+  n32 [shape=none,label="..."]
+  n33 [shape=none,label=".\n.\n."]
+  n34 [shape=none,label="..."]
+  n35 [shape=none,label="..."]
+  [rank=same]}
+
+  n1 -> n2 [label =<z<SUB>i-1</SUB>>];
+
+  n2 -> n3 [label =<z<SUB>i</SUB>>];
+
+  n3 -> n31 [label = "no noise", fontsize=10.0];
+  n3 -> n32 [label = "+noise", fontcolor=red, color=red, fontsize=10.0, style=dashed];
+  n3 -> n33 [color=invis];
+  n3 -> n34 [label = "+noise", fontcolor=red, color=red, fontsize=10.0, style=dashed];
+  n3 -> n35 [label = "+noise", fontcolor=red, color=red, fontsize=10.0, style=dashed];
+}

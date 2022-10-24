@@ -1,0 +1,107 @@
+<html>
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text">
+<h1>Analyzing Weak Gradient Method</h1>
+<hr>
+
+<ol style="max-width:45%;">
+    <li> <a href="./loss_landscape_bnn.html">Previous Article</a> 
+    <li> <a href="#intro">Introduction</a> 
+    <li> <a href="#impl">Weak Gradient Implementation</a> 
+    <li> <a href="#single">Simple Deep Network</a> 
+</ol>
+<br>
+
+<h2 id="intro">Introduction</h2>
+<p>
+In <a href="./loss_landscape_bnn.html">this article</a> I introduced some new methods for computing gradients in the context of very complex loss landscape (in this case I was training networks of biological neurons). In this article, I will analyze how these methods can be applied in the context of artificial neural networks (ANNs) and how they could actually be useful in this context. This is clearly a motivated case to consider because ANNs are the most commonly used neural network in machine learning so designing methods with real applications to them has real demand.
+</p>
+
+<h2 id="impl">Weak Gradient Implementation</h2>
+<p>
+In this section I will describe how we can implement a weak gradient method in Pytorch in quite an elegant way that does not introduce much overhead or necessitate much code change.
+</p>
+<p>
+Suppose we are given a neural network and want to insert a weak gradient after layer \(i\). Below is an illustration showing how the weak gradient operates.
+</p>
+
+<br>
+<center>
+<div style="max-width:50%; width:49%; display:inline-block; ">
+<b style="font-size:0.7cm;">Without Weak Gradient</b>
+<br>
+<br>
+<img src="net_ann.png" style="max-width:100%; border: 5px solid #555;" alt="Without"/>
+</div>
+<div  style="max-width:50%; width:49%;  display:inline-block;">
+<b style="font-size:0.7cm;">With Weak Gradient</b>
+<br>
+<br>
+<img src="net_ann_weak_grad.png" style="max-width:100%; border: 5px solid #555;" alt="With"/>
+</div>
+</center>
+<br>
+
+<p>
+In detail, the weak gradient works as follows:
+</p>
+
+<br>
+<p>
+<b>In the forward pass</b> the weak gradient takes in an input \(z_i\). As output, it creates \(S\) copies of the \(z_i\) and adds noise from some distribution to \(z_i\) to each copy except for the first copy, which it keeps the exact same. This is done in practice by increasing the batch size which is convenient because the further layers might expect a certain dimensionality and we do not change this by increasing the batch size. The \(S\) copies of \(z_i\) will go through the network the exact same way. Note that we can then get the loss by extracting the first loss outputted from the network, since we do not add noise to the first sample. This means that when we backpropagate there is no extra overhead since we only do so on the first loss, not all the same losses.
+</p>
+
+<p>
+<b>In the backward pass</b> the weak gradient functions by dropping the currently backpropagated gradient and instead computes a weak gradient using one of the methods I developed in the previous article. This is done by using the sample noises and losses to, for example, perform a linear regression to compute the gradient. After computing this gradient, this is fed back through autodiff by Pytorch just as usual. 
+</p>
+
+<br>
+
+<p>
+Thus, the TL;DR is that we can slot the weak gradient into a network with little overhead change and with the only change being that we extract the first sample loss outputted from the network to backpropagate, since with the weak gradient the network now outputs up to \(S\) losses and the only non-noisy one is the first one.
+</p>
+
+<p>
+Here is the code to implement a weak grad (note that losses is a global variable that should be set by the user when evaluating the network output (e.g. losses = loss_fun(outputs)):
+</p>
+
+<br>
+<br>
+<img src="./code_weak_grad.png" style="max-width:100%; width:70%; border: 10px solid #555;" alt="Code"/>
+<br>
+
+<h2 id="single">Simple Deep Network</h2>
+
+
+
+
+<div class="top_bar" style="left: 30px;">
+<a href="index.html" style="text-decoration: none;">goto: main</a>
+</div>
+
+<div class="top_bar" style="right: 30px;">
+<a href="" style="text-decoration: none;">goto: top</a>
+</div>
+
+</body>
+</html>
