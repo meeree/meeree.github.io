@@ -1,0 +1,176 @@
+<html>
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="../nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="../koch-snowflake.png" type="image/x-icon">
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text" style="width:45cm;">
+<h1>Training Complex Neural Networks on Integration Tasks</h1>
+<hr>
+
+<ol style="max-width:45%;">
+</ol>
+<br>
+<h3 id="todo">Todo</h3>
+<ol style="max-width:50%;">
+	<li><b>I WANT TO SEE MORE WEIRD SOLUTIONS AND MORE ROBUST SOLUTIONS!</b></li>
+	<ol>
+		<li>We could use longer timeframes and a different training method (neural ODEs) if necessary</li>
+		<li>Could we integrate latent factors into training like in Sussillo paper?</li>
+		<li>We need to really analyze exactly what's happening</li>
+	</ol>
+	<li>Visualization of solution from BNN</li>
+	<li>Dynamic length inputs</li>
+	<li><b>Fixed inhibitory vs excitatory populations or analyze populations after training</b></li>
+	<li>More neuron models and make infer a [causal] relationship between neuron complexity and solution complexity/characteristics</li>
+</ol>
+
+<h3 id="todo">Interesting Directions 03/19</h3>
+<ol style="max-width:50%;">
+    <li>Izhikevich neurons. Training these for longer timeframes/learning parameters</li>
+    <li>Collection of neurons with different dynamics: e.g. inhibitory/excitatory, Izhikevich bursting/integrators/spiking/resonators, etc. How do roles emerge?</li>
+    <li>Solving other tasks (e.g FFT). How can neurons learn to solve this kind of task? What dynamics emerge?</li>
+</ol>
+
+<h2 id="intro">Introduction</h2>
+<p>
+The topic of this article is my current work on training biological neural networks on integrator style tasks. These tasks require a network to accumulate evidence over a particular timeframe and output what occurs most, with some modifications for more complex problems. Here's a more formally worded introduction to the problem:
+</p>
+<i>
+<p>
+In order to understand how the brain works at even an extremely minimal scale, we believe it is absolutely necessary to devise efficient means of training computational models of biological processes occurring within the brain to solve particular tasks. With such tools, one can understand how a population of neurons with particular characteristics can solve tasks such as implementing working memory, decision making, natural language formation, vision, etc. Many recent papers have focused on biologically plausible learning rules (CITE HELENA LIU). However, in this work we focus primarily on efficient training of biological neurons with less emphasis on plausibility. In particular, we use direct backpropagation-through-time (BPTT) (AND NEURAL ODES?). Although solutions obtained may not translate to what is observed experimentally (CITE NO FREE LUNCH), they can still provide insights into how complex neuronal populations can solve diverse tasks. The underlying neurons in such populations are extremely complex compared to artificial neural networks, so manually fitting such populations to solve even very basic tasks is extremely nontrivial.
+</p>
+<p>
+In this work, we focus on training biological neural network models composed of individual biophysical components according to dynamics given by the Hodgkin-Huxley (HH), Morris-Lecar (ML) and Izhikevich (IZ) models, among others. We demonstrate that conventional BPPT (AND NEURAL ODES?) can effectively train such networks with interpretable results. In particular, we train populations of neurons on the ubiquitous neuroscience "DOTS task" which requires accumulation of evidence with specified timescales that may far exceed those of the underlying neuron model. We chose this task because it fundamentally tests how neurons can form working memory and has been extremely well studied in the neuroscience literature with hand-crafted solutions for simple neuron models such as Leaky Integrate-and-Fire (LIF) (CITE WANG, MORE). 
+</p>
+<p>
+Our work focuses on how introducing more complex neuronal dynamics can influence the solution learned on the integration task. In particular, we observe that different neuronal models such as integrators (CITE) and resonators (CITE) solve the task in a different way and that using more complex neuronal models leads to higher dimensional solutions heavily reliant on oscillation (WE NEED TO SHOW THIS!). 
+</p>
+</i>
+
+<h2>Setup and Internal Details</h2> 
+
+<p>
+One of the most important things that I have to be careful about is the internal details related to this project. We have a ton of different hyperparameters and choices. These include:
+</p>
+<ol style="max-width:50%;">
+	<li>Neuroscience Related</li>
+	<ol>
+		<li>Choice of neuron model: LIF, HH, ML, IZ, etc. Also, include noise?</li>
+		<li>Choice of numerical method: trapezoidal rule (simple, not exact), implicit methods (hard to implement and use), explicit methods (need small DT)</li>
+		<li>Type of coupling: direct input current vs synaptic gating variable</li>
+		<li>Thing to vary: complexity, resonator vs integrator</li>
+		<li>Fixed inhibitory vs excitatory population</li>
+	</ol>
+	<li>Task Related</li>
+	<ol>
+		<li>What tasks should we use? Right now we've focused on discrete integration</li>
+		<li>Other choices related to integration include contextual integration, continuous integration</li>
+		<li>We could also train on a more complex ML tasks. <i>But including a lot of this could just distract from the message. There's a lot already related just to discrete integration</i></li>
+	</ol>
+	<li>Discrete Integration Related</li>
+	<ol>
+		<li>Timeframe to use</li>
+		<li>Evidence timescale and # of evidence inputs</li>
+		<li>Use a delay?</li>
+		<li>Dynamic length inputs</li>
+	</ol>
+	<li>Training Related</li>
+	<ol>
+		<li>Choice of training method: BPTT, neural ODEs, approximate gradient</li>
+		<li>Train neuronal parameters as well as weights and biases?</li>
+		<li>Network architecture to use</li>
+	</ol>
+</ol>
+
+<h3>Neuroscience Related</h3>
+
+<h3>Task Related</h3>
+
+<h2>Results for Different Neuronal Models</h2>
+
+<h3>Useful Reference</h3>
+
+<p>Izhikevich has done a ton of work categorizing neuronal dynamics and he has many great papers that are super good references. The figure below summarizes the  variety of all dynamics observed for an individual neuron. These (I believe) were all simulated with his Izhikevich (IZ) model.</p>
+
+<img src="./izhikevich_which.png" style="max-width:100%; width:100%;" alt="Summary Dynamics"/>
+
+
+<h3>Hodgkin-Huxley Vanilla Model</h3>
+
+<p>For this model, I got it from the book <i>Dynamical Systems in Neuroscience</i> by Izhikevich (which is a great book!) and the same model is in <i>Neuronal Dynamics</i> by Gerstner et al. (which is also super good and has better code, but less of a comprehensive focus on individual neuron models). Note that the reversal potentials in the Izhikevich book are the only difference and they're just shifted by +65 (which was what Hodgkin-Huxley did in their original paper), so the models are the same.</p>
+
+<p>The Hodgkin-Huxley model has the following form:</p>
+
+<img src="./hh_vanilla.png" style="max-width:100%; width:50%;" alt="Hodgkin-Huxley"/>
+
+<p>
+Here are the gating functions and constants:
+</p>
+
+
+<img src="./gerstner_model.png" style="max-width:100%; width:100%;" alt="Hodgkin-Huxley Gerstner Parameters"/>
+
+<h4>Validation of Numerical Method</h4>
+
+<p>
+To validate the model I compared against ode15s. Sadly, this required me to use matlab. This is a sad situation but necessary.
+</p>
+
+
+<h4>Training Details</h4>
+
+<p> I managed to train this model to above 95% validation/test accuracy on the discrete integration task. TODO: add accuracy plots here.</p>
+
+<h4>Analysis of Learned Results</h4>
+
+<br>
+
+<h3 id="refs">Useful References</h3>
+<ol>
+    <li>...</li>
+</ol>
+
+<h3>Morris-Lecar Type I Model</h3>
+
+<h4>Validation of Numerical Method</h4>
+
+<h4>Training Details</h4>
+
+<h4>Analysis of Learned Results</h4>
+
+
+
+
+
+
+
+<!--<img src="./voltage.png" style="max-width:100%; width:100%;" alt="Voltage"/>-->
+
+
+<div class="top_bar" style="left: 30px;">
+<a href="index.html" style="text-decoration: none;">goto: main</a>
+</div>
+
+<div class="top_bar" style="right: 30px;">
+<a href="" style="text-decoration: none;">goto: top</a>
+</div>
+
+</body>
+</html>
