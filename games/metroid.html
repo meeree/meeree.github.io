@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en-us"><head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Unity WebGL Player | Metroid (Unity Remaster)</title>
+    <link rel="shortcut icon" href="http://www-personal.umich.edu/~jhazelde/494Porfolio/WebBuildMetroid/TemplateData/favicon.ico">
+    <link rel="stylesheet" href="metroid_files/style.css">
+    <script src="metroid_files/UnityProgress.js"></script>
+    <script src="metroid_files/UnityLoader.js"></script>
+    <script>
+      var unityInstance = UnityLoader.instantiate("unityContainer", "Build/WebBuildMetroid.json", {onProgress: UnityProgress});
+    </script>
+  </head>
+  <body>
+    <div class="webgl-content">
+      <div id="unityContainer" style="width: 640px; height: 600px; padding: 0px; margin: 0px; border: 0px none; position: relative; background: rgb(35, 31, 32);"><canvas style="width: 100%; height: 100%; cursor: default;" id="#canvas" width="640" height="600"></canvas><div class="logo Dark" style="display: none;"></div><div class="progress Dark" style="display: none;"><div class="empty" style="width: 0%;"></div><div class="full" style="width: 100%;"></div></div></div>
+      <div class="footer">
+        <div class="webgl-logo"></div>
+        <div class="fullscreen" onclick="unityInstance.SetFullscreen(1)"></div>
+        <div class="title">Metroid (Unity Remaster)</div>
+      </div>
+    </div>
+  
+
+<script src="blob:http://www-personal.umich.edu/f8d20b29-d351-46fa-a1e7-85cf4208e15e" id="616dc33aa2c6e65c7452e20869bddef8"></script></body></html>
