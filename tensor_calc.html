@@ -34,7 +34,9 @@
     </ol>
     <li> <a href="#calc">Tensor Calculus</a>
     <ol style="max-width:45%; font-size: 0.8cm;">
+    <li> <a href="#prod">Product Rule</a> 
     <li> <a href="#chan">Chain Rule</a> 
+    <li> <a href="#exmp">Examples</a> 
     </ol>
 </ol>
 <br>
@@ -91,6 +93,12 @@ $$T \otimes_\gamma S := \sum_{\delta \leq \gamma} (T_{...,\delta} \otimes S_{\de
 where \(T_{...,\delta}\) means the sub-tensor in \(\mathbb{F}^\alpha\) with the last \(\gamma\) indices chosen and similar for \(S_{\delta,...}\). In other words, we pair up the \(\gamma\) parts and multiply them elementwise then sum all them up. The product can be read as "tensor product of \(T\) and \(S\) contracted over \(\gamma\)." We can define other contractions on tensors which are commonly used in packages like numpy such as summing along an axis of a single tensor, but the one above is all that's needed for the tensor chain rule.
 </p>
 
+<p>
+For example, suppose \(T \in \mathbb{R}^{10 \times 4 \times 4}, S \in \mathbb{R}^{4 \times 4 \times 8 \times 7}\). Then, we can take the tensor product contraction 
+$$(T \otimes_{(4, 4)} S)_{p,q,r} = \sum_{i=1}^4 \sum_{j=1}^4 T_{p,i,j} S_{i,j,q,r} \in \mathbb{R}.$$
+The tensor \(T \otimes_{(4,4)} S\) is in \(\mathbb{R}^{10 \times 8 \times 7}\).
+</p>
+
 <br>
 
 <center><p>Let's now describe three examples:</p></center>
@@ -127,8 +135,6 @@ $$A \cdot B = (A \otimes_n B) \in \mathbb{F}^{m \times k}.$$
 I'll now describe how to do calculus with these tensors, specifically the chain rule. This has turned out to be very useful for me since it gives a more formal way of computing thingsuch as a "derivative of a vector valued function with respect to a matrix." I'll show how some of the intuitive facts that people take for granted typically are special cases of the tensor chain rule.
 </p>
 
-<h3 id="cntr">Tensor Chain Rule</h3> 
-
 <p>
 Suppose \(G\) is a tensor-valued function taking tensor inputs:
 $$G: \mathbb{F}^\alpha \rightarrow \mathbb{F}^\beta.$$
@@ -137,12 +143,76 @@ $$(D_T G)_{\delta | \gamma} = \frac{d G(T)_\alpha}{d T_\delta},$$
 for specific indices \(\gamma \leq \alpha, \delta \leq \beta\). Unforunately the greek symbols make the formula above look more complex than it should be. Think of \(\alpha, \beta, \delta, \gamma\) as just \(n, m, i, j\) and pretty much everything looks the same as the Jacobian matrix.
 </p>
 
+<h3 id="prod">Product Rule</h3> 
+
+<p>
+A tensor product rule holds although it's difficult to think of due to non-commutativity. First, note for motivation a simple case. Suppose \(f(v), g(v)\) are vector valued function in \(\mathbb{R}^m\) and \(v \in \mathbb{R}^n\). Then, you can check that 
+$$D_v \langle f(v), g(v) \rangle = ((D_v f(v))^T g(v))^T + f(v)^T (D_v g(v)),$$
+where \(\langle \cdot \rangle\) is the inner product. Note the formula requires a transpose on the first term to get the matrix-vector product to work. We see the same with tensors. 
+</p>
+
+<p>
+First, for a tensor \(T \in \mathbb{F}^{\alpha | \beta}\), define the <i>tensor transpose</i> by 
+$$T^{tr(\beta)} \in \mathbb{F}^{\beta | \alpha}, \, \, T^{tr(\beta)}_{\delta, \gamma} = T_{\gamma, \delta},$$
+for all \(\delta \leq \beta, \gamma \leq \alpha\). 
+</p>
+
+<p>
+Now, we can define the product rule. In particular, suppose:
+$$G: \mathbb{F}^\alpha \rightarrow \mathbb{F}^{\beta | \gamma}, H: \mathbb{F}^\alpha \rightarrow \mathbb{F}^{\gamma | \delta},$$
+then,
+$$D_T (G(T) \otimes_{\gamma} H(T)) = ((D_T G)^{tr(\alpha)} \otimes_{\gamma} H)^{tr(\beta | \delta)} + G \otimes_{\gamma} D_T H.$$
+Note \(D_T H \in \mathbb{F}^{\gamma | \delta | \alpha},\) so \(G \otimes_{\gamma} D_T H \in \mathbb{F}^{\beta | \delta | \alpha}\). 
+</p>
+<p>
+Likewise, \((D_T G)^{tr(\alpha)} \in \mathbb{F}^{\alpha | \beta | \gamma}\), so \((D_T G)^{tr(\alpha)} \otimes_{\gamma} H \in \mathbb{F}^{\alpha | \beta | \delta}\), and finally the \(tr(\beta | \delta)\) makes the dimensions \(\beta | \delta | \alpha\) as with the other term. Jeez....
+</p>
+
+<h3 id="cntr">Chain Rule</h3> 
+
 <p>
 Now, suppose we have 
 $$G: \mathbb{F}^\alpha \rightarrow \mathbb{F}^\beta, H: \mathbb{F}^\beta \rightarrow \mathbb{F}^\nu,$$
 and we want to find the total derivative of the composed function \(H(G(T))\). Then, the <i>tensor chain rule is as follows</i>
 $$D_T H(G(T)) = D_{G(T)} H \otimes_{\beta} D_T G.$$
 </p>
+
+<h3 id="exmp">Examples</h3> 
+
+<br>
+<center><p>Derivative of \(W x\) with respect to \(W\):</p></center>
+<br>
+
+<p>
+Suppose \(H(W, x) = Wx\) where \(W \in \mathbb{R}^{n \times n}, x \in \mathbb{R}^n\). Let \(Id : \mathbb{R}^{n \times n} \times \mathbb{R}^{n \times n}\) be the identity function. Then,
+$$W x = Id(W) \otimes_n x,$$
+so by the tensor product rule, assuming \(D_W x = 0\), i.e. \(x\) doesn't depend on \(W\), 
+$$D_W(W x) = ((D_W Id(W))^{tr(n,n)} \otimes_n x)^{tr(n)}.$$
+Let \(E_\alpha\) denote the ``tensor identity'' given by 
+$$E_\alpha = \sum_{i=1}^{\min(\alpha)} e_i \otimes e_i \otimes \cdots \otimes e_i,$$
+i.e. the sum of all diagonal outer products of standard unit vectors. Then, 
+$$D_W(W x) = ((E_{n,n,n,n})^{tr(n,n)} \otimes_n x)^{tr(n)}$$
+$$= (E_{n,n,n,n} \otimes_n x)^{tr(m)}$$
+$$= (E_{n,n} \otimes x)^{tr(n)}$$
+$$= E_{n,n} \otimes x.$$
+The matrix \(E_{n,n}\) is essentially just the identity matrix. We computed  the contracted product with:
+$$E_{\alpha |n} \otimes_{n} x = \sum_{i=1}^n x_i (e_i \otimes \cdots \otimes e_i) = (\sum_i x_i e_i) \otimes \cdots \otimes e_i = x \otimes E_\alpha.$$
+It's clear then that \(x \otimes E_{n,n} = E_{n,n} \otimes x\). Finally, note that given a vector \(v \in \mathbb{R}^n\), 
+$$D_W(W x) \otimes_n v = (E_{n,n} \otimes x) \otimes_n v = \langle x, v \rangle E_{n,n},$$
+i.e. the Jacobian <i>behaves like</i> \(x^T\)!
+</p>
+
+<br>
+<!--<center><p>A neural net example:</p></center>
+<br>
+
+<p>
+Suppose 
+$$f(x) = W_2 \cdot \sigma(W_1 x),$$
+where \(W_2, W_1 \in \mathbb{R}^{n,n}\) for simplicity. Then,
+$$D_{W_1} f(x) = W_2 \cdot D_{W_1} \sigma(W_1 x)$$
+$$= W_2 
+</p>-->
 
 <div class="top_bar" style="left: 30px;">
 <a href="index.html" style="text-decoration: none;">goto: main</a>
@@ -151,6 +221,7 @@ $$D_T H(G(T)) = D_{G(T)} H \otimes_{\beta} D_T G.$$
 
 <div class="top_bar" style="right: 30px;">
 <a href="" style="text-decoration: none;">goto: top</a>
+
 </div>
 
 </body>
