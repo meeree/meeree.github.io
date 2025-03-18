@@ -1,0 +1,157 @@
+<html style="background: #f4f0e8;
+      background-size: 20%;">
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text">
+<h1>Tensor Calculus and the Tensor Chain Rule</h1>
+<hr>
+
+<ol style="max-width:45%; font-size: 0.8cm;">
+    <li> <a href="#overview">Overview</a> 
+    <li> <a href="#intr">Tensors Preliminary</a>
+    <ol style="max-width:45%; font-size: 0.8cm;">
+    <li> <a href="#prod">Tensor Product</a> 
+    <li> <a href="#cntr">Tensor Product Contraction</a> 
+    </ol>
+    <li> <a href="#calc">Tensor Calculus</a>
+    <ol style="max-width:45%; font-size: 0.8cm;">
+    <li> <a href="#chan">Chain Rule</a> 
+    </ol>
+</ol>
+<br>
+
+<h2 id="overview">Overview</h2>
+<p>
+In my own deep-learning research I often find myself needing to compute derivatives of vector or scalar valued functions with repect to matrices. Looking on the internet, however, I find there is a ton of inconsistent and confusing notation related to tensor and matrix calculus and people often rely on heuristic rules to compute these more complex derivatives. For example, it's common to say things like \(\nabla_{W} Wx = x^T\), which really makes no sense since the left side is a three-tensor while the right side is a row vector that is a 1-tensor. Effectively, however, \(\nabla_W W x\) <i>behaves like</i> \(x^T\). 
+</p>
+
+<p>
+In this article, I'll try to formally write out a "tensor chain rule" and show how it can be used to compute common complicated derivatives. I'll also give some of my intuition. Basically, I want to write up the main approaches I use to approach these complicated derivatives for future reference.
+</p>
+
+<br>
+
+<h2 id="intr">Tensors Preliminary</h2>
+
+<p>
+A scalar \(\xi\) is a zero tensor and a vector \(v\) is a one tensor. A matrix is effectively a two tensor. Operations on these such as dot product between vectors, matrix-vector products and matrix-matrix products can be defined through a unifying notion of a "tensor contractions" (below). 
+</p>
+
+<p>
+In general, an \(m\)-tensor over a field \(\mathbb{F}\) (such as the real or complex numbers) looks like an element of \(\mathbb{F}^{n_1 \times n_2 \times \cdots \times n_m}\) for numbers \(n_1, ..., n_m \geq 1\). We can denote such a tensor by \(T\). To simplify things, it's convenient to define a <i>multi-index</i> \(alpha\) which is a tuple of numbers, e.g. using a multi-index \(\alpha = (n_1, ..., n_m)\), we can write
+$$T \in \mathbb{F}^{\alpha} = \mathbb{F}^{n_1 \times \cdots \times n_m}.$$
+Indexing the tensor uses any other multi-index \(\beta = (p_1, ..., p_m)\) where \(\beta \leq \alpha\), meaning \(1 \leq p_i \leq n_i\) for all \(i=1...m\). Each entry of \(T\) is a scalar of the form
+$$T_\beta := T_{p_1, p_2, ..., p_m} \in \mathbb{F}.$$
+</p>
+
+<h3 id="prod">Tensor Product</h3>
+
+<p>
+Now, tensors are typically built from the ground up by sums of tensor products, which we now define. The <i>tensor product</i> generalizes the idea of an outer product on vectors. In particular, when we have a vector \(v \in \mathbb{F}^n\) and a vector \(w \in \mathbb{F}^m\) their outer product is 
+$$v \cdot w^T \in \mathbb{F}^{n \times m}.$$
+So, the outer product takes two one tensors and constructs a two tensor. Note that 
+$$(v \cdot w^T)_{i,j} = v_i \cdot w_j,$$
+i.e. the entries are multiplied entry-wise. Let \(|\) denote concatenation of two multi-indices. In general, we define the tensor product on tensors \(T \in \mathbb{F}^\alpha, S \in \mathbb{F}^\beta\) as a tensor \(T \otimes S \in \mathbb{F}^{\alpha | \beta}\) with entries
+$$(T \otimes S)_{\gamma | \delta} = T_\gamma \cdot T_\delta.$$
+Without the multi-index notation, assuming \(\alpha\) is length \(m\), \(\beta\) is length \(\ell\), we can write this as 
+$$(T \otimes S)_{p_1, ..., p_m, \, q_1, ..., q_\ell} = T_{p_1, ..., p_m} \cdot S_{q_1, ..., q_\ell}.$$
+A general tensor \(T\) can always be written in terms of tensor products. For example, if \(e_i\) is the \(i\)th standard unit vector, define \(e_\delta\) to be the tensor product of \(e_i\)'s corresponding to a multi index \(\delta\). Then, if \(T \in \mathbb{F}^\alpha\),
+$$T = \sum_{\delta \leq \alpha} T_\delta \cdot e_\delta,$$
+i.e. we write \(T\) in standard coordinates.
+</p>
+
+<h3 id="cntr">Tensor Product Contraction</h3> 
+
+<p>
+The tensor product behaves like an outer product. Similarly, a <i>pairwise contraction</i> on two tensors behaves like an inner product. Given two vectors, the inner product componentwise the two vectors them sums along that axis:
+$$v \cdot w = \sum_i v_i w_i.$$
+We can write this as a sum along the diagonal elements of the outer (tensor) product:
+$$v \cdot w = \sum_i (v \otimes w)_{i,i}.$$
+Suppose we have a tensor \(T \in \mathbb{F}^{\alpha | \gamma}\) and a tensor \(S \in \mathbb{F}^{\gamma | \beta}\), then we can define the tensor product contraction as 
+$$T \otimes_\gamma S := \sum_{\delta \leq \gamma} (T_{...,\delta} \otimes S_{\delta,...}) \in \mathbb{F}^{\alpha | \beta},$$
+where \(T_{...,\delta}\) means the sub-tensor in \(\mathbb{F}^\alpha\) with the last \(\gamma\) indices chosen and similar for \(S_{\delta,...}\). In other words, we pair up the \(\gamma\) parts and multiply them elementwise then sum all them up. The product can be read as "tensor product of \(T\) and \(S\) contracted over \(\gamma\)." We can define other contractions on tensors which are commonly used in packages like numpy such as summing along an axis of a single tensor, but the one above is all that's needed for the tensor chain rule.
+</p>
+
+<br>
+
+<center><p>Let's now describe three examples:</p></center>
+
+<br>
+
+<p>
+<b>Vector inner product:</b> For two vectors, \(v\), \(w\) in \(\mathbb{F}^n\), 
+$$v \cdot w = (v \otimes_n w) \in \mathbb{F}.$$
+</p>
+
+<br>
+
+<p>
+<b>Matrix-vector product:</b> For a matrix \(W \in \mathbb{F}^{m \times n}\) and a vector \(v \in \mathbb{F}^n\), 
+$$W \cdot v = (W \otimes_n v) \in \mathbb{F}^m.$$
+</p>
+
+<br>
+
+<p>
+<b>Matrix-matrix product:</b> For two matrices \(A \in \mathbb{F}^{m \times n}\) and a vector \(B \in \mathbb{F}^{n \times k}\), 
+$$A \cdot B = (A \otimes_n B) \in \mathbb{F}^{m \times k}.$$
+</p>
+
+<p>
+(Note that the notation \(n\) is shorthand for the length one multi index \((n)\)).
+</p>
+
+
+<h2 id="cntr">Tensor Calculus</h2> 
+
+<p>
+I'll now describe how to do calculus with these tensors, specifically the chain rule. This has turned out to be very useful for me since it gives a more formal way of computing thingsuch as a "derivative of a vector valued function with respect to a matrix." I'll show how some of the intuitive facts that people take for granted typically are special cases of the tensor chain rule.
+</p>
+
+<h3 id="cntr">Tensor Chain Rule</h3> 
+
+<p>
+Suppose \(G\) is a tensor-valued function taking tensor inputs:
+$$G: \mathbb{F}^\alpha \rightarrow \mathbb{F}^\beta.$$
+Then, the <i>Jacobian</i> or <i>total derivative</i>, of \(G\) with respect to input \(T \in \mathbb{F}^\alpha\) is a tensor \(D_T G \in \mathbb{F}^{\beta | \alpha}\) defined by 
+$$(D_T G)_{\delta | \gamma} = \frac{d G(T)_\alpha}{d T_\delta},$$
+for specific indices \(\gamma \leq \alpha, \delta \leq \beta\). Unforunately the greek symbols make the formula above look more complex than it should be. Think of \(\alpha, \beta, \delta, \gamma\) as just \(n, m, i, j\) and pretty much everything looks the same as the Jacobian matrix.
+</p>
+
+<p>
+Now, suppose we have 
+$$G: \mathbb{F}^\alpha \rightarrow \mathbb{F}^\beta, H: \mathbb{F}^\beta \rightarrow \mathbb{F}^\nu,$$
+and we want to find the total derivative of the composed function \(H(G(T))\). Then, the <i>tensor chain rule is as follows</i>
+$$D_T H(G(T)) = D_{G(T)} H \otimes_{\beta} D_T G.$$
+</p>
+
+<div class="top_bar" style="left: 30px;">
+<a href="index.html" style="text-decoration: none;">goto: main</a>
+</div>
+
+
+<div class="top_bar" style="right: 30px;">
+<a href="" style="text-decoration: none;">goto: top</a>
+</div>
+
+</body>
+</html>
