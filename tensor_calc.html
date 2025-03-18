@@ -73,7 +73,7 @@ $$v \cdot w^T \in \mathbb{F}^{n \times m}.$$
 So, the outer product takes two one tensors and constructs a two tensor. Note that 
 $$(v \cdot w^T)_{i,j} = v_i \cdot w_j,$$
 i.e. the entries are multiplied entry-wise. Let \(|\) denote concatenation of two multi-indices. In general, we define the tensor product on tensors \(T \in \mathbb{F}^\alpha, S \in \mathbb{F}^\beta\) as a tensor \(T \otimes S \in \mathbb{F}^{\alpha | \beta}\) with entries
-$$(T \otimes S)_{\gamma | \delta} = T_\gamma \cdot T_\delta.$$
+$$(T \otimes S)_{\gamma | \delta} = T_\gamma \cdot S_\delta.$$
 Without the multi-index notation, assuming \(\alpha\) is length \(m\), \(\beta\) is length \(\ell\), we can write this as 
 $$(T \otimes S)_{p_1, ..., p_m, \, q_1, ..., q_\ell} = T_{p_1, ..., p_m} \cdot S_{q_1, ..., q_\ell}.$$
 A general tensor \(T\) can always be written in terms of tensor products. For example, if \(e_i\) is the \(i\)th standard unit vector, define \(e_\delta\) to be the tensor product of \(e_i\)'s corresponding to a multi index \(\delta\). Then, if \(T \in \mathbb{F}^\alpha\),
