@@ -1,19 +1,4 @@
 <html>
-<script>
-    const bgImages = [
-      'art/lozi.png',
-      'art/split_complex.png'
-    ];
-
-    function randomBackground() {
-	  const idx = Math.floor(Math.random() * bgImages.length);
-      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('${bgImages[idx]}')`;
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      randomBackground();                       // show the first immediately
-    });
-  </script>
 <head>
 <head>
 <meta name="description" content="James Hazelden">
@@ -31,14 +16,14 @@
 </script>
 </head>
 <body style="margin-top: 0px;
-	background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('art/lozi.png');
+	background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('art/split_complex.png');
         background-size: 100% 100%;
       background-position: center center;
       background-repeat: no-repeat;
       background-attachment: fixed;
 ">
 
-	<center><table width=75% border=0 cellspacing="3" cellpadding="3" bgcolor=" rgba(255,255,255,0);" style = "	opacity: 0.8;  box-shadow: 0 0 10px 5px #000;">
+	<center><table width=65% border=0 cellspacing="3" cellpadding="3" bgcolor=" rgba(255,255,255,0);" style = "	opacity: 0.9;  box-shadow: 0 0 10px 5px #000;">
    <tr><td align="center" bgcolor="white">
        <a href="games/"><img src="./koch-snowflake.png" style="width: 66px;"/></a>
 	   </td>
@@ -56,9 +41,9 @@
 	  </td>
 
 		<td align="center" bgcolor="white">
-      <p style="text-indent: 0px; font-size: 0.7cm; margin-top: 0px; margin-bottom: 10px;">Research and Personal Blog</p>
-      Email: <a href="mailto://j.a.hazelden@gmail.com">j.a.hazelden@gmail.com</a><br>
-	  <a href="https://www.youtube.com/channel/UCYCQ-OLB3-lpF9iMNaNFy-w">YouTube</a>
+	  <p style="text-indent: 0px; font-size: 0.7cm; margin-top: 0px; margin-bottom: 10px;">Research and Personal Blog</p>
+      <p style = "font-size:.5cm;">Email: <a href="mailto://j.a.hazelden@gmail.com">j.a.hazelden@gmail.com</a>, </p>
+	  <p style = "font-size:.5cm;"><a href="https://github.com/meeree">Github</a>, <a href="https://scholar.google.com/citations?user=mF39NyEAAAAJ&hl=en&oi=ao">Google Scholar</a>, <a href="https://www.youtube.com/channel/UCYCQ-OLB3-lpF9iMNaNFy-w">YouTube</a></p>
    </td>
 	 <td align="center" bgcolor="white">
 	  <img src="./mandel.jpg" style="width: 170px;"/>
@@ -69,45 +54,52 @@
 <center>
 <div style="
 	position: static; 
-	width:65%; 
+	width:60%; 
 	border: 4px solid #cccccc;
-	background-color: rgba(255, 255, 255, 0.8);
+	background-color: rgba(255, 255, 255, 0.9);
 	margin-top: 10px; padding-top: 10px; padding-bottom: 10px;
-	font-size: 0.7cm;
-	border-radius: 3px;
+	font-size: 0.65cm;
+	border-radius: 20px;
 	  box-shadow: 0 0 10px 5px #000;
 	"> 
 	<h2 style="margin:20px;">Articles:</h2>
 
 	  <hr style="color: #cccccc; margin: 0px;">
-	  Research Related:
+	  Research:
 	  <hr style="color: #cccccc; margin-top: 3px; margin-bottom: 10px;">
+	  
+	  <b  style = "font-size: 0.6cm;" >1. Operators Governing Dynamics of GD Learning in Recurrent Models (<a href="https://arxiv.org/abs/2507.06381">paper</a>)</b><br>
+	  <a style = "font-size: 0.55cm;" href="./kpflow.html">Introduction to K-P Flow Operator Formulation</a>.
 
-	  <b>Previous Research Project</b><br>
-	  <i style = "font-size: 0.6cm;">Paper Link:</i> <a style = "font-size: 0.6cm;" href="https://arxiv.org/abs/2311.10869">Evolutionary algorithms as an alternative to...</a>,<br>
-	  <i style = "font-size: 0.6cm;">Simple Exploration:</i> <a style = "font-size: 0.6cm;" href="./neuron_circuits.html">Training Neuronal Circuits with Finite Difference</a>,<br>
-	  <i style = "font-size: 0.6cm;">First Pass on a Difficult Task:</i> <a style = "font-size: 0.6cm;" href="./bnns_spiking_data.html">Interfacing BNNs and Spiking Data</a>,<br>
-	  <i style = "font-size: 0.6cm;">Building New Techniques and Theory:</i> <a style = "font-size: 0.6cm;" href="./loss_landscape_bnn.html">Loss Landscapes Emerging from BNNs</a>, <br>
+	  
+	<hr>
+
+	  <b  style = "font-size: 0.6cm;" >2. Backpropagation for Training Biophysical Neural Networks (BNNs) (<a href="https://arxiv.org/abs/2311.10869">paper</a>)</b><br>
+	  <a style = "font-size: 0.55cm;" href="./loss_landscape_bnn.html">Loss Landscapes Emerging from BNNs</a>, <br> <a style = "font-size: 0.55cm;" href="./neuron_circuits.html">Training Neuronal Circuits with Finite Difference</a>, <a style = "font-size: 0.55cm;" href="./bnns_spiking_data.html">Interfacing BNNs and Spiking Data</a>,<br>
 <!--	  <i style = "font-size: 0.6cm;">Returning to Harder Tasks with New Methods:</i> <a style = "font-size: 0.6cm;" href="./nlb_second_pass.html"> Tackling Hard Tasks with BNNs</a>, <br>
 	  <i style = "font-size: 0.6cm;">Applications to SNNs Using New Techniques:</i> <a style = "font-size: 0.6cm;" href="./snn_new_method.html">New Techniques on SNNs</a>, <br>
 	  <i style = "font-size: 0.6cm;">Analysis on ANNs and in General ML Context:</i> <a style = "font-size: 0.6cm;" href="./weak_grad.html">Analyzing Weak Gradient Method</a>, <br> <br>-->
-	  <a style = "font-size: 0.6cm;" href="./plan.html">Active Planning and Logging</a> <br>
+
+	<hr>
+
+	 <b  style = "font-size: 0.55cm;" >3. Simulating Networks of Biophysical Neurons on the GPU (<a href="https://www.biorxiv.org/content/10.1101/2025.07.05.663278v1">paper</a>)</b><br>
+	  <a style = "font-size: 0.55cm;" href="index.html">...</a>
 
 	  <hr style="color: #cccccc; margin-bottom: 3px; margin-top: 30px;">
 	  Personal Projects:
 	  <hr style="color: #cccccc; margin-top: 3px; margin-bottom: 10px;">
-	  <a style = "font-size: 0.6cm;" href="./soft_body.html">Soft Body Physics in CUDA and OpenGL</a>,<br>
-	  <a style = "font-size: 0.6cm;" href="./tensor_calc.html">Tensor Calculus and the Tensor Chain Rule</a>,<br>
-      <a style = "font-size: 0.6cm;" href="./hazey/hazey.html">Hazey: Designing a GUI Builder in OpenGL</a>,<br>
-	  <a style = "font-size: 0.6cm;" href="./space_log.html">Space Log</a>,<br>
-      <a style = "font-size: 0.6cm;" href="./voronoi.html">Voronoi Diagrams in 2- and 3-D</a>,<br>
+	  <a style = "font-size: 0.55cm;" href="./soft_body.html">Soft Body Physics in CUDA and OpenGL</a>,&nbsp;
+	  <a style = "font-size: 0.55cm;" href="./tensor_calc.html">Tensor Calculus and the Tensor Chain Rule</a>,<br>
+      <a style = "font-size: 0.55cm;" href="./hazey/hazey.html">Hazey: Designing a GUI Builder in OpenGL</a>,&nbsp;   
+	  <a style = "font-size: 0.55cm;" href="./space_log.html">Space Log</a>,<br>
+      <a style = "font-size: 0.55cm;" href="./voronoi.html">Voronoi Diagrams in 2- and 3-D</a>.
 
 	  <hr style="color: #cccccc; margin-bottom: 3px; margin-top: 30px;">
 	  Random:
 	  <hr style="color: #cccccc; margin-top: 3px; margin-bottom: 10px;">
 
-      <a style = "font-size: 0.6cm;" href="./art/index.html">Random Art</a>,<br>
-      <a style = "font-size: 0.6cm;" href="./coffee/coffee.html">Coffee Brightness as a Function of Time</a>
+      <a style = "font-size: 0.55cm;" href="./art/index.html">Random Art</a>,&nbsp;
+      <a style = "font-size: 0.55cm;" href="./coffee/coffee.html">Coffee Brightness as a Function of Time</a>
 </div>
 </center>
 
