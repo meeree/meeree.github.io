@@ -1,4 +1,19 @@
-<html style="background-color:floralwhite;">
+<html>
+<script>
+    const bgImages = [
+      'art/lozi.png',
+      'art/split_complex.png'
+    ];
+
+    function randomBackground() {
+	  const idx = Math.floor(Math.random() * bgImages.length);
+      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('${bgImages[idx]}')`;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      randomBackground();                       // show the first immediately
+    });
+  </script>
 <head>
 <head>
 <meta name="description" content="James Hazelden">
@@ -15,9 +30,15 @@
 -->
 </script>
 </head>
-<body style="margin-top: 0px;">
+<body style="margin-top: 0px;
+	background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('art/lozi.png');
+        background-size: 100% 100%;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+">
 
-	<center><table width=80% border=0 cellspacing="3" cellpadding="3" bgcolor="#cccccc">
+	<center><table width=75% border=0 cellspacing="3" cellpadding="3" bgcolor=" rgba(255,255,255,0);" style = "	opacity: 0.8;  box-shadow: 0 0 10px 5px #000;">
    <tr><td align="center" bgcolor="white">
        <a href="games/"><img src="./koch-snowflake.png" style="width: 66px;"/></a>
 	   </td>
@@ -48,12 +69,14 @@
 <center>
 <div style="
 	position: static; 
-	width:80%; 
+	width:65%; 
 	border: 4px solid #cccccc;
-	background-color: white;
+	background-color: rgba(255, 255, 255, 0.8);
 	margin-top: 10px; padding-top: 10px; padding-bottom: 10px;
-	font-size: 0.6cm;
-	border-radius: 3px;"> 
+	font-size: 0.7cm;
+	border-radius: 3px;
+	  box-shadow: 0 0 10px 5px #000;
+	"> 
 	<h2 style="margin:20px;">Articles:</h2>
 
 	  <hr style="color: #cccccc; margin: 0px;">
@@ -61,30 +84,30 @@
 	  <hr style="color: #cccccc; margin-top: 3px; margin-bottom: 10px;">
 
 	  <b>Previous Research Project</b><br>
-	  <i style = "font-size: 0.5cm;">Paper Link:</i> <a style = "font-size: 0.5cm;" href="https://arxiv.org/abs/2311.10869">Evolutionary algorithms as an alternative to...</a>,<br>
-	  <i style = "font-size: 0.5cm;">Simple Exploration:</i> <a style = "font-size: 0.5cm;" href="./neuron_circuits.html">Training Neuronal Circuits with Finite Difference</a>,<br>
-	  <i style = "font-size: 0.5cm;">First Pass on a Difficult Task:</i> <a style = "font-size: 0.5cm;" href="./bnns_spiking_data.html">Interfacing BNNs and Spiking Data</a>,<br>
-	  <i style = "font-size: 0.5cm;">Building New Techniques and Theory:</i> <a style = "font-size: 0.5cm;" href="./loss_landscape_bnn.html">Loss Landscapes Emerging from BNNs</a>, <br>
-<!--	  <i style = "font-size: 0.5cm;">Returning to Harder Tasks with New Methods:</i> <a style = "font-size: 0.5cm;" href="./nlb_second_pass.html"> Tackling Hard Tasks with BNNs</a>, <br>
-	  <i style = "font-size: 0.5cm;">Applications to SNNs Using New Techniques:</i> <a style = "font-size: 0.5cm;" href="./snn_new_method.html">New Techniques on SNNs</a>, <br>
-	  <i style = "font-size: 0.5cm;">Analysis on ANNs and in General ML Context:</i> <a style = "font-size: 0.5cm;" href="./weak_grad.html">Analyzing Weak Gradient Method</a>, <br> <br>-->
-	  <a style = "font-size: 0.5cm;" href="./plan.html">Active Planning and Logging</a> <br>
+	  <i style = "font-size: 0.6cm;">Paper Link:</i> <a style = "font-size: 0.6cm;" href="https://arxiv.org/abs/2311.10869">Evolutionary algorithms as an alternative to...</a>,<br>
+	  <i style = "font-size: 0.6cm;">Simple Exploration:</i> <a style = "font-size: 0.6cm;" href="./neuron_circuits.html">Training Neuronal Circuits with Finite Difference</a>,<br>
+	  <i style = "font-size: 0.6cm;">First Pass on a Difficult Task:</i> <a style = "font-size: 0.6cm;" href="./bnns_spiking_data.html">Interfacing BNNs and Spiking Data</a>,<br>
+	  <i style = "font-size: 0.6cm;">Building New Techniques and Theory:</i> <a style = "font-size: 0.6cm;" href="./loss_landscape_bnn.html">Loss Landscapes Emerging from BNNs</a>, <br>
+<!--	  <i style = "font-size: 0.6cm;">Returning to Harder Tasks with New Methods:</i> <a style = "font-size: 0.6cm;" href="./nlb_second_pass.html"> Tackling Hard Tasks with BNNs</a>, <br>
+	  <i style = "font-size: 0.6cm;">Applications to SNNs Using New Techniques:</i> <a style = "font-size: 0.6cm;" href="./snn_new_method.html">New Techniques on SNNs</a>, <br>
+	  <i style = "font-size: 0.6cm;">Analysis on ANNs and in General ML Context:</i> <a style = "font-size: 0.6cm;" href="./weak_grad.html">Analyzing Weak Gradient Method</a>, <br> <br>-->
+	  <a style = "font-size: 0.6cm;" href="./plan.html">Active Planning and Logging</a> <br>
 
 	  <hr style="color: #cccccc; margin-bottom: 3px; margin-top: 30px;">
 	  Personal Projects:
 	  <hr style="color: #cccccc; margin-top: 3px; margin-bottom: 10px;">
-	  <a style = "font-size: 0.5cm;" href="./soft_body.html">Soft Body Physics in CUDA and OpenGL</a>,<br>
-	  <a style = "font-size: 0.5cm;" href="./tensor_calc.html">Tensor Calculus and the Tensor Chain Rule</a>,<br>
-      <a style = "font-size: 0.5cm;" href="./hazey/hazey.html">Hazey: Designing a GUI Builder in OpenGL</a>,<br>
-	  <a style = "font-size: 0.5cm;" href="./space_log.html">Space Log</a>,<br>
-      <a style = "font-size: 0.5cm;" href="./voronoi.html">Voronoi Diagrams in 2- and 3-D</a>,<br>
+	  <a style = "font-size: 0.6cm;" href="./soft_body.html">Soft Body Physics in CUDA and OpenGL</a>,<br>
+	  <a style = "font-size: 0.6cm;" href="./tensor_calc.html">Tensor Calculus and the Tensor Chain Rule</a>,<br>
+      <a style = "font-size: 0.6cm;" href="./hazey/hazey.html">Hazey: Designing a GUI Builder in OpenGL</a>,<br>
+	  <a style = "font-size: 0.6cm;" href="./space_log.html">Space Log</a>,<br>
+      <a style = "font-size: 0.6cm;" href="./voronoi.html">Voronoi Diagrams in 2- and 3-D</a>,<br>
 
 	  <hr style="color: #cccccc; margin-bottom: 3px; margin-top: 30px;">
 	  Random:
 	  <hr style="color: #cccccc; margin-top: 3px; margin-bottom: 10px;">
 
-      <a style = "font-size: 0.5cm;" href="./art">Random Art</a><br>
-      <a style = "font-size: 0.5cm;" href="./coffee/coffee.html">Coffee Brightness as a Function of Time</a>
+      <a style = "font-size: 0.6cm;" href="./art/index.html">Random Art</a>,<br>
+      <a style = "font-size: 0.6cm;" href="./coffee/coffee.html">Coffee Brightness as a Function of Time</a>
 </div>
 </center>
 
