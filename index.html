@@ -1,4 +1,5 @@
-<html>
+<html style="
+">
 <head>
 <head>
 <meta name="description" content="James Hazelden">
@@ -14,6 +15,23 @@
    }
 -->
 </script>
+<script>
+    // 1) List your images here (paths can be relative or absolute URLs)
+    const bgImages = [
+      'art/split_complex.png',
+      'art/lozi_clipped.png',
+	  'art/modes_poster_repeat.png'
+    ];
+
+    // 2) Pick one at random
+    function setRandomBackground() {
+      const idx = Math.floor(Math.random() * bgImages.length);
+      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('${bgImages[idx]}')`;
+    }
+
+    // 3) When the page loads, apply it
+    window.addEventListener('DOMContentLoaded', setRandomBackground);
+  </script>
 </head>
 <body style="margin-top: 0px;
 	background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('art/split_complex.png');
@@ -21,8 +39,19 @@
       background-position: center center;
       background-repeat: no-repeat;
       background-attachment: fixed;
+	  zoom: 80%;
+	   height: 100%;
+	   overflow: hidden;
 ">
 
+	<div style = "
+	  position: fixed;       /* lock to the viewport */
+      top: 0; left: 0;
+      right: 0; bottom: 0;
+      overflow-y: auto;      /* vertical scrolling inside */
+      overflow-x: hidden;    /* never scroll horizontally */
+		padding: 2rem;
+	">
 	<center><table width=65% border=0 cellspacing="3" cellpadding="3" bgcolor=" rgba(255,255,255,0);" style = "	opacity: 0.9;  box-shadow: 0 0 10px 5px #000;">
    <tr><td align="center" bgcolor="white">
        <a href="games/"><img src="./koch-snowflake.png" style="width: 66px;"/></a>
@@ -100,8 +129,11 @@
 
       <a style = "font-size: 0.55cm;" href="./art/index.html">Random Art</a>,&nbsp;
       <a style = "font-size: 0.55cm;" href="./coffee/coffee.html">Coffee Brightness as a Function of Time</a>
+
 </div>
 </center>
+
+</div>
 
 </body>
 

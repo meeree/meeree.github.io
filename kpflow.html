@@ -36,6 +36,23 @@ This blog post will explore the operators more formally described in our pre-pri
 
 <h1 id="learning">GD Learning in Recurrent Models</h1>
 
+<br>
+
+<p>We work in a domain of "per trial trajectories." Specifically, there is assumed to be some trial input, \(x\), driving the dynamics of a trajectory, which exists in some time range \(t \in [0, t_{end}]\). Technically, these are three tensors. The space of all such trajectories is denoted by \(\mathbb{T}\). On this space, assuming all inputs \(x\) are from some distribution of trial inputs \(X\), we define an inner product by taking an average of the component-wise, trial-wise and time-wise multipied signals:</p>
+
+<p>$$\langle p, q \rangle_X := \underset{\substack{x \sim X\\t \in [0, t_{end}]}}{\mathbb{E}} \Big[p(t|x)^T q(t|x)\Big]$$</p>
+
+<p> Naturally, this defines a norm on the space. Typically, I'll assume \(X\) as the training or testing set and drop it in the notation.</p>
+
+<p>Consider the problem of steering a dynamical system on a bunch of inputs to match some target output. Explicitly, define a <i>hidden state</i> dynamical system \(z(t,\theta|x)\) on trial inputs \(x \sim X\), an <i>input trial distribution</i> with dynamics 
+$$\frac{d}{dt} z(t,\theta|x) = f(z(t|x), x(t), \theta); \, z(0|x) = z_0,$$
+where \(\theta\) are some parameters. We let \(Z(\theta)\) denote the state of the system in \(\mathbb{T}\) as a 3-tensor, the output of our model after time-stepping on all trials. We then define a loss function \(\ell(z(t|x), \phi)\) at every time \(t\) and trial \(x \sim X\), which may depend on some output weights (the output parameters \(\theta\)) and targets, \(y^*(t|x)\), in a supervised context. Specifically, the mean loss signal is:
+$$L(\theta, \phi) :=  \|\ell(Z(\theta), \phi)\|_X$$
+GD iteratively perturbs the parameters \(\theta, \phi\) to adjust the dynamics, to minimize this loss, i.e. we solve:
+$$\arg \min_{\theta, \phi} (L(\theta, \phi)),$$
+specifically by iteratively choosing the steepest descent directions, \(\nabla_{\theta} L, \nabla_{\phi} L\), and stepping negatively in this direction weighted by a small learning rate, \(\eta\). 
+</p>
+
 
 <div class="top_bar" style="left: 30px;">
 <a href="index.html" style="text-decoration: none;">goto: main</a>
