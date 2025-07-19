@@ -22,15 +22,25 @@
       'art/lozi_clipped.png',
 	  'art/modes_poster_repeat.png'
     ];
+	
+	let current = 0;
+	
+	function cycleBackground() {
+      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('${bgImages[current]}')`;
+      current = (current + 1) % bgImages.length;
+    }
 
     // 2) Pick one at random
     function setRandomBackground() {
-      const idx = Math.floor(Math.random() * bgImages.length);
-      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('${bgImages[idx]}')`;
+      current = Math.floor(Math.random() * bgImages.length);
+      document.body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.9)),url('${bgImages[current]}')`;
     }
 
     // 3) When the page loads, apply it
-    window.addEventListener('DOMContentLoaded', setRandomBackground);
+    window.addEventListener('DOMContentLoaded', () => {
+	  setRandomBackground();
+      setInterval(cycleBackground, 6000);   
+	 });
   </script>
 </head>
 <body style="margin-top: 0px;
@@ -54,7 +64,7 @@
 	">
 	<center><table width=65% border=0 cellspacing="3" cellpadding="3" bgcolor=" rgba(255,255,255,0);" style = "	opacity: 0.9;  box-shadow: 0 0 10px 5px #000;">
    <tr><td align="center" bgcolor="white">
-       <a href="games/"><img src="./koch-snowflake_special.png" style="width: 66px;"/></a>
+       <a href="games/"><img src="./koch-snowflake_special.gif" style="width: 66px;"/></a>
 	   </td>
 <td align="center" bgcolor="white">
     <h1>James Hazelden</h1>
