@@ -1,0 +1,160 @@
+<!--- 1. Hidden NTK vs Output NTK and two terms
+2. Final time NTK vs all times -->
+
+<html style="background: url(art/modes_poster.png);
+      background-size: repeat; 
+      background-size: 50%;">
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body>
+
+<div class="main_text">
+<h1>Efficient NTK Metrics for General Recurrent Models</h1>
+<hr>
+
+<p>
+This blog post explores computing NTK metrics efficiently for recurrent models, using the operators in our pre-print <a href = "https://arxiv.org/abs/2507.06381">here</a>.
+</p>
+
+<h2>Background</h2>
+
+<p>
+Here, I'll briefly describe the mathematical preliminaries. For a more detailed introduction, see the Appendix of the pre-print above.
+</p>
+<br>
+
+<p>
+The aim is to train a dynamical system to minimize some loss over a set of trainining inputs. Every quantity considered thus has a time axis, \(t\), which we assume is in a fixed window \(t \in [0, t_{end}]\) for simplicity. 
+Specifically, we are given a <i>training set</i> \(X\) consisting of inputs for each <i>trial</i> \(x(t) \sim X\). The model has hidden state \(z(t, x)\) on trial input \(x\) and at time \(t\), with dynamics given by a parameterized ODE: 
+$$\frac{d}{dt} z(t,x) = f(z(t,x), t, x, \theta); \, \, \text{ where } z(0, x) = z_0.$$ 
+The parameters are \(\theta\), which evolve according to Gradient Descent (GD), as below. All trajectories have initial condition \(z_0\) for simplicity. The function \(f\) thus describes the tangential flow of the model dynamics.
+</p><p>
+Given this setup, there is assumed to be a loss function \(\ell(z(t,x))\) quantifying how far we are from some objective (typically involving a target \(y^*(t, x)\) for supervised problems, along with output weights).
+The goal is to minimize the average loss over all time and trials:
+$$\text{ Goal:  } \, \arg \min_\theta L := \arg \min_\theta \langle \ell(z(t,x)) \rangle_{t,x},$$
+where \(\langle \cdot \rangle_{t,x}\) denotes averaging over \(t, x\). To solve this problem, we can use GD, evolving \(\theta\) along the steepdest descent direction in parameter space. I.e., we incrementally perturb the parameters by:
+$$\delta \theta = -\nabla_\theta L.$$
+When we take infinitesimal steps along these updates, we define the so-called <i>gradient flow</i> of the parameters, \(\theta\). 
+</p><p>
+However, it is useful to consider the gradient flow of other quantities, since the parameters are ultimately a proxy for the model dynamics themselves. For example, we can investigate how the model state, \(z(t,x)\), evolves under GD.
+Technically, this quantity is a tensor over all trial inputs, \(x\), times, \(t\), and hidden units. In the discrete setting with B = # of batches, T = # of timesteps, H = # of hidden units, then \(z\) is a three-tensor of shape [B,T,H].
+</p><p>
+We let \(\mathbb{T}\) denote the space of all such tensors (discrete or continuous) throughout. As in my paper, there are two linear operators, \(\mathcal{P}, \mathcal{K} :\mathbb{T} \rightarrow \mathbb{T}\), such that 
+$$\delta z = \mathcal{P K P^*} (\text{Err}),$$
+describes the flow of error corrections, \(\text{Err} = \nabla_z \ell\), to perturbations \(\delta z\), i.e. the <i>hidden state GD flow</i>. 
+The operator \(\Theta := \mathcal{P K P^*}\) is thus a more-general anologue of the <i>Neural Tangent Kernel</i> (NTK) for recurrent dynamical systems. Classically, the NTK describes evolution of the output of a neural network with a scalar output and no notion of time, so it is a matrix over batch trials. 
+In our case, however, the NTK is an operator on tensors in \(\mathbb{T}\), of shape [B, T, H] when discretized, i.e. it is a linear operator on three-tensors. 
+</p>
+
+<h2>Motivation</h2>
+
+<p>
+Prior work has used the NTK to quantify <i>rich versus lazy</i> learning. Rich learning occurs when the hidden state representation changes a lot after we train the model with GD. This can be summarized basically as:
+$$\text{ NTK Changes a Lot } \Rightarrow \text{ Rich Learning}; \text{ NTK Basically Constant } \Rightarrow \text{ Lazy Learning}.$$
+For example, for feed-forward neural networks, it has been shown that when the number of hidden units goes to infinity they fall into the lazy regime, where the NTK is completely static throughout training. 
+</p><p>
+To quantify this, we define the <i>NTK alignment</i> as in <a href = "https://arxiv.org/abs/2310.08513">this paper</a> Equation 6. Letting \(\Theta_0, \Theta_f\) denote the operator \(\mathcal{P K P^*}\) before and after GD training on a recurrent model, the alignment is given by:
+$$\text{KA}(\Theta_0, \Theta_f) = \frac{\text{Tr}(\Theta_0^* \Theta_f)}{\sqrt{\text{Tr}(\Theta_0^* \Theta_0) \text{Tr}(\Theta_f^* \Theta_0)}},$$ 
+where Tr computes the trace of the linear operator. Note that when, for example, [B, T, H] = [100, 90, 256], which is a very small network with very few batches, the discretized operator \(Theta\) can be seen as a matrix with 2,304,000 rows and columns! <b><u>In this article, I will focus on efficiently computing this expression</u></b>.
+</p>
+
+<h2>Naive Approach</h2>
+
+<p>
+Naively, we can explictly compute \(\Phi\) as an outer product of parameter derivatives. In particular, \(\Phi\) is a tensor-product of the all parameter derivatives of the hidden state, \(z\). We can thus construct it as follows:
+$$J_\theta[b, t, i] := \text{autograd}(z[b, t, i], \theta).$$
+This is a tensor of shape [B, T, H, M], assuming there are M parameters. Then, \(\Phi\) is a six-tensor of shape [B, T, H, B, T, H] defined by 
+$$\Phi[b_0, t_0, i_0, b_1, t_1, i_1] = J_\theta[b_0, t_0, i_0]^T J_\theta[b_1, t_1, i_1].$$
+It is clear that this approach is super inefficient. Naively, this will require B * T * H evaluations of autograd to form the parameter Jacobian. 
+</p> <p>
+However, if we are interested in small problems and consider objects other than the state \(z\), it can be feasible. For example, in Helena Liu's paper above, the NTK of the output of the network at the final timestep is considered. 
+This operator is much smaller than the NTK of the state at every single timestep. In that case, the Naive approach can be used, as in her code, which I'll reproduce here:
+</p>
+
+<br>
+
+<code style="width:100%;"> <b>Naive Approach:</b>
+<!-- HTML generated using hilite.me -->
+<div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%;"><span></span><span style="color: #080; font-weight: bold">for</span> b <span style="color: #000; font-weight: bold">in</span> <span style="color: #007020">range</span>(batch_size):
+  <span style="color: #080; font-weight: bold">for</span> k <span style="color: #000; font-weight: bold">in</span> <span style="color: #007020">range</span>(output_size): 
+    df_1 <span style="color: #333">=</span> torch<span style="color: #333">.</span>unsqueeze(torch<span style="color: #333">.</span>autograd<span style="color: #333">.</span>grad(output[<span style="color: #333">-</span><span style="color: #00D; font-weight: bold">1</span>,b,k], \
+      net<span style="color: #333">.</span>rnn<span style="color: #333">.</span>h2h<span style="color: #333">.</span>weight, retain_graph<span style="color: #333">=</span><span style="color: #080; font-weight: bold">True</span>)[<span style="color: #00D; font-weight: bold">0</span>], dim<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">0</span>)
+    <span style="color: #080; font-weight: bold">if</span> (b<span style="color: #333">==</span><span style="color: #00D; font-weight: bold">0</span>) <span style="color: #000; font-weight: bold">and</span> (k<span style="color: #333">==</span><span style="color: #00D; font-weight: bold">0</span>):
+      df <span style="color: #333">=</span> df_1<span style="color: #888">                                      # df is J_theta</span>
+    <span style="color: #080; font-weight: bold">else</span>:
+      df <span style="color: #333">=</span> torch<span style="color: #333">.</span>cat((df, df_1), dim<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">0</span>)	  
+Theta <span style="color: #333">=</span> torch<span style="color: #333">.</span>einsum(<span>&#39;bij,aij-&gt;ba&#39;</span>, df, df) <span style="color: #888">         # Form the NTK Theta Matrix. </span>
+</pre></div>
+</code>
+<br>
+
+<h2> Matrix-Free Approaches</h2>
+
+<p>
+The Naive approach explictly computes \(J_\theta\), which is very intractable, both in memory and compute. In the following sections, the methods introduced are <i>matrix-free</i>, relying only on applications of the operator \(\Theta\) to specific vectors, never actually computing it explictly.
+</p>
+
+<h2>Preliminary: Computing Actions with VJP and JVP</h2>
+
+<p>
+As in <a href="https://docs.pytorch.org/tutorials/intermediate/neural_tangent_kernels.html">this</a> tutorial, this action can be efficiently computed using built-in pytorch (or jax) functionality: <i>vjp</i> and <i>jvp</i>. 
+Specifically, vjp (Vector-Jacobian Product) takes in a tensor of shape [B, T, H] and returns a quantity in the parameter space of shape [M] (in reality the parameters are typically a named dictionary, which we can vectorize to make a vector). 
+In particular, assuming \(J_\theta\) has flattened shape [B*T*H, M] and \(v\) has shape [B*T*H], then
+$$\text{vjp}(v) = J_\theta^T \, v.$$ 
+Similarly, jvp (Jacobian-Vector Product) takes in a quantity, \(\phi\), which is a vector of shape [M] in the parameter space, and outputs a quantity of shape [B*T*H]:
+$$\text{jvp}(\phi) = J_\theta \, \phi.$$
+These operations actually implicitly compute the products using automatic differentiation, without forming \(J_\theta\). Firstly, vjp uses backwards-mode automatic differentiation, i.e. backpropagation, while jvp uses forward-mode automatic differentiation, which is more memory intensive. 
+</p>
+
+<h2>Hutch++ and Nystrom++</h2>
+
+<p>
+In my code, I implement the linear operators \(\mathcal{P}, \mathcal{K}\) as classes that can be converted into scipy <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.LinearOperator.html">LinearOperators</a>.
+To compute the NTK alignment, it is necessary to compute the trace of three operators. The denominator operators are positive semi-definite and given by \(\mathcal{(P_0 K_0 P_0^*)^2}, \mathcal{(P_f K_f P_f^*)^2}\). 
+The numerator operator measures the inner product between the first and final NTK: \(\mathcal{P_0 K_0 P_0^* P_f K_f K_f^*}\). For the numerator, which may not be PSD, I computed the trace of the operator using <i><a href=https://arxiv.org/abs/2010.09649">Hutch++</a></i>. 
+For the denominator terms, which are PSD, I used the <i><a href="https://epubs.siam.org/doi/pdf/10.1137/21M1447623">Nystrom++</a></i> algorithm, which builds on Hutch++ incorporating the PSD assumption. 
+</p><p>
+Hutch++ builds on the standard Hutchingson-trace estimator by speeding up compute for potentially low-rank operators. I have found that the NTK operator is often low-rank, as in my pre-print above. 
+Note that the trace of a square \(n\)-by-\(n\) matrix \(A\) can be expressed as 
+$$Tr(A) = \sum_i q_i^T A q_i = Tr(Q^T A Q),$$
+for any orthonormal basis \((q_i)_{1\leq i\leq n}\) of \(\mathbb{R}^n\). The idea of Hutch++ is to find a good choice of random \(\hat Q \in \mathbb{R}^{n \times k}\) that accounts for all the variance in \(A\). In other words, we choose \(k\) vectors such that 
+$$Tr(A) \approx Tr(\hat Q^T A \hat Q).$$ 
+Note \(\hat Q^T A \hat Q\) is a \(k\) by \(k\) matrix, which may be very small. If \(A\) is effectively a low rank matrix (or linear operator), we can thus transform the problem of finding its trace into taking the trace of a small, \(k\) by \(k\) empirically computed matrix. 
+</p>
+
+
+<code style="width:100%;"> <b>Hutch++:</b>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%;"><span></span><span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">trace_hpp</span>(A, nsamp):
+  d <span style="color: #333">=</span> A<span style="color: #333">.</span>shape[<span style="color: #00D; font-weight: bold">0</span>]
+  S <span style="color: #333">=</span> np<span style="color: #333">.</span>random<span style="color: #333">.</span>randint(<span style="color: #00D; font-weight: bold">2</span>, size<span style="color: #333">=</span>(d,nsamp))<span style="color: #333">.</span>astype(<span style="color: #007020">float</span>) <span style="color: #333">*</span> <span style="color: #00D; font-weight: bold">2</span> <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span> <span style="color: #888"># Either 1 or -1</span>
+  G <span style="color: #333">=</span> np<span style="color: #333">.</span>random<span style="color: #333">.</span>randint(<span style="color: #00D; font-weight: bold">2</span>, size<span style="color: #333">=</span>(d,nsamp))<span style="color: #333">.</span>astype(<span style="color: #007020">float</span>) <span style="color: #333">*</span> <span style="color: #00D; font-weight: bold">2</span> <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span> <span style="color: #888"># Either 1 or -1</span>
+  Q, _ <span style="color: #333">=</span> np<span style="color: #333">.</span>linalg<span style="color: #333">.</span>qr(A <span style="color: #333">@</span> S)
+  prod <span style="color: #333">=</span> G <span style="color: #333">-</span> Q <span style="color: #333">@</span> (Q<span style="color: #333">.</span>T <span style="color: #333">@</span> G)
+  <span style="color: #080; font-weight: bold">return</span> np<span style="color: #333">.</span>trace((A <span style="color: #333">@</span> Q)<span style="color: #333">.</span>T <span style="color: #333">@</span> Q) <span style="color: #333">+</span> (<span style="color: #60E; font-weight: bold">1.</span><span style="color: #333">/</span>nsamp) <span style="color: #333">*</span> np<span style="color: #333">.</span>trace((A <span style="color: #333">@</span> prod)<span style="color: #333">.</span>T <span style="color: #333">@</span> prod)
+</pre></div>
+</code>
+
+<br>
+<br>
+<img src="tr_estimate_nyst_k.png"/>
+
+
+</body>
+</html>

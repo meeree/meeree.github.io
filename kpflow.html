@@ -53,6 +53,20 @@ $$\arg \min_{\theta, \phi} (L(\theta, \phi)),$$
 specifically by iteratively choosing the steepest descent directions, \(\nabla_{\theta} L, \nabla_{\phi} L\), and stepping negatively in this direction weighted by a small learning rate, \(\eta\). 
 </p>
 
+<h2>RNN Example in Depth</h2>
+
+<p>Consider
+$$\dot z(t|x) = -z(t|x) + W \sigma(z(t|x)) + W_{in} x(t).$$
+Then, 
+$$J_z(t|x) = -\text{Id} + W \text{diag}(\nabla_{z(t|x)} \sigma).$$
+Suppose we focus on learning \(\theta = W\), so that 
+$$J_\theta(t|x) = \sigma(z(t|x))^T \otimes \text{Id},$$
+and the kernel for the parameter operator is 
+$$k(t, t_0 | x, x_0) = J_\theta(t|x) \otimes_{2} J_\theta(t|x)^T = \sigma(z(t|x))^T \sigma(z(t_0|x_0)) \text{Id}.$$
+ 
+</p>
+
+
 
 <div class="top_bar" style="left: 30px;">
 <a href="index.html" style="text-decoration: none;">goto: main</a>
