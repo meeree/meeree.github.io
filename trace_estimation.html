@@ -91,16 +91,15 @@ This operator is much smaller than the NTK of the state at every single timestep
 <br>
 
 <code style="width:100%;"> <b>Naive Approach:</b>
-<!-- HTML generated using hilite.me -->
-<div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%;"><span></span><span style="color: #080; font-weight: bold">for</span> b <span style="color: #000; font-weight: bold">in</span> <span style="color: #007020">range</span>(batch_size):
-  <span style="color: #080; font-weight: bold">for</span> k <span style="color: #000; font-weight: bold">in</span> <span style="color: #007020">range</span>(output_size): 
-    df_1 <span style="color: #333">=</span> torch<span style="color: #333">.</span>unsqueeze(torch<span style="color: #333">.</span>autograd<span style="color: #333">.</span>grad(output[<span style="color: #333">-</span><span style="color: #00D; font-weight: bold">1</span>,b,k], \
-      net<span style="color: #333">.</span>rnn<span style="color: #333">.</span>h2h<span style="color: #333">.</span>weight, retain_graph<span style="color: #333">=</span><span style="color: #080; font-weight: bold">True</span>)[<span style="color: #00D; font-weight: bold">0</span>], dim<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">0</span>)
-    <span style="color: #080; font-weight: bold">if</span> (b<span style="color: #333">==</span><span style="color: #00D; font-weight: bold">0</span>) <span style="color: #000; font-weight: bold">and</span> (k<span style="color: #333">==</span><span style="color: #00D; font-weight: bold">0</span>):
-      df <span style="color: #333">=</span> df_1<span style="color: #888">                                      # df is J_theta</span>
-    <span style="color: #080; font-weight: bold">else</span>:
-      df <span style="color: #333">=</span> torch<span style="color: #333">.</span>cat((df, df_1), dim<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">0</span>)	  
-Theta <span style="color: #333">=</span> torch<span style="color: #333">.</span>einsum(<span>&#39;bij,aij-&gt;ba&#39;</span>, df, df) <span style="color: #888">         # Form the NTK Theta Matrix. </span>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%;"><span></span>J <span style="color: #333">=</span> [] <span style="color: #888">  # J_theta, parameter jacobian [B*T*H, M].</span>
+<span style="color: #080; font-weight: bold">for</span> b <span style="color: #000; font-weight: bold">in</span> <span style="color: #007020">range</span>(batch_size):
+  <span style="color: #080; font-weight: bold">for</span> t <span style="color: #000; font-weight: bold">in</span> <span style="color: #007020">range</span>(time_size):
+    <span style="color: #080; font-weight: bold">for</span> k <span style="color: #000; font-weight: bold">in</span> <span style="color: #007020">range</span>(hidden_size): 
+      J_i <span style="color: #333">=</span> torch<span style="color: #333">.</span>unsqueeze(torch<span style="color: #333">.</span>autograd<span style="color: #333">.</span>grad(hidden[b,t,k], \
+        net<span style="color: #333">.</span>params, retain_graph<span style="color: #333">=</span><span style="color: #080; font-weight: bold">True</span>)[<span style="color: #00D; font-weight: bold">0</span>], dim<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">0</span>) <span style="color: #888"># net.params is a length M vec.</span>
+      J<span style="color: #333">.</span>append(J_i)
+J <span style="color: #333">=</span> torch<span style="color: #333">.</span>stack(J, <span style="color: #00D; font-weight: bold">0</span>)
+Theta <span style="color: #333">=</span> J <span style="color: #333">@</span> J<span style="color: #333">.</span>T <span style="color: #888">  # Form the NTK Theta Matrix.</span>
 </pre></div>
 </code>
 <br>
@@ -150,6 +149,8 @@ Note \(\hat Q^T A \hat Q\) is a \(k\) by \(k\) matrix, which may be very small. 
   <span style="color: #080; font-weight: bold">return</span> np<span style="color: #333">.</span>trace((A <span style="color: #333">@</span> Q)<span style="color: #333">.</span>T <span style="color: #333">@</span> Q) <span style="color: #333">+</span> (<span style="color: #60E; font-weight: bold">1.</span><span style="color: #333">/</span>nsamp) <span style="color: #333">*</span> np<span style="color: #333">.</span>trace((A <span style="color: #333">@</span> prod)<span style="color: #333">.</span>T <span style="color: #333">@</span> prod)
 </pre></div>
 </code>
+
+<h3>Results</h3>
 
 <br>
 <br>

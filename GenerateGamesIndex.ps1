@@ -12,10 +12,10 @@ $htmlStart = @"
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Index of /art/</title>
+    <title>Index of /games/</title>
 </head>
 <body>
-    <h1>Index of /art/</h1>
+    <h1>Index of /games/</h1>
     <ul>
 "@
 
