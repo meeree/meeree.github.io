@@ -153,8 +153,19 @@ Note \(\hat Q^T A \hat Q\) is a \(k\) by \(k\) matrix, which may be very small. 
 <h3>Results</h3>
 
 <br>
+
+<p>
+Below, I measured the runtime and estimates of the Hutch++ estimator described above. The third panel compares the relative error of each estimate versus the final estimate. It takes about 1 second with 10 samples and 25 seconds with 300 samples.
+</p>
+
 <br>
-<img src="tr_estimate_nyst_k.png"/>
+
+
+<img src="stats_hubbpp.png"  style="max-width:200%; max-height:200%; width:1200px; height:315px;"/>
+
+<h2>Re-Using Matrix Skecteches</h2>
+
+The Hutch++ algorithm relies on <i>matrix sketching</i>. Essentially, if we have an algorithm that exactly computes a value on a matrix, \(A\), we first sample a random matrix, \(S\), compute a product
 
 <div class="top_bar" style="left: 30px;">
 <a href="index.html" style="text-decoration: none;">goto: main</a>
