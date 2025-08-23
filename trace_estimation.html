@@ -30,7 +30,7 @@
 <hr>
 
 <p>
-This blog post explores computing NTK metrics efficiently for recurrent models, using the operators in our pre-print <a href = "https://arxiv.org/abs/2507.06381">here</a>.
+This blog post explores computing NTK metrics efficiently for recurrent models, using the operators in our pre-print <a href = "https://arxiv.org/abs/2507.06381">here</a>. Find related code in  <a href ="https://github.com/meeree/kpflow/blob/main/src/kpflow/trace_estimation.py">my package</a>.
 </p>
 
 <h2>Background</h2>
@@ -142,11 +142,11 @@ Note \(\hat Q^T A \hat Q\) is a \(k\) by \(k\) matrix, which may be very small. 
 <code style="width:100%;"> <b>Hutch++:</b>
 <!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%;"><span></span><span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">trace_hpp</span>(A, nsamp):
   d <span style="color: #333">=</span> A<span style="color: #333">.</span>shape[<span style="color: #00D; font-weight: bold">0</span>]
-  S <span style="color: #333">=</span> np<span style="color: #333">.</span>random<span style="color: #333">.</span>randint(<span style="color: #00D; font-weight: bold">2</span>, size<span style="color: #333">=</span>(d,nsamp))<span style="color: #333">.</span>astype(<span style="color: #007020">float</span>) <span style="color: #333">*</span> <span style="color: #00D; font-weight: bold">2</span> <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span> <span style="color: #888"># Either 1 or -1</span>
-  G <span style="color: #333">=</span> np<span style="color: #333">.</span>random<span style="color: #333">.</span>randint(<span style="color: #00D; font-weight: bold">2</span>, size<span style="color: #333">=</span>(d,nsamp))<span style="color: #333">.</span>astype(<span style="color: #007020">float</span>) <span style="color: #333">*</span> <span style="color: #00D; font-weight: bold">2</span> <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span> <span style="color: #888"># Either 1 or -1</span>
-  Q, _ <span style="color: #333">=</span> np<span style="color: #333">.</span>linalg<span style="color: #333">.</span>qr(A <span style="color: #333">@</span> S)
-  prod <span style="color: #333">=</span> G <span style="color: #333">-</span> Q <span style="color: #333">@</span> (Q<span style="color: #333">.</span>T <span style="color: #333">@</span> G)
-  <span style="color: #080; font-weight: bold">return</span> np<span style="color: #333">.</span>trace((A <span style="color: #333">@</span> Q)<span style="color: #333">.</span>T <span style="color: #333">@</span> Q) <span style="color: #333">+</span> (<span style="color: #60E; font-weight: bold">1.</span><span style="color: #333">/</span>nsamp) <span style="color: #333">*</span> np<span style="color: #333">.</span>trace((A <span style="color: #333">@</span> prod)<span style="color: #333">.</span>T <span style="color: #333">@</span> prod)
+  S <span style="color: #333">=</span> torch<span style="color: #333">.</span><span style="color: #333"></span>randint(<span style="color: #00D; font-weight: bold">2</span>, size<span style="color: #333">=</span>(d,nsamp))<span style="color: #333">.</span>to(<span style="color: #007020">float</span>) <span style="color: #333">*</span> <span style="color: #00D; font-weight: bold">2</span> <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span> <span style="color: #888"># Either 1 or -1</span>
+  G <span style="color: #333">=</span> torch<span style="color: #333">.</span><span style="color: #333"></span>randint(<span style="color: #00D; font-weight: bold">2</span>, size<span style="color: #333">=</span>(d,nsamp))<span style="color: #333">.</span>to(<span style="color: #007020">float</span>) <span style="color: #333">*</span> <span style="color: #00D; font-weight: bold">2</span> <span style="color: #333">-</span> <span style="color: #00D; font-weight: bold">1</span> <span style="color: #888"># Either 1 or -1</span>
+  Q, _ <span style="color: #333">=</span> torch<span style="color: #333">.</span>linalg<span style="color: #333">.</span>qr(A <span style="color: #333">@</span> S)
+  B <span style="color: #333">=</span> G <span style="color: #333">-</span> Q <span style="color: #333">@</span> (Q<span style="color: #333">.</span>T <span style="color: #333">@</span> G)
+  <span style="color: #080; font-weight: bold">return</span> torch<span style="color: #333">.</span>trace((A <span style="color: #333">@</span> Q)<span style="color: #333">.</span>T <span style="color: #333">@</span> Q) <span style="color: #333">+</span> (<span style="color: #60E; font-weight: bold">1.</span><span style="color: #333">/</span>nsamp) <span style="color: #333">*</span> torch<span style="color: #333">.</span>trace((A <span style="color: #333">@</span> B)<span style="color: #333">.</span>T <span style="color: #333">@</span> B)
 </pre></div>
 </code>
 
@@ -163,9 +163,64 @@ Below, I measured the runtime and estimates of the Hutch++ estimator described a
 
 <img src="stats_hubbpp.png"  style="max-width:200%; max-height:200%; width:1200px; height:315px;"/>
 
-<h2>Re-Using Matrix Skecteches</h2>
 
-The Hutch++ algorithm relies on <i>matrix sketching</i>. Essentially, if we have an algorithm that exactly computes a value on a matrix, \(A\), we first sample a random matrix, \(S\), compute a product
+<h2>Optimizing Cosine Alignment</h2>
+
+<p>
+The term I'm really interested in is the NTK cosine alignment, which involves the trace of \(A^T B, A^T A, B^T B\), for operator \(A, B\). 
+The biggest bottle-neck by far is the application of the operators, which involves a complex vjp, jvp forward-backward autodiff calculation. 
+The naive approach is to compute three traces using Hutch++ above, which does decently well. However, I decided to try design an algorithm that accounts for the redundancy. 
+</p>
+
+<p>
+Let \(A, B\) by \(n\) by \(n\) and \(S\) be an empirically sampled matrix of shape \(n\) by \(d\) with random orthonormal columns. Compute \(A S, B S\). 
+Then, we can estimate the trace of \(A^T A\) by the expect value of the squared norm of the columns of \(A S\):
+$$Tr(A^T A) \approx n \mathbb{E}_{i} [\| A s_i\|^2].$$
+Likewise we can estimate the trace of \(B^T B\). Finally, 
+$$Tr(A^T B) \approx n \mathbb{E}_{i} [\langle B s_i, A s_i\rangle^2].$$
+Note that using the consistent <i>matrix skecth</i> \(S\) throughout also correlates the errors and can help reduce the variance of this estimator. Below is the code I used in my package, <a href ="https://github.com/meeree/kpflow">which you can find here.</a> 
+It uses pytorch, allowing for possible GPU acceleration (which I haven't tested) and my Operator implementation in that package. 
+</p>
+
+<br>
+
+<code style="width:100%;"> <b>Final NTK Alignment Implementation:</b>
+<!-- HTML generated using hilite.me --><div style="background: #ffffff; overflow:auto;width:auto;border:solid gray;border-width:.1em .1em .1em .8em;padding:.2em .6em;"><pre style="margin: 0; line-height: 125%;"><span></span><span style="color: #080; font-weight: bold">def</span><span style="color: #BBB"> </span><span style="color: #06B; font-weight: bold">op_alignment</span>(A, B, nsamp<span style="color: #333">=</span><span style="color: #00D; font-weight: bold">20</span>):
+    A_flat <span style="color: #333">=</span> A<span style="color: #333">.</span>flatten() <span style="color: #888"># Flatten input and output shapes. </span>
+    B_flat <span style="color: #333">=</span> B<span style="color: #333">.</span>flatten() 
+    d <span style="color: #333">=</span> A_flat<span style="color: #333">.</span>shape_in
+    G <span style="color: #333">=</span> torch<span style="color: #333">.</span>randn(d, nsamp)
+    Q, _ <span style="color: #333">=</span> torch<span style="color: #333">.</span>linalg<span style="color: #333">.</span>qr(G) <span style="color: #888"># Random orthonormal vectors.</span>
+    S <span style="color: #333">=</span> (d <span style="color: #333">/</span> nsamp)<span style="color: #333">**</span><span style="color: #60E; font-weight: bold">0.5</span> <span style="color: #333">*</span> Q          
+    AS <span style="color: #333">=</span> A_flat<span style="color: #333">.</span>batched_call(S<span style="color: #333">.</span>T)<span style="color: #333">.</span>T
+    BS <span style="color: #333">=</span> B_flat<span style="color: #333">.</span>batched_call(S<span style="color: #333">.</span>T)<span style="color: #333">.</span>T
+    <span style="color: #080; font-weight: bold">return</span> torch<span style="color: #333">.</span>sum(AS <span style="color: #333">*</span> BS) <span style="color: #333">/</span> (torch<span style="color: #333">.</span>sum(AS <span style="color: #333">*</span> AS) <span style="color: #333">*</span> torch<span style="color: #333">.</span>sum(BS <span style="color: #333">*</span> BS))<span style="color: #333">**</span><span style="color: #60E; font-weight: bold">0.5</span>
+</pre></div>
+</code>
+
+<br>
+
+<p>
+In total, we get about a three times faster estimate with comparable accuracy, as summarized below. 
+</p>
+
+<br>
+
+<img src="stats_compare.png"  style="max-width:200%; max-height:200%; width:1200px; height:315px;"/>
+
+<br>
+
+<h2>Summary</h2>
+
+<p>
+In summary I made an efficient estimator of the NTK alignment metric to compare how the NTK of a model at different points during GD training compare. I found that using Hutch++ was fast and accurate and simple to implement. 
+However, I found that, due to redundancy in the cosine similarity expression, we can improve on this by about a factor of three in runtime. 
+</p>
+
+<p>
+With this code, <u>I found that comparing NTKs with [batches, timesteps, hidden size] = [100, 10, 128], i.e. 128,000 by 128,000 NTK operators, takes about 0.33 seconds with 50 estimator samples, which gives a relative error of below about 1%</u>. 
+With such an efficient estimator, it may be possible to practically use this NTK comparison <i>during training</i>, but I'm not sure how or why yet. For now, it allows my collaborators and I to efficiently compare trained models very fast.
+</p>
 
 <div class="top_bar" style="left: 30px;">
 <a href="index.html" style="text-decoration: none;">goto: main</a>
