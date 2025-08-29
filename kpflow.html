@@ -22,21 +22,84 @@
 </head>
 <body>
 
+
 <div class="main_text">
-<h1>Introduction to K-P Flow:<br><span style = "font-size: 1cm;">An Operator Decomposition of the Gradient Flow of a Recurrent Dynamical System</span></h1>
+<h1>Unpacking K-P Flow:<br><span style = "font-size: 1cm;">An Operator Decomposition of the Gradient Flow of a Recurrent Dynamical System</span></h1>
 <hr>
 
-<p>
-This blog post will explore the operators more formally described in our pre-print <a href = "https://arxiv.org/abs/2507.06381">here</a>, building some intuition for simpler models, exploring next directions and working through experiments.</p>
+<table style="margin-left: auto; margin-right: auto; width: 80%;font-size:.8cm; border-collapse:separate; border:solid black 3px; border-radius:6px;">
+
+<tr>
+<td  colspan=2 style="background-color: white; ">
+<b>Links</b>
+</td>
+</tr>
+
+<tr>
+<td style="width:50%; background-color: #eeeeee;">
+<a href = "https://arxiv.org/abs/2507.06381">Arxiv Pre-Print</a>
+</td>
+
+<td  style="width:50%; background-color: #eeeeee;">
+<a href = "https://github.com/meeree/kpflow/">Pytorch Package</a>
+</td>
+</tr>
+
+
+</table>
+
+
 <br>
-<ol style="max-width:45%;">
-    <li> <a href="#learning">GD Learning in Recurrent Models</a> 
+
+
+<p style="text-align:center;">
+<b style="font-size: .8cm;">Synopsis</b><br>
+This blog post provides a more intuitive exploration of parts our main paper, linked above, which broadly explores the gradient flow of general recurrent models. 
+An efficient and in-development package with examples is linked above. See accompanying blog posts on my main page exploring specific aspects of the code. 
+</p>
+<br>
+<br>
+
+<ol style="max-width:45%; font-size: .8cm; text-align:center; list-style-type: none;">
+	<li> <b>Table of Contents</b>
+    <li> <a href="#intro">Introduction and Motivation</a>
+	<li> <a href="#theory">Theoretical Background</a>
+	<li> <a href="#examples">Examples and Intuition</a>
+	<li> <a href="#results">Results</a>
 </ol>
-<br>
-
-<h1 id="learning">GD Learning in Recurrent Models</h1>
 
 <br>
+<br>
+<hr>
+
+<h1 id="intro">Introduction and Motivation</h1>
+
+<br>
+
+<p>
+Many tasks in machine learning and computational neuroscience can be framed as training a dynamical system to mimic some behavior over a variety of inputs, typically in a way that generalizes well to not-seen inputs.
+More specifically, in a supervised context, the model is given a time-varying input \(x(t)\), with \(t \in [0, t_{end}]\), and is tasked with minimicing a target output \(y^*(t)\) over that time window. 
+The model state, \(h(t)\), is governed by a parameterized dynamical system that is driven by the specific trial input, \(x(t)\).
+Specifically, we assume \(h(t)\) is given by a simple ODE of the following general form,
+$$h(t) = f(h(t), x(t), \theta); \, \text{ Where } h(0) = h_0.$$
+Here, \(\theta\) denote the model parameters.
+In this context, it is common to fit the model on the (input, target) trials using Gradient Descent (GD) on the parameters, \(\theta\), iteratively adjusting them to minimize a loss-function. 
+</p> 
+
+<p>
+The evolution of the parameters \(\theta \in \mathbb{R}^m\) over GD iterations defines a so-called <i>gradient flow</i> in the parameter Euclidean space.
+However, the parameters are simply a surrogate for the actual model dynamics. 
+The seminal work of Jacot et al. (2018), proposed the idea of tracking the gradient flow of the model output over GD iterations for a scalar-valued feed-forward network without any notion of time, \(t\). 
+They found that the transformation from error corrections, \(y^* - y\), into GD perturbations to the output, \(\delta y\), can be expressed as a matrix dubbed the empirical <i>Neural Tangent Kernel</i> (NTK). 
+Further work extended this idea to vanilla Recurrent Neural Networks (RNNs), tracking how the time-varying output (e.g., \(y(t) := W_{out} h(t) + b_{out}\)) evolves over GD iterations.
+In this work, they explicitly calculated the form of the NTK for such vanilla RNNs and used it to show that, in the infinite width limit, the NTK does not vary over GD iterations.
+</p>
+
+<p>
+In our work, we set out to instead analyze the evolution of the internal state \(h(t)\) of <i>any</i> dynamical system in the form presented above. 
+To do so, we develop operators reminiscent of the NTK
+</p>
+
 
 <p>We work in a domain of "per trial trajectories." Specifically, there is assumed to be some trial input, \(x\), driving the dynamics of a trajectory, which exists in some time range \(t \in [0, t_{end}]\). Technically, these are three tensors. The space of all such trajectories is denoted by \(\mathbb{T}\). On this space, assuming all inputs \(x\) are from some distribution of trial inputs \(X\), we define an inner product by taking an average of the component-wise, trial-wise and time-wise multipied signals:</p>
 
@@ -65,6 +128,13 @@ and the kernel for the parameter operator is
 $$k(t, t_0 | x, x_0) = J_\theta(t|x) \otimes_{2} J_\theta(t|x)^T = \sigma(z(t|x))^T \sigma(z(t_0|x_0)) \text{Id}.$$
  
 </p>
+<!--
+<p>
+Many tasks in machine learning and computational neuroscience can be framed as training a parameterized dynamical system model to match some behavior over a variety of inputs. 
+In supervised contexts, where the inputs, \(x \sim X\), are specified and have corresponding targets, \(y^*\), Gradient Descent (GD) is typically used to fit the parameters of such a model. 
+Let \(h(t)\) denote the hidden state of this dynamical system at feed-forward time \(t\). 
+</p>
+-->
 
 
 
