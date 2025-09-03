@@ -180,116 +180,67 @@ Formally, this is a tensor product on \(J_\theta\) where the parameter dimension
 <h3>Working with Tensor Operators</h3>
 
 <p>
-As mentioned in the prior section, the full empirical NTK for recurrent models is a linear operator on a space of 3-tensors (discretely of shape [B, T, H]). In this section, I'll discuss building some more intuition and practical tools for working with such operators. Indeed, it may be tempting to think that working with such a massive, complex objective is overcomplicating things. However, this object exactly matches Pytorch without any simplication and <i>can be simplified after-the-fact, instead of simplifying at the outset</i>. 
-</p> A
+As mentioned in the prior section, the full empirical NTK for recurrent models is a linear operator on a space of 3-tensors (discretely of shape [B, T, H]). In this section, I'll discuss building some more intuition and practical tools for working with such operators. Indeed, it may be tempting to think that working with such a massive, complex objective is overcomplicating things. However, this object exactly matches Pytorch without any simplication and <i>can be simplified after-the-fact, instead of simplifying at the outset</i>. As we will see later, keeping the full operator in all its complexity allows us to further decompose it into individual components: \(\mathcal{P}\) and \(\mathcal{K}\), the former which intergrates perturbations independently over input trials and the latter which filters perturbations through the parameters.
+</p> 
+<br>
 
 <p>
 <b>Reduced <i>Views</i></b> A simple way to work with this complex operator is to reduce it into simpler "views". The operator itself informs how gradient updates to the hidden state are structured over time, batch inputs and hidden units, which is a ton of information. Sometimes, we would like to know in what subspaces the updates will reside, on average, without consider time or batches. Or, as another example, we want to consider where most of the updates will be concentrated as a signal over time and batches, without thinking about the individual hidden units. 
 </p> <p>
-To generate such perspectives, we define a method of reducing the operator over particular axes. getting
-</p>
-
-<p>
-<b>Full Operator SVD</b>
-</p>
-
-
-<h2>Decomposing the NTK into \(\mathcal{P}\) and \(\mathcal{K}\)</h2>
-
-
-
-<!--
-<p>
-For intuition, in the following discussion, we present the NTK in a discrete, realistic context, where time and batch trials are finite. 
-<b>NTK in Discrete Time</b> In Pytorch, the hidden state would be a 3-tensor of shape [B, T, H] over batches, forward-pass times, and hidden units. We can track how this tensor is perturbed after each step of GD. To do so, define the hidden-state parameter Jacobian, which, in this Pytorch context, would have shape [B, T, H, M], where M is the parameter count. We can define this by:
-$$J_\theta[b, t, h, m] := \frac{\partial h[b, t, h]}{\partial \theta[m]}.$$
-First, define an <i>Instantenous error signal</i> by 
-$$\text{Err}[b, t, h] := \nabla{\ell(y[b,t,h], y^*[b,t,h])}{\nabla z[b,t,h]}.$$
-For example, when \(\ell(y, y^*) = \| y - y^* \|^2\) is a squared error, then \(\text{Err} = 2 W_{out}^T (y - y^*)\) is the residual signal, projected onto the row space of \(W_{out}\). 
-</p>
-
-<p>
-Using Err, from the multi-variate (tensor) chain rule (see my <a href="tensor_calc.html">other blog post</a> discussing this in detail), we have
-$$\delta_\theta[m] := \nabla_\theta L[m]  = \langle  J_\theta[b_0, t_0, h_0, m] \text{Err}[b_0,t_0,h_0] \rangle_{b_0, t_0, h_0},$$
-i.e. we average all <i>vector-jacobian products (vjp)</i> of the form \(J_\theta^T \text{Err}\). Then, given this parameter change, the hidden state approximately changes according to \(J_\theta\), i.e.
-$$\delta h[b, t, h] = J_\theta[b,t,h] \cdot \delta \theta.$$
-So, finally, if we define the <i>hidden state NTK operator</i>, which is formally a <b>tensor linear operator</b> on tensors of the form [B,T,H], given by
-$$\Theta[b,t,h, b_0, t_0, h_0] = \sum_m J_\theta[b,t,h,m] \cdot J_\theta[b_0, t_0, h_0,m],$$
-then 
-$$\delta h = \Theta \cdot \text{Err},$$
-where the product contracts the final three axes of \(\Theta\) with the error signal. 
-</p>
-
-
-
-<p>
-Many tasks in machine learning and neuroscience can be framed as training a dynamical system to mimic some behavior over a variety of inputs, typically in a way that generalizes well to not-seen inputs. 
-Experimentally, neural activity in the brain may often form simple dynamical solutions composed of motifs such as fixed points and attractors, all existing on a so-called low-dimensional <i>neural manifold</i>. 
-Furthermore, in practice, when Recurrent Neural Networks (RNNs) or other, more diverse models are trained on specific tasks, it is often observed that the learned solution exhibits nice structure, such as compositionality or sharing of subspaces for multiple tasks or using simple dynamical low-dimensional motifs for a single task. 
-However, understanding how a recurrent 
-
-Dynamical systems can form diverse, low-dimensional solutions to complex tasks by composing simple dynamical motifs such as fixed points and attractors. 
-Experimentally, it is
-
-More specifically, in a supervised context, the model is given a time-varying input \(x(t)\), with \(t \in [0, t_{end}]\), and is tasked with minimicing a target output \(y^*(t)\) over that time window. 
-The model state, \(h(t)\), is governed by a parameterized dynamical system that is driven by the specific trial input, \(x(t)\).
-Specifically, we assume \(h(t)\) is given by a simple ODE of the following general form,
-$$h(t) = f(h(t), x(t), \theta); \, \text{ Where } h(0) = h_0.$$
-Here, \(\theta\) denote the model parameters.
-In this context, it is common to fit the model on the (input, target) trials using Gradient Descent (GD) on the parameters, \(\theta\), iteratively adjusting them to minimize a loss-function. 
+To generate such views, we define a method of reducing the operator over particular axes. Given an axis (time, batches or hidden units), the view of the tensor essentially performs streaming over that axis. For example, let's define the time-averaged NTK \(\langle \Phi \rangle_t\). This is a linear operator now on 2-tensors of shape [B, H]. Specifically, 
+$$\langle \Phi \rangle_t[b, h, b_0, h_0] = \langle \Phi[b, h, t, b_0, h_0, t_0] \rangle_{t, t_0},$$
+i.e. we average over the time axes. This operator takes in tensors of shape [B, H], produces a tensor of shape [B, T, H] by making T copies, applies \(\Phi\) to this tensor, then averages the final result over the time axis. In my code, you can find the implementation in <b>op_common.py</b>, called <b>AveragedOperator</b>. Similarly, we can define averaging operations over any of the axes: time, hidden units, or batches, or multiple simultaneously. 
 </p> 
+<br>
+<p class="center_text"><b>Some Example Use Cases</b></p>
+<p>
+<b>As a Matrix Over Hidden Units</b> Using these views, we can measure interpretable properties of the NTK and gradient flow. For example, suppose want to quantify where the gradient updates will be concentrated in the hidden space, irregardless of time or batch trials. Then, we can measure the averaged operator \(\langle \Phi \rangle_{x,t}\), which is now an H by H matrix. We can then measure the <u>singular vectors</u> \(\{v_i\}_{i=1...n}\) of this matrix, and its <u>singular values</u> \(\{\sigma_i\}_{i=1...n}\). The principle vector \(v_1\) explains exactly which types of hidden space inputs will maximally stimulate the operator \(\Phi\), on average over input batches and times. Note that two trials with different inputs, \(x_1, x_2\) to the hidden state, may produce trajectories in completely disparate regions of the hidden space. However, by design, both of these directions will factor in distinctly to the averaged SVD (see my paper Appendix for more explanation of this). If we want to see where gradient updates will be correlated, we can use the <u>left singular vectors</u>, \(\{u_i\}_{i=1...n}\): the first vector \(u_1\) explains where \(\Phi\)'s updates will be contentrated if we given it tons of random input signals, i.e. where GD is likely to concentrate. Finally, the <u>effective rank</u> of the operator \(\langle \Phi \rangle_{x,t}\) explains how hidden space GD updates are constrained: if it is low, it means the operator will be constrained to producing updates in a small, low-dimensional hidden subspace. 
+</p>
+<p>
+<b>Eigenfunction Signals Averaging Hidden Space</b> As another example, we can consider the operator \(\langle \Phi \rangle_{h}\), averaged over spatial hidden units. If we take the SVD of this operator, we get <u>input-dependent eigenfunctions</u> \(\{\phi_{b,t}\}_{b=1...B,t=1...T}\). Each eigenfunction explains which points in time are most crucial to stimulating \(\Phi\), for each individual one of the batch trials. On trial 1, it might say that a particular time window of the task is very crucial, i.e. most of the learning will be concentrated there, while on trial 2, with a different batch input for the model, there could be a completely distinct time window. Consequently, <i>these eigenfunction signals explain the temporal structure imposed by the task on learning</i>, accross each input-driven trial of the model inference. Since the operator is averaged over hidden units, we don't take into account <i>which</i> hidden unit to stimulate, instead we care about which times or indendent input trials are most relevant to the GD update.
+</p>
+
+<p>Below is a figure more clearly explained in my paper, illustrating the eigenfunctions of the operator \(\langle \mathcal{K} \rangle_{h}\), averaged over hidden units, as in the previous paragraph. A full description of \(\mathcal{K}\) itself is detailed below. The color of each individual trajectory indicate distinct batches. Note that each eigenfunction is a tensor of shape [B, T], as above, informing, on each batch trial, which times are most significant for stimulating the operator. For task setup and more comprehensive details, see the paper itself.
+</p>
+
+<br>
+
+<br>
+<img src="eigfuns_k.png" width=90% style="border-color: black; border-width: 10px;">
+
+<br>
+
+<br>
+<br>
+
+<p class="center_text"><b>The Full Operator SVD</b></p>
+<p>
+Simular to the previous use case, we can take the SVD of the full operator, \(\Phi\), without averaging any axes. Then, the eigenfunctions and singular values you get inform how to stimulate \(\Phi\) individually at a very granular level: at each timestep of forward evaluation of the model, hidden unit, and on each distinct input-driven trial.
+</p>
+
+<h3>Decomposing the NTK into \(\mathcal{P}\) and \(\mathcal{K}\)</h3>
 
 <p>
-The evolution of the parameters \(\theta \in \mathbb{R}^m\) over GD iterations defines a so-called <i>gradient flow</i> in the parameter Euclidean space.
-However, the parameters are simply a surrogate for the actual model dynamics. 
-The seminal work of Jacot et al. (2018), proposed the idea of tracking the gradient flow of the model output over GD iterations for a scalar-valued feed-forward network without any notion of time, \(t\). 
-They found that the transformation from error corrections, \(y^* - y\), into GD perturbations to the output, \(\delta y\), can be expressed as a matrix dubbed the empirical <i>Neural Tangent Kernel</i> (NTK). 
-Further work extended this idea to vanilla Recurrent Neural Networks (RNNs), tracking how the time-varying output (e.g., \(y(t) := W_{out} h(t) + b_{out}\)) evolves over GD iterations.
-In this work, they explicitly calculated the form of the NTK for such vanilla RNNs and used it to show that, in the infinite width limit, the NTK does not vary over GD iterations.
+To summarize the work so far, I have discussed the NTK, expained why for recurrent dynamical models it is a linear operator on 3-tensors and finally I've discussed how to work with such a weird object. In this section, I will introduce the decomposition in my main paper, breaking the recurrent NTK for these general models into a product:
+$$\Phi = \mathcal{P} \mathcal{K} \mathcal{P}^*$$
+where \(\mathcal{P, K}\) are linear operators themselves, which I'll now define, and \(\mathcal{P}^*\) denotes the <i>Hermitian adjoint</i> of the operator \(\mathcal{P}\) (typically just the transpose of the discretized matrix). 
+</p>
+
+
+<p>
+I gave the operators the following names: 
+<br>
+<br>
+<ol style="max-width:45%; font-size: .8cm; text-align:center; text-indent: 0;">
+    <li> \(\mathcal{P}\) the <i>Propagation Operator</i> which integrates perturbations to the hidden state dynamics forwards over time. This is exactly the Green's function of the model dynamics!
+        <br>
+        <br>
+    <li> \(\mathcal{K}\) the <i>Parameter Operator</i> which filters tangential perturbations to the model instantaneous dynamics (the term \(f\) in dynamics) through the parameters, essentially producing a best estimate of how to achieve those changes through the model weights and biases.
+</ol>
 </p>
 
 <p>
-In our work, we set out to instead analyze the evolution of the internal state \(h(t)\) of <i>any</i> dynamical system in the form presented above. 
-To do so, we develop operators reminiscent of the NTK
 </p>
-
-
-<p>We work in a domain of "per trial trajectories." Specifically, there is assumed to be some trial input, \(x\), driving the dynamics of a trajectory, which exists in some time range \(t \in [0, t_{end}]\). Technically, these are three tensors. The space of all such trajectories is denoted by \(\mathbb{T}\). On this space, assuming all inputs \(x\) are from some distribution of trial inputs \(X\), we define an inner product by taking an average of the component-wise, trial-wise and time-wise multipied signals:</p>
-
-<p>$$\langle p, q \rangle_X := \underset{\substack{x \sim X\\t \in [0, t_{end}]}}{\mathbb{E}} \Big[p(t|x)^T q(t|x)\Big]$$</p>
-
-<p> Naturally, this defines a norm on the space. Typically, I'll assume \(X\) as the training or testing set and drop it in the notation.</p>
-
-<p>Consider the problem of steering a dynamical system on a bunch of inputs to match some target output. Explicitly, define a <i>hidden state</i> dynamical system \(z(t,\theta|x)\) on trial inputs \(x \sim X\), an <i>input trial distribution</i> with dynamics 
-$$\frac{d}{dt} z(t,\theta|x) = f(z(t|x), x(t), \theta); \, z(0|x) = z_0,$$
-where \(\theta\) are some parameters. We let \(Z(\theta)\) denote the state of the system in \(\mathbb{T}\) as a 3-tensor, the output of our model after time-stepping on all trials. We then define a loss function \(\ell(z(t|x), \phi)\) at every time \(t\) and trial \(x \sim X\), which may depend on some output weights (the output parameters \(\theta\)) and targets, \(y^*(t|x)\), in a supervised context. Specifically, the mean loss signal is:
-$$L(\theta, \phi) :=  \|\ell(Z(\theta), \phi)\|_X$$
-GD iteratively perturbs the parameters \(\theta, \phi\) to adjust the dynamics, to minimize this loss, i.e. we solve:
-$$\arg \min_{\theta, \phi} (L(\theta, \phi)),$$
-specifically by iteratively choosing the steepest descent directions, \(\nabla_{\theta} L, \nabla_{\phi} L\), and stepping negatively in this direction weighted by a small learning rate, \(\eta\). 
-</p>
-
-<h2>RNN Example in Depth</h2>
-
-<p>Consider
-$$\dot z(t|x) = -z(t|x) + W \sigma(z(t|x)) + W_{in} x(t).$$
-Then, 
-$$J_z(t|x) = -\text{Id} + W \text{diag}(\nabla_{z(t|x)} \sigma).$$
-Suppose we focus on learning \(\theta = W\), so that 
-$$J_\theta(t|x) = \sigma(z(t|x))^T \otimes \text{Id},$$
-and the kernel for the parameter operator is 
-$$k(t, t_0 | x, x_0) = J_\theta(t|x) \otimes_{2} J_\theta(t|x)^T = \sigma(z(t|x))^T \sigma(z(t_0|x_0)) \text{Id}.$$
- 
-</p>-->
-<!--
-<p>
-Many tasks in machine learning and computational neuroscience can be framed as training a parameterized dynamical system model to match some behavior over a variety of inputs. 
-In supervised contexts, where the inputs, \(x \sim X\), are specified and have corresponding targets, \(y^*\), Gradient Descent (GD) is typically used to fit the parameters of such a model. 
-Let \(h(t)\) denote the hidden state of this dynamical system at feed-forward time \(t\). 
-</p>
--->
-
-
 
 <div class="top_bar" style="left: 30px;">
 <a href="index.html" style="text-decoration: none;">goto: main</a>
