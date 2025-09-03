@@ -3,7 +3,7 @@
 
 html {
 	background-color: black;	
-	zoom: 75%;
+    zoom: 65%;
 }
 
 
@@ -26,12 +26,14 @@ code {
 }
 
 .main_text {
-    border: 5px solid grey;
+    border: 2px solid grey;
     background-color: white;
     width: 40cm;
     margin: auto;
     padding-bottom: 5cm;
-    border-radius: 25px;
+    padding-left: 7cm;
+    padding-right: 7cm;
+    border-radius: 15px;
 }
 
 .center_text {
@@ -43,11 +45,12 @@ body {
     margin: auto;
     padding: 10px;
     margin-top: 1cm;
+    font-family: Roboto;
 }
 
 h1,h2,h3,h4,h5 {
     text-align: center;
-    font-family: 'Times New Roman', serif;
+/*    font-family: 'Times New Roman', serif; */
     padding-bottom: 0px;
     margin-bottom: 0px;
 }
@@ -76,11 +79,26 @@ hr {
     margin-bottom: 0.8cm;
 }
 
+@font-face {
+    font-family: testfont;
+    src: url(AnonymousPro-Regular.tff);
+}
+
 p {
     font-size: 0.8cm;
     width: 95%;
     margin: auto;
     text-indent: 50px;
+    font-weight: 360;
+    line-height: 1.3cm;
+}
+
+p b {
+    font-weight: 450;
+}
+
+a {
+    font-weight: 367;
 }
 
 ol {
@@ -183,7 +201,7 @@ table {
     border-collapse: collapse;
     margin: 25px 0;
     font-size: 0.8cm;
-    font-family: sans-serif;
+/*    font-family: sans-serif;*/
     min-width: 400px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     background: url(https://astro.uni-frankfurt.de/wp-content/uploads/2014/01/White-Paper-Texture-Background-520x390.jpg);
@@ -208,4 +226,3 @@ td {
 tbody tr {
     border: 3px solid black;
 }
-

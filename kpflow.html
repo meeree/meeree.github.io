@@ -1,6 +1,7 @@
 <html style="background: url(art/modes_poster.png);
       background-size: repeat; 
-      background-size: 50%;">
+      background-size: 50%;"
+>
 <head>
 <meta name="description" content="James Hazelden">
 <link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
@@ -24,7 +25,7 @@
 
 
 <div class="main_text">
-<h1>Unpacking K-P Flow:<br><span style = "font-size: 1.4cm; color: #A00;">The Geometry of GD Learning in General Recurrent Models</span></h1>
+<h1>Unpacking K-P Flow:<br><span style = "font-size: 1.4cm; color: #555;">The Geometry of GD Learning in General Recurrent Models</span></h1>
 <hr>
 
 <table style="margin-left: auto; margin-right: auto; width: 80%;font-size:.8cm; border-collapse:separate; border:solid black 3px; border-radius:6px;">
@@ -163,18 +164,18 @@ Here, \(\eta\) is a learning rate, which I'll just assume is \(1\) throughout th
 <p>
 Now, before getting into the details of the objects involved, the general idea (which turns out to work correctly) is simply as follows. Firstly, define the <i>Instantenous Error Signal</i>, Err, by
 $$\text{Err} := \nabla_{z} \ell(y, y^*).$$
-For example, when we use a squared error loss, \(\ell(y, y^*) := \| y - y^*\|\), the error signal is \(\text{Err} = W_{out}^T (y - y^*)\), a simple residual projected onto the row space of \(W_{out}\). Define a parameter Jacobian \(J_\theta := \nabla_theta h\). Then, by the chain rule, 
-$$\nabla_\theta L = J_\theta^T \text{Err}.$$
+For example, when we use a squared error loss, \(\ell(y, y^*) := \| y - y^*\|\), the error signal is \(\text{Err} = W_{out}^T (y - y^*)\), a simple residual projected onto the row space of \(W_{out}\). Then, by the chain rule, 
+$$\nabla_\theta L = (\frac{d h}{d \theta})^T \text{Err}.$$
 Given this parameter change, the hidden state itself will approximately change by 
-$$\nabla h = -J_\theta \cdot \nabla_\theta L = -J_\theta \cdot J_\theta^T \text{Err}.$$
-The outer product \(J_\theta \cdot J_\theta^T\) is referred to as the <i>Neural Tangent Kernel (NTK)</i>.
+$$\nabla h = -\frac{d h}{d \theta} \cdot \nabla_\theta L = -\frac{d h}{d \theta} \cdot \frac{d h}{d \theta}^T \text{Err}.$$
+The Jacobian outer product \(\frac{d h}{d \theta} \cdot \frac{d h}{d \theta}^T\) is referred to as the <i>Neural Tangent Kernel (NTK)</i>.
 </p>
 
 <p>
-<b>The NTK is a tensor operator</b> In the classical NTK literature, the model considered is a multi-layer perceptron neural network with scalar output, so there is no notion of time, \(t\), and no spatial (hidden unit) dimension. Hence, the NTK is a matrix comparing alignment based on the task inputs, \(x\). In our case, however, the NTK is actually a tensor operator. In a Pytorch implementation, for example, the hidden state will have the form [B, T, H] over batch inputs, \(x\), times, \(t\), and hidden units. The quantity \(J_\theta\) thus has the form [B, T, H, M], where \(M\) is the size of the flattened model parameters. Finally, \(\Theta\) is an linear operator on the space of tensors of the form [B, T, H]. If we discretize it, it will be a <i>massive</i> matrix of shape B*T*H by B*T*H. If indexed in Pytorch, the of \(\Phi\) are given by 
+<b>The NTK is a tensor operator</b> In the classical NTK literature, the model considered is a multi-layer perceptron neural network with scalar output, so there is no notion of time, \(t\), and no spatial (hidden unit) dimension. Hence, the NTK is a matrix comparing alignment based on the task inputs, \(x\). In our case, however, the NTK is actually a tensor operator. In a Pytorch implementation, for example, the hidden state will have the form [B, T, H] over batch inputs, \(x\), times, \(t\), and hidden units. The quantity \(\frac{d h}{d \theta}\) thus has the form [B, T, H, M], where \(M\) is the size of the flattened model parameters. Finally, \(\Theta\) is an linear operator on the space of tensors of the form [B, T, H]. If we discretize it, it will be a <i>massive</i> matrix of shape B*T*H by B*T*H. If indexed in Pytorch, the of \(\Phi\) are given by 
 $$\Phi: \mathbb{R}^{B\times T \times H} \rightarrow \mathbb{R}^{B \times T \times H}$$
-$$\Phi[b, t, h, b_0, t_0, h_0] = \sum_{m=1}^M J_\theta[b, t, h, m] J_\theta[b_0, t_0, h_0, m].$$
-Formally, this is a tensor product on \(J_\theta\) where the parameter dimension is contracted (see my <a href="tensor_calc">blog post going into more depth on tensor calculus</a>). The fact that the NTK is a tensor operator for such general recurrent models has pros and cons. Pros include that it encapsulates a <i>massive</i> amount of information, including insights into GD learning at very granular levels given by eigenfunctions. Indeed, in the next section I'll discuss some of the ways we can <i>reduce the operator</i> to generate different perspectives on the GD learning. However, this is also a since it makes the whole object harder to understand, requiring some tensor math. Another major con is the massive size of this object. Even for very small problems it can be huge (e.g. 100 neurons, batch size 100 and 100 forward-pass times results in \(\Phi\) being 1m by 1m when discretized). Thus, advanced matrix-free methods that do not actually compute the full discretized operator are needed to work with \(\Phi\) (see <a href="trace_estimation">my blog using trace estimation for the NTK</a>, for example).
+$$\Phi[b, t, h, b_0, t_0, h_0] = \sum_{m=1}^M \frac{d h}{d \theta}[b, t, h, m] \frac{d h}{d \theta}[b_0, t_0, h_0, m].$$
+Formally, this is a tensor product on \(\frac{d h}{d \theta}\) where the parameter dimension is contracted (see my <a href="tensor_calc">blog post going into more depth on tensor calculus</a>). The fact that the NTK is a tensor operator for such general recurrent models has pros and cons. Pros include that it encapsulates a <i>massive</i> amount of information, including insights into GD learning at very granular levels given by eigenfunctions. Indeed, in the next section I'll discuss some of the ways we can <i>reduce the operator</i> to generate different perspectives on the GD learning. However, this is also a since it makes the whole object harder to understand, requiring some tensor math. Another major con is the massive size of this object. Even for very small problems it can be huge (e.g. 100 neurons, batch size 100 and 100 forward-pass times results in \(\Phi\) being 1m by 1m when discretized). Thus, advanced matrix-free methods that do not actually compute the full discretized operator are needed to work with \(\Phi\) (see <a href="trace_estimation">my blog using trace estimation for the NTK</a>, for example).
 </p>
 
 <h3>Working with Tensor Operators</h3>
@@ -231,12 +232,20 @@ where \(\mathcal{P, K}\) are linear operators themselves, which I'll now define,
 I gave the operators the following names: 
 <br>
 <br>
-<ol style="max-width:45%; font-size: .8cm; text-align:center; text-indent: 0;">
+<ol style="max-width:65%; font-size: .8cm; text-align:center; text-indent: 0;">
     <li> \(\mathcal{P}\) the <i>Propagation Operator</i> which integrates perturbations to the hidden state dynamics forwards over time. This is exactly the Green's function of the model dynamics!
-        <br>
-        <br>
+        <br><br>
     <li> \(\mathcal{K}\) the <i>Parameter Operator</i> which filters tangential perturbations to the model instantaneous dynamics (the term \(f\) in dynamics) through the parameters, essentially producing a best estimate of how to achieve those changes through the model weights and biases.
 </ol>
+</p>
+
+<p>
+</p>
+
+<h3>The \(\mathcal{P}\) Operator</h3>
+
+<p>
+First, we 
 </p>
 
 <p>
