@@ -24,7 +24,7 @@
 
 
 <div class="main_text">
-<h1>Unpacking K-P Flow:<br><span style = "font-size: 1cm;">An Operator Decomposition of the Gradient Flow of a Recurrent Dynamical System</span></h1>
+<h1>Unpacking K-P Flow:<br><span style = "font-size: 1.4cm; color: #A00;">The Geometry of GD Learning in General Recurrent Models</span></h1>
 <hr>
 
 <table style="margin-left: auto; margin-right: auto; width: 80%;font-size:.8cm; border-collapse:separate; border:solid black 3px; border-radius:6px;">
@@ -52,32 +52,185 @@
 <br>
 
 
-<p style="text-align:center;">
-<b style="font-size: .8cm;">Synopsis</b><br>
+<p class="center_text">
+<b style="font-size: .89cm;">Synopsis</b><br>
 This blog post provides a more intuitive exploration of parts our main paper, linked above, which broadly explores the gradient flow of general recurrent models. 
 An efficient and in-development package with examples is linked above. See accompanying blog posts on my main page exploring specific aspects of the code. 
 </p>
 <br>
 <br>
 
-<ol style="max-width:45%; font-size: .8cm; text-align:center; list-style-type: none;">
+<ol style="max-width:45%; font-size: .8cm; text-align:center; text-indent: 0; list-style-type: none;">
 	<li> <b>Table of Contents</b>
-    <li> <a href="#intro">Introduction and Motivation</a>
-	<li> <a href="#theory">Theoretical Background</a>
+    <li> <a href="#motiv">Broader Motivation and Prior Work</a>
+    <li> <a href="#intro">Introduction</a>
+	<li> <a href="#methods">Methods</a>
 	<li> <a href="#examples">Examples and Intuition</a>
 	<li> <a href="#results">Results</a>
 </ol>
 
 <br>
-<br>
 <hr>
 
-<h1 id="intro">Introduction and Motivation</h1>
+<p class = "center_text">
+<u>TLDR</u><br>
+<i><b>Q: </b>Can we track the evolution of a dynamical system trained by Gradient Descent (GD)?</i><br>
+<i><b>A: </b>Yes, but the NTK involves tensor calculus. We need new geometric intuition and dynamical tools.</i>
+</p>
+
+<br>
+<br>
+
+<img src="schem_gd_flow.png" width=80%/>
+<br>
+
+
+<!--
+<p>
+Suppose we have some time-varying dynamical system model with tangential dynamics denoted by \(f\), given by a set of vectorized parameters \(\theta\). More specifically, the model takes in some input trajectory, \(x(t)\), for times \(t \in [0, t_{end}]\) and, using this, produces a so-called hidden state trajectory \(h(t)\) by simulating the following initial value problem:
+$$\frac{d}{d t} h(t, x) = f(h(t, x), x(t), \theta); \text{ where } h(0) = h_0.$$ 
+We may drop the \(x\) above to write simply \(h(t)\) at some points later. Note this is very general: the model may consist of network of neurons, where \(\theta\) are the parameters, or may have a very different form. 
+</p>
+<p>
+In a supervised learning context (e.g. in optimal control or deep learning), we typically want to <i>train</i> this model on a particular dataset of trial inputs \(x \sim X\), so that the network output mimics some target output, \(y^*(t, x)\), on each input-conditioned trial.
+</p>
+
+To summarize notation so far:
+$$\theta \text{ : Model parameters,}$$
+$$x(t) \text{ : Input at time } t \in [0, t_{end}]$$
+$$h(t, x) \text{ : Hidden state at time } t \text{ given an input } x.$$
+
+</p>-->
+
+<h1 id="motiv">Broader Motivation and Prior Work</h1>
 
 <br>
 
 <p>
-Many tasks in machine learning and computational neuroscience can be framed as training a dynamical system to mimic some behavior over a variety of inputs, typically in a way that generalizes well to not-seen inputs.
+<b>Recurrent Models in Neuroscience and ML</b> Recurrent models in machine learning are a powerful tool that can mimic sequential behavior when fit to data. Practically, this can be used to solve a variety of tasks in deep learning and control. Furthermore, such models can be used as a proxy for understanding how circuity in the brain forms so-called <i>neural manifolds</i>, consisting of low-dimensional dynamical motifs such as fixed points and attractors. In multi-task learning contexts, recurrent models give insights solving complex continual learning or compositional problems.
+</p>
+
+<br>
+
+<p>
+<b>Many, Many Recurrent Architectures</b> Classically, in control, the most common recurrent model is the Linear Time Invariant (LTI) controller, which is a linear dynamical system that can be trained on a variety of problems and is well analyzed theoretically. In deep learning, the most classical model is the Recurrent Neural Network (RNN), with non-linear time-stepping dynamics. Building on this model are GRUs and LSTMs, which train better, avoiding pitfalls of vanishing and exploding gradients. More recently, there are many diverse recurrent architectures in deep learning, including those with dynamical synapses (MPNs) or State-Space Models (SSMs). Outside of these contexts, we can look to physics and neuroscience to see a very wide range of complex network-based recurrent dynamical systems, such as spin-glasses, Hodgkin-Huxley biophysical neural networks, Hopfield neural networks, energy-based models, and many, many more. 
+</p>
+
+<br>
+
+<p>
+<b>Training Recurrent Models</b> In control and deep learning, the primary means of "training" such recurrent models is dynamically adapting their parameters (typically weights of the recurrent or output connections) with (potentially stochastic or accelerated) Gradient Descent (GD). More specifically, on discrete models like RNNs or GRUs, we use Backpropagation Through Time (BPTT) to efficiently compute gradients, which are then used to incrementally adjust the parameters. In optimal control or continuous Neural ODEs, this may be instead be labeled as the <i>adjoint method</i>, but it was proven long ago that BPTT and the adjoint method are exactly the same thing. 
+</p>
+
+<br>
+
+<p>
+<b>Tracking Trained Dynamics</b> In this study, we investigated how the dynamics of a recurrent model trained with GD evolve. More specifically, we define operators that, when composed together, define the <i>hidden-state gradient flow</i> of the a general parameterized recurrent dynamical system. 
+</p>
+
+<h1 id="intro">Introduction</h1>
+
+<h3>Gradient Descent (GD) Setup</h3>
+
+<p>
+<b>A General Recurrent Model</b> As described, we consider a recurrent dynamical system, trained with GD to approximately mirror target trajectories given a variety of time-varying inputs. We let \(h(t)\) denote the model's hidden state, and \(x(t)\) denote a sample task input. The variable \(t\) denotes the forward pass time and exists in a given time range \([0, t_{end}]\). During the forward-pass inference, an individual task input is chosen, \(x(t)\), from a given distribution of all task inputs; then, the model state \(h(t)\) is simulated from an initial state \(h_0\) to time \(t_{end}\), driven by the input \(x(t)\). The dynamics can be continuously specified or discretely with little change in the mathematics below, so we use assume time is continuous. In this case, the model dynamics take the form:
+$$\frac{d}{dt} h(t) = f(h(t), x(t), \theta), \text{ for } t \in (0, t_{end}]; \text { with } h(0) = h_0.$$
+Here, \(\theta\) denote the model parameters (e.g., weights and biases) and \(f\) models the tangential dynamics of the hidden state. 
+</p>
+
+<p>
+<b>Defining the Task</b> For each input \(x(t)\) we associate and desired output target \(y^*(t)\). Furthermore, we define an output function of the hidden state, e.g., the simple affine map:
+$$y(t) = W_{out} z(t) + b_{out}.$$
+Then, the goal is to minimize a loss function \(\ell(y(t), y^*(t))\) on all possible inputs and at all times. In particular, we define the loss as an average (denoted by \(\langle \cdot \rangle_{x,t}\)):
+$$L := \langle \ell(y(t), y^*(t)) \rangle_{x,t}.$$
+</p>
+
+<p>
+<b>Training the Model with GD</b>
+The goal is to minimize the loss \(L\) by tuning the parameters of the model, \(\theta\). To do so, we want to find the best parameters:
+$$\theta^* := \arg \min_\theta L.$$
+This is typically done by GD, where the parameters are iteratively updated by travelling down the <i>steepest direction in Euclidean parameter space</i>. Specifically, letting \(\delta \theta\) be the perturbation to the parameters at a particular instant in GD, it is given by:
+$$\delta \theta := -\eta \nabla_\theta L.$$
+Here, \(\eta\) is a learning rate, which I'll just assume is \(1\) throughout the rest of this blog for simplicity. 
+</p>
+
+<h3>The Hidden State GD Flow and NTK</h3>
+
+<p>
+<b>Tracking the GD Flow</b> We would like to track certain quantities as they evolve under GD. The simplest quantity to track are the parameters, defining the so-called <i>parameter GD flow</i>. However, this quantity is ultimately a proxy for the actual dynamics of the hidden state, which also evolves as GD trains the model. We would like to track how this quantity itself evolves in a meaningful way. The hidden state dynamics can be envisioned as a large vector field, conditioned on the particular input you give the model. 
+</p>
+
+<p>
+Now, before getting into the details of the objects involved, the general idea (which turns out to work correctly) is simply as follows. Firstly, define the <i>Instantenous Error Signal</i>, Err, by
+$$\text{Err} := \nabla_{z} \ell(y, y^*).$$
+For example, when we use a squared error loss, \(\ell(y, y^*) := \| y - y^*\|\), the error signal is \(\text{Err} = W_{out}^T (y - y^*)\), a simple residual projected onto the row space of \(W_{out}\). Define a parameter Jacobian \(J_\theta := \nabla_theta h\). Then, by the chain rule, 
+$$\nabla_\theta L = J_\theta^T \text{Err}.$$
+Given this parameter change, the hidden state itself will approximately change by 
+$$\nabla h = -J_\theta \cdot \nabla_\theta L = -J_\theta \cdot J_\theta^T \text{Err}.$$
+The outer product \(J_\theta \cdot J_\theta^T\) is referred to as the <i>Neural Tangent Kernel (NTK)</i>.
+</p>
+
+<p>
+<b>The NTK is a tensor operator</b> In the classical NTK literature, the model considered is a multi-layer perceptron neural network with scalar output, so there is no notion of time, \(t\), and no spatial (hidden unit) dimension. Hence, the NTK is a matrix comparing alignment based on the task inputs, \(x\). In our case, however, the NTK is actually a tensor operator. In a Pytorch implementation, for example, the hidden state will have the form [B, T, H] over batch inputs, \(x\), times, \(t\), and hidden units. The quantity \(J_\theta\) thus has the form [B, T, H, M], where \(M\) is the size of the flattened model parameters. Finally, \(\Theta\) is an linear operator on the space of tensors of the form [B, T, H]. If we discretize it, it will be a <i>massive</i> matrix of shape B*T*H by B*T*H. If indexed in Pytorch, the of \(\Phi\) are given by 
+$$\Phi: \mathbb{R}^{B\times T \times H} \rightarrow \mathbb{R}^{B \times T \times H}$$
+$$\Phi[b, t, h, b_0, t_0, h_0] = \sum_{m=1}^M J_\theta[b, t, h, m] J_\theta[b_0, t_0, h_0, m].$$
+Formally, this is a tensor product on \(J_\theta\) where the parameter dimension is contracted (see my <a href="tensor_calc">blog post going into more depth on tensor calculus</a>). The fact that the NTK is a tensor operator for such general recurrent models has pros and cons. Pros include that it encapsulates a <i>massive</i> amount of information, including insights into GD learning at very granular levels given by eigenfunctions. Indeed, in the next section I'll discuss some of the ways we can <i>reduce the operator</i> to generate different perspectives on the GD learning. However, this is also a since it makes the whole object harder to understand, requiring some tensor math. Another major con is the massive size of this object. Even for very small problems it can be huge (e.g. 100 neurons, batch size 100 and 100 forward-pass times results in \(\Phi\) being 1m by 1m when discretized). Thus, advanced matrix-free methods that do not actually compute the full discretized operator are needed to work with \(\Phi\) (see <a href="trace_estimation">my blog using trace estimation for the NTK</a>, for example).
+</p>
+
+<h3>Working with Tensor Operators</h3>
+
+<p>
+As mentioned in the prior section, the full empirical NTK for recurrent models is a linear operator on a space of 3-tensors (discretely of shape [B, T, H]). In this section, I'll discuss building some more intuition and practical tools for working with such operators. Indeed, it may be tempting to think that working with such a massive, complex objective is overcomplicating things. However, this object exactly matches Pytorch without any simplication and <i>can be simplified after-the-fact, instead of simplifying at the outset</i>. 
+</p> A
+
+<p>
+<b>Reduced <i>Views</i></b> A simple way to work with this complex operator is to reduce it into simpler "views". The operator itself informs how gradient updates to the hidden state are structured over time, batch inputs and hidden units, which is a ton of information. Sometimes, we would like to know in what subspaces the updates will reside, on average, without consider time or batches. Or, as another example, we want to consider where most of the updates will be concentrated as a signal over time and batches, without thinking about the individual hidden units. 
+</p> <p>
+To generate such perspectives, we define a method of reducing the operator over particular axes. getting
+</p>
+
+<p>
+<b>Full Operator SVD</b>
+</p>
+
+
+<h2>Decomposing the NTK into \(\mathcal{P}\) and \(\mathcal{K}\)</h2>
+
+
+
+<!--
+<p>
+For intuition, in the following discussion, we present the NTK in a discrete, realistic context, where time and batch trials are finite. 
+<b>NTK in Discrete Time</b> In Pytorch, the hidden state would be a 3-tensor of shape [B, T, H] over batches, forward-pass times, and hidden units. We can track how this tensor is perturbed after each step of GD. To do so, define the hidden-state parameter Jacobian, which, in this Pytorch context, would have shape [B, T, H, M], where M is the parameter count. We can define this by:
+$$J_\theta[b, t, h, m] := \frac{\partial h[b, t, h]}{\partial \theta[m]}.$$
+First, define an <i>Instantenous error signal</i> by 
+$$\text{Err}[b, t, h] := \nabla{\ell(y[b,t,h], y^*[b,t,h])}{\nabla z[b,t,h]}.$$
+For example, when \(\ell(y, y^*) = \| y - y^* \|^2\) is a squared error, then \(\text{Err} = 2 W_{out}^T (y - y^*)\) is the residual signal, projected onto the row space of \(W_{out}\). 
+</p>
+
+<p>
+Using Err, from the multi-variate (tensor) chain rule (see my <a href="tensor_calc.html">other blog post</a> discussing this in detail), we have
+$$\delta_\theta[m] := \nabla_\theta L[m]  = \langle  J_\theta[b_0, t_0, h_0, m] \text{Err}[b_0,t_0,h_0] \rangle_{b_0, t_0, h_0},$$
+i.e. we average all <i>vector-jacobian products (vjp)</i> of the form \(J_\theta^T \text{Err}\). Then, given this parameter change, the hidden state approximately changes according to \(J_\theta\), i.e.
+$$\delta h[b, t, h] = J_\theta[b,t,h] \cdot \delta \theta.$$
+So, finally, if we define the <i>hidden state NTK operator</i>, which is formally a <b>tensor linear operator</b> on tensors of the form [B,T,H], given by
+$$\Theta[b,t,h, b_0, t_0, h_0] = \sum_m J_\theta[b,t,h,m] \cdot J_\theta[b_0, t_0, h_0,m],$$
+then 
+$$\delta h = \Theta \cdot \text{Err},$$
+where the product contracts the final three axes of \(\Theta\) with the error signal. 
+</p>
+
+
+
+<p>
+Many tasks in machine learning and neuroscience can be framed as training a dynamical system to mimic some behavior over a variety of inputs, typically in a way that generalizes well to not-seen inputs. 
+Experimentally, neural activity in the brain may often form simple dynamical solutions composed of motifs such as fixed points and attractors, all existing on a so-called low-dimensional <i>neural manifold</i>. 
+Furthermore, in practice, when Recurrent Neural Networks (RNNs) or other, more diverse models are trained on specific tasks, it is often observed that the learned solution exhibits nice structure, such as compositionality or sharing of subspaces for multiple tasks or using simple dynamical low-dimensional motifs for a single task. 
+However, understanding how a recurrent 
+
+Dynamical systems can form diverse, low-dimensional solutions to complex tasks by composing simple dynamical motifs such as fixed points and attractors. 
+Experimentally, it is
+
 More specifically, in a supervised context, the model is given a time-varying input \(x(t)\), with \(t \in [0, t_{end}]\), and is tasked with minimicing a target output \(y^*(t)\) over that time window. 
 The model state, \(h(t)\), is governed by a parameterized dynamical system that is driven by the specific trial input, \(x(t)\).
 Specifically, we assume \(h(t)\) is given by a simple ODE of the following general form,
@@ -127,7 +280,7 @@ $$J_\theta(t|x) = \sigma(z(t|x))^T \otimes \text{Id},$$
 and the kernel for the parameter operator is 
 $$k(t, t_0 | x, x_0) = J_\theta(t|x) \otimes_{2} J_\theta(t|x)^T = \sigma(z(t|x))^T \sigma(z(t_0|x_0)) \text{Id}.$$
  
-</p>
+</p>-->
 <!--
 <p>
 Many tasks in machine learning and computational neuroscience can be framed as training a parameterized dynamical system model to match some behavior over a variety of inputs. 
