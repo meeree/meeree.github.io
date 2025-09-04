@@ -12,10 +12,11 @@ code {
   max-width: 70%;
   margin: auto;
   font-size: 0.6cm;
-  border: 3px dashed black;
+  border: 3px solid rgba(0,0,0,.1);
   padding: 7px;
   border-radius: 25px;
   background: url(https://astro.uni-frankfurt.de/wp-content/uploads/2014/01/White-Paper-Texture-Background-520x390.jpg);
+  background-color:rgba(0, 0, 0, 0.5);
   background-size: cover;
 }
 
@@ -78,11 +79,6 @@ hr {
     margin-bottom: 0.8cm;
 }
 
-@font-face {
-    font-family: testfont;
-    src: url(AnonymousPro-Regular.tff);
-}
-
 p {
     font-size: 0.8cm;
     margin: auto;
@@ -100,16 +96,17 @@ p + p { /* Applies to a paragraph that immediately follows another paragraph */
 }
 
 figure img {
-    padding: 10px 20px 10px 20px;
-    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1); /* Horizontal offset, Vertical offset, Blur radius, Color */
-    border-radius: 5px;
+    padding: 20px 20px 10px 20px;
+    box-shadow: 0px 0px 30px rgba(0, 0, 0, 0.15); /* Horizontal offset, Vertical offset, Blur radius, Color */
+    border-radius: 10px;
 }
 
 figcaption p {
     text-indent: 0px;
-    padding-top: 5px;
+    padding-top: 15px;
     text-align: center;
     font-size: 0.7cm;
+    padding-bottom: 10px;
 }
 
 
@@ -122,17 +119,14 @@ ol {
   max-width: 70%;
   margin: auto;
   font-size: 0.6cm;
-  border: 3px dashed black;
-  border-radius: 25px;
+  border: 3px solid rgba(0,0,0,.1);
+  border-radius: 5px;
   background: url(https://astro.uni-frankfurt.de/wp-content/uploads/2014/01/White-Paper-Texture-Background-520x390.jpg);
   background-size: cover;
-  padding-bottom: 2px;
-  padding-top: 2px;
+  padding: 10px 50px 10px 50px;
   counter-reset: item;
 }
 li {
-    padding-top: 2px;
-    padding-bottom: 2px;
     counter-increment: item;
 }
 ol ol {
