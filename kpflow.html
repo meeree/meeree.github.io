@@ -32,7 +32,7 @@
 
 <tr>
 <td  colspan=2 style="background-color: white; ">
-<b>Links</b>
+<b>Relevant Links</b>
 </td>
 </tr>
 
@@ -49,29 +49,17 @@
 
 </table>
 
-
-<br>
-
-
-<p class="center_text">
-<b style="font-size: .89cm;">Synopsis</b><br>
-This blog post provides a more intuitive exploration of parts our main paper, linked above, which broadly explores the gradient flow of general recurrent models. 
-An efficient and in-development package with examples is linked above. See accompanying blog posts on my main page exploring specific aspects of the code. 
-</p>
-<br>
-<br>
-
-<ol style="max-width:45%; font-size: .8cm; text-align:center; text-indent: 0; list-style-type: none;">
+<!--<ol style="max-width:45%; font-size: .8cm; text-align:center; text-indent: 0; list-style-type: none;">
 	<li> <b>Table of Contents</b>
     <li> <a href="#motiv">Broader Motivation and Prior Work</a>
     <li> <a href="#intro">Introduction</a>
 	<li> <a href="#methods">Methods</a>
 	<li> <a href="#examples">Examples and Intuition</a>
 	<li> <a href="#results">Results</a>
-</ol>
+</ol>-->
+
 
 <br>
-<hr>
 
 <p class = "center_text">
 <u>TLDR</u><br>
@@ -82,29 +70,18 @@ An efficient and in-development package with examples is linked above. See accom
 <br>
 <br>
 
-<figure>
-<a href="schem_gd_flow.png"><img src="schem_gd_flow.png" width=80%/></a>
-<figcaption><p><b>Figure:</b> Schematic of the K-P flow decomposition of the full NTK associated with a recurrent dynamical system, as detailed in this blog post. </p></figcaption>
-</figure>
+
+
+<p class="center_text">
+<b style="font-size: .89cm;">Synopsis</b><br>
+This blog post provides a more intuitive exploration of some parts of our main paper, linked above, which broadly explores the gradient flow of general recurrent models. 
+An efficient and in-development package with examples is linked above. See accompanying blog posts on my main page exploring specific aspects of the code. 
+</p>
+<br>
 <br>
 
-
-<!--
-<p>
-Suppose we have some time-varying dynamical system model with tangential dynamics denoted by \(f\), given by a set of vectorized parameters \(\theta\). More specifically, the model takes in some input trajectory, \(x(t)\), for times \(t \in [0, t_{end}]\) and, using this, produces a so-called hidden state trajectory \(h(t)\) by simulating the following initial value problem:
-$$\frac{d}{d t} h(t, x) = f(h(t, x), x(t), \theta); \text{ where } h(0) = h_0.$$ 
-We may drop the \(x\) above to write simply \(h(t)\) at some points later. Note this is very general: the model may consist of network of neurons, where \(\theta\) are the parameters, or may have a very different form. 
-</p>
-<p>
-In a supervised learning context (e.g. in optimal control or deep learning), we typically want to <i>train</i> this model on a particular dataset of trial inputs \(x \sim X\), so that the network output mimics some target output, \(y^*(t, x)\), on each input-conditioned trial.
-</p>
-
-To summarize notation so far:
-$$\theta \text{ : Model parameters,}$$
-$$x(t) \text{ : Input at time } t \in [0, t_{end}]$$
-$$h(t, x) \text{ : Hidden state at time } t \text{ given an input } x.$$
-
-</p>-->
+<br>
+<hr>
 
 <h1 id="motiv">Broader Motivation and Prior Work</h1>
 
@@ -144,7 +121,7 @@ Here, \(\theta\) denote the model parameters (e.g., weights and biases) and \(f\
 
 <p>
 <b>Defining the Task</b> For each input \(x(t)\) we associate and desired output target \(y^*(t)\). Furthermore, we define an output function of the hidden state, e.g., the simple affine map:
-$$y(t) = W_{out} z(t) + b_{out}.$$
+$$y(t) = W_{out} h(t) + b_{out}.$$
 Then, the goal is to minimize a loss function \(\ell(y(t), y^*(t))\) on all possible inputs and at all times. In particular, we define the loss as an average (denoted by \(\langle \cdot \rangle_{x,t}\)):
 $$L := \langle \ell(y(t), y^*(t)) \rangle_{x,t}.$$
 </p>
@@ -166,7 +143,7 @@ Here, \(\eta\) is a learning rate, which I'll just assume is \(1\) throughout th
 
 <p>
 Now, before getting into the details of the objects involved, the general idea (which turns out to work correctly) is simply as follows. Firstly, define the <i>Instantenous Error Signal</i>, Err, by
-$$\text{Err} := \nabla_{z} \ell(y, y^*).$$
+$$\text{Err} := \nabla_{h} \ell(y, y^*).$$
 For example, when we use a squared error loss, \(\ell(y, y^*) := \| y - y^*\|\), the error signal is \(\text{Err} = W_{out}^T (y - y^*)\), a simple residual projected onto the row space of \(W_{out}\). Then, by the chain rule, 
 $$\nabla_\theta L = (\frac{d h}{d \theta})^T \text{Err}.$$
 Given this parameter change, the hidden state itself will approximately change by 
@@ -175,7 +152,9 @@ The Jacobian outer product \(\frac{d h}{d \theta} \cdot \frac{d h}{d \theta}^T\)
 </p>
 
 <p>
-<b>The NTK is a tensor operator</b> In the classical NTK literature, the model considered is a multi-layer perceptron neural network with scalar output, so there is no notion of time, \(t\), and no spatial (hidden unit) dimension. Hence, the NTK is a matrix comparing alignment based on the task inputs, \(x\). In our case, however, the NTK is actually a tensor operator. In a Pytorch implementation, for example, the hidden state will have the form [B, T, H] over batch inputs, \(x\), times, \(t\), and hidden units. The quantity \(\frac{d h}{d \theta}\) thus has the form [B, T, H, M], where \(M\) is the size of the flattened model parameters. Finally, \(\Theta\) is an linear operator on the space of tensors of the form [B, T, H]. If we discretize it, it will be a <i>massive</i> matrix of shape B*T*H by B*T*H. If indexed in Pytorch, the of \(\Phi\) are given by 
+<b>The Classical NTK</b> In the classical NTK literature, the model considered is a multi-layer perceptron neural network with scalar output, so there is no notion of time, \(t\), and no spatial (hidden unit) dimension. Hence, the NTK is just a B by B matrix over all batch input trials. The NTK entries pinpoint how much a GD corrections correlate over batch trials: do corrections to the parameters proposed by two distinct task inputs agree, not overlap at all, or disagree, leading to loss when we do the actual parameter update. 
+</p> <p>
+<b>The NTK is a tensor operator</b> In our case, however, the NTK is actually a tensor operator. In a Pytorch implementation, for example, the hidden state will have the form [B, T, H] over batch inputs, \(x\), times, \(t\), and hidden units. The quantity \(\frac{d h}{d \theta}\) thus has the form [B, T, H, M], where \(M\) is the size of the flattened model parameters. Finally, \(\Theta\) is an linear operator on the space of tensors of the form [B, T, H]. If we discretize it, it will be a <i>massive</i> matrix of shape B*T*H by B*T*H. If indexed in Pytorch, the of \(\Phi\) are given by 
 $$\Phi: \mathbb{R}^{B\times T \times H} \rightarrow \mathbb{R}^{B \times T \times H}$$
 $$\Phi[b, t, h, b_0, t_0, h_0] = \sum_{m=1}^M \frac{d h}{d \theta}[b, t, h, m] \frac{d h}{d \theta}[b_0, t_0, h_0, m].$$
 Formally, this is a tensor product on \(\frac{d h}{d \theta}\) where the parameter dimension is contracted (see my <a href="tensor_calc">blog post going into more depth on tensor calculus</a>). The fact that the NTK is a tensor operator for such general recurrent models has pros and cons. Pros include that it encapsulates a <i>massive</i> amount of information, including insights into GD learning at very granular levels given by eigenfunctions. Indeed, in the next section I'll discuss some of the ways we can <i>reduce the operator</i> to generate different perspectives on the GD learning. However, this is also a since it makes the whole object harder to understand, requiring some tensor math. Another major con is the massive size of this object. Even for very small problems it can be huge (e.g. 100 neurons, batch size 100 and 100 forward-pass times results in \(\Phi\) being 1m by 1m when discretized). Thus, advanced matrix-free methods that do not actually compute the full discretized operator are needed to work with \(\Phi\) (see <a href="trace_estimation">my blog using trace estimation for the NTK</a>, for example).
@@ -184,7 +163,7 @@ Formally, this is a tensor product on \(\frac{d h}{d \theta}\) where the paramet
 <h3>Working with Tensor Operators</h3>
 
 <p>
-As mentioned in the prior section, the full empirical NTK for recurrent models is a linear operator on a space of 3-tensors (discretely of shape [B, T, H]). In this section, I'll discuss building some more intuition and practical tools for working with such operators. Indeed, it may be tempting to think that working with such a massive, complex objective is overcomplicating things. However, this object exactly matches Pytorch without any simplication and <i>can be simplified after-the-fact, instead of simplifying at the outset</i>. As we will see later, keeping the full operator in all its complexity allows us to further decompose it into individual components: \(\mathcal{P}\) and \(\mathcal{K}\), the former which intergrates perturbations independently over input trials and the latter which filters perturbations through the parameters.
+As mentioned in the prior section, the full empirical NTK for recurrent models is a linear operator on a space of 3-tensors (discretely of shape [B, T, H]). In this section, I'll discuss building some more intuition and practical tools for working with such operators. Indeed, it may be tempting to think that working with such a massive, complex objective is overcomplicating things. However, this object exactly matches Pytorch without any simplication and <i>can be simplified after-the-fact, instead of simplifying at the outset</i>. As we will see later, keeping the full operator in all its complexity allows us to further decompose it into individual components: \(\mathcal{P}\) and \(\mathcal{K}\) which are operators that have their own distinct structure that can be exploited.
 </p> 
 <br>
 
@@ -207,18 +186,11 @@ i.e. we average over the time axes. This operator takes in tensors of shape [B, 
 <p>Below is a figure more clearly explained in my paper, illustrating the eigenfunctions of the operator \(\langle \mathcal{K} \rangle_{h}\), averaged over hidden units, as in the previous paragraph. A full description of \(\mathcal{K}\) itself is detailed below. The color of each individual trajectory indicate distinct batches. Note that each eigenfunction is a tensor of shape [B, T], as above, informing, on each batch trial, which times are most significant for stimulating the operator. For task setup and more comprehensive details, see the paper itself.
 </p>
 
-<br>
 
-<br>
 <figure>
 <a href="eigfuns_k.png"><img src="eigfuns_k.png" width=90%/></a>
-<figcaption><p><b>Figure:</b> Eigenfunctions and effective rank of the parameter operator \(\langle \mathcal{K} \rangle_{h}\), reduced over the hidden dimension. </p></figcaption>
+<figcaption><p><b>Fig 1</b> Eigenfunctions and effective rank of the parameter operator \(\langle \mathcal{K} \rangle_{h}\), reduced over the hidden dimension. </p></figcaption>
 </figure>
-
-<br>
-
-<br>
-<br>
 
 <p class="center_text"><b>The Full Operator SVD</b></p>
 <p>
@@ -226,6 +198,11 @@ Simular to the previous use case, we can take the SVD of the full operator, \(\P
 </p>
 
 <h3>Decomposing the NTK into \(\mathcal{P}\) and \(\mathcal{K}\)</h3>
+
+<figure>
+<a href="schem_gd_flow.png"><img src="schem_gd_flow.png" width=80%/></a>
+<figcaption><p><b>Fig 2</b> Schematic of the K-P flow decomposition of the full NTK associated with a recurrent dynamical system, as detailed in this blog post. </p></figcaption>
+</figure>
 
 <p>
 To summarize the work so far, I have discussed the NTK, expained why for recurrent dynamical models it is a linear operator on 3-tensors and finally I've discussed how to work with such a weird object. In this section, I will introduce the decomposition in my main paper, breaking the recurrent NTK for these general models into a product:
