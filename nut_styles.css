@@ -2,10 +2,9 @@
 }
 
 html {
-	background-color: black;	
-    zoom: 60%;
+	background-color: black;
+	zoom: 0.4;
 }
-
 
 code {
   display: block;
