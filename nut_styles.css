@@ -3,7 +3,7 @@
 
 html {
 	background-color: black;	
-    zoom: 65%;
+    zoom: 60%;
 }
 
 
@@ -86,7 +86,6 @@ hr {
 
 p {
     font-size: 0.8cm;
-    width: 95%;
     margin: auto;
     text-indent: 50px;
     font-weight: 360;
@@ -96,6 +95,24 @@ p {
 p b {
     font-weight: 450;
 }
+
+p + p { /* Applies to a paragraph that immediately follows another paragraph */
+    padding-top: 20px;
+}
+
+figure img {
+    padding: 10px 20px 10px 20px;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1); /* Horizontal offset, Vertical offset, Blur radius, Color */
+    border-radius: 5px;
+}
+
+figcaption p {
+    text-indent: 0px;
+    padding-top: 5px;
+    text-align: center;
+    font-size: 0.7cm;
+}
+
 
 a {
     font-weight: 367;
@@ -155,7 +172,6 @@ iframe {
     height: 40%;
 }
 u {
-  border-bottom:2px dotted red;
 }
 
 div.top_bar {
