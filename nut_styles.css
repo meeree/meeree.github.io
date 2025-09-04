@@ -93,7 +93,7 @@ p {
 }
 
 p b {
-    font-weight: 450;
+    font-weight: bold;
 }
 
 p + p { /* Applies to a paragraph that immediately follows another paragraph */
