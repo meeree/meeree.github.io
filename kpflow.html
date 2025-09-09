@@ -165,6 +165,12 @@ As mentioned in the prior section, the full empirical NTK for recurrent models i
 </p> 
 <br>
 
+
+<figure>
+<a href="schematic_reduction.png"><img src="schematic_reduction.png" width=100%/></a>
+<figcaption><p><b>Fig 1</b> Schematic of heirarchy of <i>views</i> attainable by different reductions of the full hidden-state NTK operator (or related operators). </p></figcaption>
+</figure>
+
 <p>
 <b>Reduced <i>Views</i></b> A simple way to work with this complex operator is to reduce it into simpler "views". The operator itself informs how gradient updates to the hidden state are structured over time, batch inputs and hidden units, which is a ton of information. Sometimes, we would like to know in what subspaces the updates will reside, on average, without consider time or batches. Or, as another example, we want to consider where most of the updates will be concentrated as a signal over time and batches, without thinking about the individual hidden units. 
 </p> <p>
@@ -187,7 +193,7 @@ i.e. we average over the time axes. This operator takes in tensors of shape [B, 
 
 <figure>
 <a href="eigfuns_k.png"><img src="eigfuns_k.png" width=90%/></a>
-<figcaption><p><b>Fig 1</b> Eigenfunctions and effective rank of the parameter operator \(\langle \mathcal{K} \rangle_{h}\), reduced over the hidden dimension. </p></figcaption>
+<figcaption><p><b>Fig 2</b> Eigenfunctions and effective rank of the parameter operator \(\langle \mathcal{K} \rangle_{h}\), reduced over the hidden dimension. </p></figcaption>
 </figure>
 
 <p class="center_text"><b>The Full Operator SVD</b></p>
@@ -199,7 +205,7 @@ Simular to the previous use case, we can take the SVD of the full operator, \(\P
 
 <figure>
 <a href="schem_gd_flow.png"><img src="schem_gd_flow.png" width=80%/></a>
-<figcaption><p><b>Fig 2</b> Schematic of the K-P flow decomposition of the full NTK associated with a recurrent dynamical system, as detailed in this blog post. </p></figcaption>
+<figcaption><p><b>Fig 3</b> Schematic of the K-P flow decomposition of the full NTK associated with a recurrent dynamical system, as detailed in this blog post. </p></figcaption>
 </figure>
 
 <p>
