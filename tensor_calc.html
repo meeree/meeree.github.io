@@ -55,11 +55,12 @@ In this article, I'll try to formally write out a "tensor chain rule" and show h
 <h2 id="intr">Tensors Preliminary</h2>
 
 <p>
-A scalar \(\xi\) is a zero tensor and a vector \(v\) is a one tensor. A matrix is effectively a two tensor. Operations on these such as dot product between vectors, matrix-vector products and matrix-matrix products can be defined through a unifying notion of a "tensor contractions" (below). 
+Any scalar \(\xi\) is a zero-tensor. A vector \(v\) is a one-tensor. A matrix is a two-tensor. Operations on these such as dot product between vectors, matrix-vector products and matrix-matrix products can be defined through a unifying notion of a "tensor contractions" (below). 
 </p>
 
 <p>
-In general, an \(m\)-tensor over a field \(\mathbb{F}\) (such as the real or complex numbers) looks like an element of \(\mathbb{F}^{n_1 \times n_2 \times \cdots \times n_m}\) for numbers \(n_1, ..., n_m \geq 1\). We can denote such a tensor by \(T\). To simplify things, it's convenient to define a <i>multi-index</i> \(alpha\) which is a tuple of numbers, e.g. using a multi-index \(\alpha = (n_1, ..., n_m)\), we can write
+In general, an \(m\)-tensor over a field \(\mathbb{F}\) (such as the real or complex numbers) looks like an element of \(\mathbb{F}^{n_1 \times n_2 \times \cdots \times n_m}\) for numbers \(n_1, ..., n_m \geq 1\). 
+We can denote such a tensor by \(T \in \mathbb{F}^{n_1 \times n_2 \times \cdots \times n_m}\). To simplify things, it's convenient to define a <i>multi-index</i> \(\alpha\) which is a tuple of numbers. For example, choosing the multi-index \(\alpha = (n_1, ..., n_m)\), we can write
 $$T \in \mathbb{F}^{\alpha} = \mathbb{F}^{n_1 \times \cdots \times n_m}.$$
 Indexing the tensor uses any other multi-index \(\beta = (p_1, ..., p_m)\) where \(\beta \leq \alpha\), meaning \(1 \leq p_i \leq n_i\) for all \(i=1...m\). Each entry of \(T\) is a scalar of the form
 $$T_\beta := T_{p_1, p_2, ..., p_m} \in \mathbb{F}.$$
@@ -70,7 +71,7 @@ $$T_\beta := T_{p_1, p_2, ..., p_m} \in \mathbb{F}.$$
 <p>
 Now, tensors are typically built from the ground up by sums of tensor products, which we now define. The <i>tensor product</i> generalizes the idea of an outer product on vectors. In particular, when we have a vector \(v \in \mathbb{F}^n\) and a vector \(w \in \mathbb{F}^m\) their outer product is 
 $$v \cdot w^T \in \mathbb{F}^{n \times m}.$$
-So, the outer product takes two one tensors and constructs a two tensor. Note that 
+So, the outer product takes a pair of one-tensors and constructs a two-tensor. Note that 
 $$(v \cdot w^T)_{i,j} = v_i \cdot w_j,$$
 i.e. the entries are multiplied entry-wise. Let \(|\) denote concatenation of two multi-indices. In general, we define the tensor product on tensors \(T \in \mathbb{F}^\alpha, S \in \mathbb{F}^\beta\) as a tensor \(T \otimes S \in \mathbb{F}^{\alpha | \beta}\) with entries
 $$(T \otimes S)_{\gamma | \delta} = T_\gamma \cdot S_\delta.$$
@@ -84,17 +85,18 @@ i.e. we write \(T\) in standard coordinates.
 <h3 id="cntr">Tensor Product Contraction</h3> 
 
 <p>
-The tensor product behaves like an outer product. Similarly, a <i>pairwise contraction</i> on two tensors behaves like an inner product. Given two vectors, the inner product componentwise the two vectors them sums along that axis:
+The tensor product behaves like an outer product. Similarly, a <i>pairwise contraction</i> on two tensors behaves like an inner product. 
+Given two vectors, the inner product multiplies the entries componentwise of the two vectors, then sums over all such products:
 $$v \cdot w = \sum_i v_i w_i.$$
 We can write this as a sum along the diagonal elements of the outer (tensor) product:
-$$v \cdot w = \sum_i (v \otimes w)_{i,i}.$$
+$$v \cdot w = \sum_i (v \otimes w)_{i,i} = \text{Tr}(v \cdot w^T).$$
 Suppose we have a tensor \(T \in \mathbb{F}^{\alpha | \gamma}\) and a tensor \(S \in \mathbb{F}^{\gamma | \beta}\), then we can define the tensor product contraction as 
 $$T \otimes_\gamma S := \sum_{\delta \leq \gamma} (T_{...,\delta} \otimes S_{\delta,...}) \in \mathbb{F}^{\alpha | \beta},$$
 where \(T_{...,\delta}\) means the sub-tensor in \(\mathbb{F}^\alpha\) with the last \(\gamma\) indices chosen and similar for \(S_{\delta,...}\). In other words, we pair up the \(\gamma\) parts and multiply them elementwise then sum all them up. The product can be read as "tensor product of \(T\) and \(S\) contracted over \(\gamma\)." We can define other contractions on tensors which are commonly used in packages like numpy such as summing along an axis of a single tensor, but the one above is all that's needed for the tensor chain rule.
 </p>
 
 <p>
-For example, suppose \(T \in \mathbb{R}^{10 \times 4 \times 4}, S \in \mathbb{R}^{4 \times 4 \times 8 \times 7}\). Then, we can take the tensor product contraction 
+<b>Example:</b> Suppose \(T \in \mathbb{R}^{10 \times 4 \times 4}, S \in \mathbb{R}^{4 \times 4 \times 8 \times 7}\). Then, we can take the tensor product contraction 
 $$(T \otimes_{(4, 4)} S)_{p,q,r} = \sum_{i=1}^4 \sum_{j=1}^4 T_{p,i,j} S_{i,j,q,r} \in \mathbb{R}.$$
 The tensor \(T \otimes_{(4,4)} S\) is in \(\mathbb{R}^{10 \times 8 \times 7}\).
 </p>
@@ -190,7 +192,9 @@ so by the tensor product rule, assuming \(D_W x = 0\), i.e. \(x\) doesn't depend
 $$D_W(W x) = ((D_W Id(W))^{tr(n,n)} \otimes_n x)^{tr(n)}.$$
 Let \(E_\alpha\) denote the ``tensor identity'' given by 
 $$E_\alpha = \sum_{i=1}^{\min(\alpha)} e_i \otimes e_i \otimes \cdots \otimes e_i,$$
-i.e. the sum of all diagonal outer products of standard unit vectors. Then, 
+i.e. the sum of all diagonal outer products of standard unit vectors. For example, 
+$$E_{n,n} = e_1 \cdot e_1^T + e_2 \cdot e_2^T + \cdots + e_n \cdot e_n^T,$$
+is just the standard \(n\) by \(n\) identity matrix. Then, 
 $$D_W(W x) = ((E_{n,n,n,n})^{tr(n,n)} \otimes_n x)^{tr(n)}$$
 $$= (E_{n,n,n,n} \otimes_n x)^{tr(m)}$$
 $$= (E_{n,n} \otimes x)^{tr(n)}$$
