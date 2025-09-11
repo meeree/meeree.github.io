@@ -170,8 +170,9 @@ $$= \text{vec}(P_1) \otimes (\sigma P_2).$$
 To interpret this, \(\sigma P_2\) selects upstream neurons and \(P_1\) selects neurons downstream, so it says that we measure how the neurons from \(P_2\) contribute to the neurons downstream specified in \(P_1\). Finally, note the action \(\text{vec}(\text{Id}_{H \times H}) \otimes_{H^2} \text{vec}(W)\) consists of multiplying the vectorized matrices and summing, so this expression is just the trace \(\text{Tr}(W)\). So, 
 $$\mathcal{K}_Q = J_\theta Q J_\theta^* = \text{Tr}(P_1) \cdot (\sigma \otimes (\sigma P_2)).$$
 Define \(\sigma_{up} := \sigma P_2\) to be the tensor of shape [B, T, H] of the upstream neurons, with non-selected neurons set to zero by \(P_2\). Furthermore, let \(n_{down} := \text{Tr}(P_1)\) which is simply the number of neurons selected by \(P_1\). Then we can write the above as
-$$\bigstar \, \underline{\mathcal{K}_Q = n_{down} \cdot (\sigma \otimes \sigma_{up})} \, \bigstar$$</span>
-
+$$\mathcal{K}_Q = n_{down} \cdot (\sigma \otimes \sigma_{up})$$</span>
+Note, finally, since we can factor \(P_2 = P_2 P_2\), \(\langle \sigma, \sigma_{up} \rangle = \langle \sigma_{up}, \sigma_{up} \rangle\), i.e. we can just write the above as the <i>covariance function restricted to the upstream neurons</i>:
+$$\bigstar \, \underline{\mathcal{K}_Q = n_{down} \cdot (\sigma_{up} \otimes \sigma_{up})} \, \bigstar$$</span>
 </p>
 
 
