@@ -140,12 +140,20 @@ As a reminder, the shape of \(J_\theta\) is [B, T, H, M] and Q is a matrix of sh
 
 <hr>
 <p class="center_text" style="padding-top:0;"><b>A Worked Example</b></p>
+
+<figure>
+<a href="K7.png"><img src="K7.png" width=30%/></a>
+<figcaption><p><b>Fig 1</b> Example network, where \(P_1\) specifies the red and green neurons, \(P_2\) specifies the blue and green neurons. Here, we have \(\text{Tr}(P_1) = 3\).</p></figcaption>
+</figure>
+
 <br>
 <p>
 <b>Defining \(Q\):</b> Consider a specific case of the Hadamard binary matrix example. Define \(P_1, P_2\) to be H-by-H diagonal binary matrices so that \(P_1\) has R ones on the diagonal, \(P_2\) has C ones on the diagonal. Define a linear mapping \(Q_{mat}\) 
-$$Q_{mat}(W) := P_1^T W P_2,$$
+$$Q_{mat}(W) := P_1 W P_2,$$
 which maps \(\mathbb{R}^{H \times H}\) to \(\mathbb{R}^{H \times H}\), <i>selecting only R rows and C columns to not zero-out/freeze based on the non-zero diagonal entries of \(P_1, P_2\)</i>. 
-Let's finally define \(Q\) as a map on \(\mathbb{R}^M = \mathbb{R}^{H^2}\), the vectorized space. 
+
+<p>
+Note, as a nice extra, but <i>totally skipable addition</i>, we can define \(Q\) as above, as a map on \(\mathbb{R}^M = \mathbb{R}^{H^2}\), the vectorized space. 
 This is done using the <a href="https://en.wikipedia.org/wiki/Vectorization_%28mathematics%29?utm_source=chatgpt.com#Compatibility_with_Kronecker_products">Krocker product identity</a>, yielding
 $$Q \theta := \text{kron}(P_2, P_1)^T \theta,$$
 where kron takes matrices of shape \(\mathbb{R}^{p, q}, \mathbb{R}^{\ell, m}\) and produces a matrix of shape \(\mathbb{R}^{p \ell, q m}\). So, \(Q\) is represented by the H\(^2\) by H\(^2\) matrix \(\text{kron}(P_2, P_1)^T\). 
@@ -154,20 +162,28 @@ I adopted the notation kron instead of \(\otimes\) because it's just confusing t
 </p>
 
 <p>
-<b>Resulting \(\mathcal{K}_Q\):</b> For the RNN, as above, 
+<b>Resulting \(\mathcal{K}_Q\):</b> Back on track. For the RNN, as above, 
 $$J_\theta = \sigma \otimes \text{vec}(\text{Id}_{H \times H}),$$
-which is a tensor of shape [B, T, H, M] = [B, T, H, H\(^2\)]. Then,
+which is a tensor of shape [B, T, H, M] = [B, T, H, H\(^2\)]. Then, we apply the mapping \(Q\), which applies \(P_1\) to the left and \(P_2\) to the right, as above, yielding (sorry this part is hard to describe cleanly):
+$$Q(J_\theta^*) = \text{vec}(P_1 \text{Id}_{H \times H}) \otimes (\sigma P_2)$$
+$$= \text{vec}(P_1) \otimes (\sigma P_2).$$
+To interpret this, \(\sigma P_2\) selects upstream neurons and \(P_1\) selects neurons downstream, so it says that we measure how the neurons from \(P_2\) contribute to the neurons downstream specified in \(P_1\). Finally, note the action \(\text{vec}(\text{Id}_{H \times H}) \otimes_{H^2} \text{vec}(W)\) consists of multiplying the vectorized matrices and summing, so this expression is just the trace \(\text{Tr}(W)\). So, 
+$$\mathcal{K}_Q = J_\theta Q J_\theta^* = \text{Tr}(P_1) \cdot (\sigma \otimes (\sigma P_2)).$$
+Define \(\sigma_{up} := \sigma P_2\) to be the tensor of shape [B, T, H] of the upstream neurons, with non-selected neurons set to zero by \(P_2\). Furthermore, let \(n_{down} := \text{Tr}(P_1)\) which is simply the number of neurons selected by \(P_1\). Then we can write the above as
+$$\bigstar \, \underline{\mathcal{K}_Q = n_{down} \cdot (\sigma \otimes \sigma_{up})} \, \bigstar$$</span>
+
+</p>
+
+
+<!--
+Then,
 $$Q \otimes_M J_\theta^* = \text{vec}(P_1^T P_2) \otimes \sigma^T.$$ 
 Note here \(\sigma^T\) is thought to be shape [H, T, B]. Finally, note \(\text{vec}(\text{Id}_{H \times H}) \otimes_M \text{vec}(P_1^T P_2)\) is just the trace, \(\text{Tr}(P_1^T P_2)\), so \(\mathcal{K}_Q\) is just a scalar multiple of \(\mathcal{K}\):
 $$\mathcal{K}_Q = J_\theta \otimes_M Q \otimes_M J_\theta^*$$
 $$= \text{Tr}(P_1^T P_2) \cdot (\sigma \otimes \sigma^T).$$
 Now, recall \(P_1, P_2\) are just diagonal, binary matrices, so \(\text{Tr}(P_1^T P_2) = \# \{i | P_1[i,i] =1 \text{ and } P_2[i,i] = 1\}\), i.e. the <i>number of common columns and rows selected</i>.
 </p>
-
-<figure>
-<a href="K7.png"><img src="K7.png" width=50%/></a>
-<figcaption><p><b>Fig 1</b> Example network, where \(P_1\) specifies the red and green neurons, \(P_2\) specifies the blue and green neurons and \(\text{Tr}(P_1^T P_2) = 2\).</p></figcaption>
-</figure>
+-->
 
 <br>
 <hr>
