@@ -30,7 +30,7 @@
     <li> <a href="#intr">Tensors Preliminary</a>
     <ol style="max-width:45%; font-size: 0.8cm;">
     <li> <a href="#prod">Tensor Product</a> 
-    <li> <a href="#cntr">Tensor Product Contraction</a> 
+    <li> <a href="#cntr">Contracted Product</a> 
     </ol>
     <li> <a href="#calc">Tensor Calculus</a>
     <ol style="max-width:45%; font-size: 0.8cm;">
@@ -82,7 +82,7 @@ $$T = \sum_{\delta \leq \alpha} T_\delta \cdot e_\delta,$$
 i.e. we write \(T\) in standard coordinates.
 </p>
 
-<h3 id="cntr">Tensor Product Contraction</h3> 
+<h3 id="cntr">Contracted Product</h3> 
 
 <p>
 The tensor product behaves like an outer product. Similarly, a <i>pairwise contraction</i> on two tensors behaves like an inner product. 
@@ -145,7 +145,7 @@ $$(D_T G)_{\delta | \gamma} = \frac{d G(T)_\alpha}{d T_\delta},$$
 for specific indices \(\gamma \leq \alpha, \delta \leq \beta\). Unforunately the greek symbols make the formula above look more complex than it should be. Think of \(\alpha, \beta, \delta, \gamma\) as just \(n, m, i, j\) and pretty much everything looks the same as the Jacobian matrix.
 </p>
 
-<h3 id="prod">Product Rule</h3> 
+<h3 id="prodr">Product Rule</h3> 
 
 <p>
 A tensor product rule holds although it's difficult to think of due to non-commutativity. First, note for motivation a simple case. Suppose \(f(v), g(v)\) are vector valued function in \(\mathbb{R}^m\) and \(v \in \mathbb{R}^n\). Then, you can check that 
@@ -218,15 +218,77 @@ $$D_{W_1} f(x) = W_2 \cdot D_{W_1} \sigma(W_1 x)$$
 $$= W_2 
 </p>-->
 
+<!-- Navbars -->
+<a href="index.html" style="text-decoration: none;">
 <div class="top_bar" style="left: 30px;">
-<a href="index.html" style="text-decoration: none;">goto: main</a>
+goto: main
 </div>
+</a>
 
-
+<a href="" style="text-decoration: none;">
 <div class="top_bar" style="right: 30px;">
-<a href="" style="text-decoration: none;">goto: top</a>
-
+goto: top
 </div>
+</a>
+
+<div class="top_bar" style="top: 4vw; left: 4vw; bottom: auto; width: 6.5vw; height: 6.5vw; 
+    border-radius: 1px; border: 0;  image-rendering: pixelated; border: 1px solid grey;">
+	
+<label for="toggle" id="toggle-btn"  class="toc-clicker">
+<img style="width: 100%; height: 100%;" src="toc.png">
+</label>
+
+<input type="checkbox" id="toggle" hidden>
+
+<div id="toc" class="top_bar" style="top: 10.5vw; left: 4vw; bottom: auto; width: 15%; 
+height: 50%;  /* ADJUST */
+border-radius: 0; border: 0;  image-rendering: pixelated; border: 0; background: none;">
+
+<table class = "toctable" style="width: 100%; height: 100%; padding: 0; background: white; border-radius: 0; margin-top: 10px;">
+
+<tr><td>
+<a href="#overview">
+Overview
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#intr">
+Tensors Preliminary
+</a>
+</td></tr>
+
+
+<tr><td>
+<a href="#calc">
+Tensor Calculus 
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#prodr">
+Product Rule
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#chain">
+Chain Rule
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#exmp">
+Examples
+</a>
+</td></tr>
+
+
+</table>
+</div>
+</div>
+
+
 
 </body>
 </html>

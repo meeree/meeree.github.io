@@ -66,8 +66,8 @@ h3 {
 }
 
 h2 {
-    font-size: 1cm;
-    text-decoration: underline;
+    font-size: 1.3cm;
+  /*  text-decoration: underline;*/
     margin-bottom: 0.5cm;
 }
 
@@ -111,7 +111,9 @@ figcaption p {
 
 
 a {
-    font-weight: 367;
+    font-size: 0.8cm;
+    margin: auto;
+    font-weight: 360;
 }
 
 ol {
@@ -179,7 +181,7 @@ div.top_bar {
 }
 
 div.top_bar:hover {
-  background: pink;
+/*  background: pink;*/
 }
 
 a.main_page {
@@ -216,6 +218,44 @@ table {
     background: url(https://astro.uni-frankfurt.de/wp-content/uploads/2014/01/White-Paper-Texture-Background-520x390.jpg);
     border-radius: 10px;
 	text-align: center;
+}
+
+.toctable {
+    margin: 0;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    border: 0;
+	background: white;
+	text-align: left;
+}
+
+#toc {
+	display: none;
+}
+
+.toctable a {
+	font-size: 2.9vw;
+}
+
+
+#toggle:checked ~ #toc {
+	display: block;
+}
+.toc-clicker {
+	width: 100%;
+	height: 100%;
+	cursor: pointer;
+}
+
+
+.toctable tr td {
+	border-left: 0;
+	border-right: 0;
+	border-top: 5px;
+}
+
+.toctable tr {
+	border-left: 0;
+	border-right: 0;
 }
 
 thead tr {

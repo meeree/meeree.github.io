@@ -23,7 +23,7 @@
 </head>
 <body style="">
 <div class="main_text">
-<h1>Unpacking K-P Flow:<br><span style = "font-size: 1.4cm; color: #555;">The Geometry of GD Learning in General Recurrent Models</span></h1>
+<h1 id="top">Unpacking K-P Flow:<br><span style = "font-size: 1.4cm; color: #555;">The Geometry of GD Learning in General Recurrent Models</span></h1>
 <hr>
 
 <table style="margin-left: auto; margin-right: auto; width: 80%;font-size:.8cm; border-collapse:separate; border:solid black 3px; border-radius:6px;">
@@ -133,7 +133,7 @@ $$\delta \theta := -\eta \nabla_\theta L.$$
 Here, \(\eta\) is a learning rate, which I'll just assume is \(1\) throughout the rest of this blog for simplicity. 
 </p>
 
-<h3>The Hidden State GD Flow and NTK</h3>
+<h3 id = "ntkflow">The Hidden State GD Flow and NTK</h3>
 
 <p>
 <b>Tracking the GD Flow</b> We would like to track certain quantities as they evolve under GD. The simplest quantity to track are the parameters, defining the so-called <i>parameter GD flow</i>. However, this quantity is ultimately a proxy for the actual dynamics of the hidden state, which also evolves as GD trains the model. We would like to track how this quantity itself evolves in a meaningful way. The hidden state dynamics can be envisioned as a large vector field, conditioned on the particular input you give the model. 
@@ -145,7 +145,7 @@ $$\text{Err} := \nabla_{h} \ell(y, y^*).$$
 For example, when we use a squared error loss, \(\ell(y, y^*) := \| y - y^*\|\), the error signal is \(\text{Err} = W_{out}^T (y - y^*)\), a simple residual projected onto the row space of \(W_{out}\). Then, by the chain rule, 
 $$\nabla_\theta L = (\frac{d h}{d \theta})^T \text{Err}.$$
 Given this parameter change, the hidden state itself will approximately change by 
-$$\nabla h = -\frac{d h}{d \theta} \cdot \nabla_\theta L = -\frac{d h}{d \theta} \cdot \frac{d h}{d \theta}^T \text{Err}.$$
+$$\delta h = -\frac{d h}{d \theta} \cdot \nabla_\theta L = -\frac{d h}{d \theta} \cdot \frac{d h}{d \theta}^T \text{Err}.$$
 The Jacobian outer product \(\frac{d h}{d \theta} \cdot \frac{d h}{d \theta}^T\) is referred to as the <i>Neural Tangent Kernel (NTK)</i>.
 </p>
 
@@ -158,7 +158,7 @@ $$\Phi[b, t, h, b_0, t_0, h_0] = \sum_{m=1}^M \frac{d h}{d \theta}[b, t, h, m] \
 Formally, this is a tensor product on \(\frac{d h}{d \theta}\) where the parameter dimension is contracted (see my <a href="tensor_calc">blog post going into more depth on tensor calculus</a>). The fact that the NTK is a tensor operator for such general recurrent models has pros and cons. Pros include that it encapsulates a <i>massive</i> amount of information, including insights into GD learning at very granular levels given by eigenfunctions. Indeed, in the next section I'll discuss some of the ways we can <i>reduce the operator</i> to generate different perspectives on the GD learning. However, this is also a since it makes the whole object harder to understand, requiring some tensor math. Another major con is the massive size of this object. Even for very small problems it can be huge (e.g. 100 neurons, batch size 100 and 100 forward-pass times results in \(\Phi\) being 1m by 1m when discretized). Thus, advanced matrix-free methods that do not actually compute the full discretized operator are needed to work with \(\Phi\) (see <a href="trace_estimation">my blog using trace estimation for the NTK</a>, for example).
 </p>
 
-<h3>Working with Tensor Operators</h3>
+<h3 id="working">Working with Tensor Operators</h3>
 
 <p>
 As mentioned in the prior section, the full empirical NTK for recurrent models is a linear operator on a space of 3-tensors (discretely of shape [B, T, H]). In this section, I'll discuss building some more intuition and practical tools for working with such operators. Indeed, it may be tempting to think that working with such a massive, complex objective is overcomplicating things. However, this object exactly matches Pytorch without any simplication and <i>can be simplified after-the-fact, instead of simplifying at the outset</i>. As we will see later, keeping the full operator in all its complexity allows us to further decompose it into individual components: \(\mathcal{P}\) and \(\mathcal{K}\) which are operators that have their own distinct structure that can be exploited.
@@ -201,7 +201,7 @@ i.e. we average over the time axes. This operator takes in tensors of shape [B, 
 Simular to the previous use case, we can take the SVD of the full operator, \(\Phi\), without averaging any axes. Then, the eigenfunctions and singular values you get inform how to stimulate \(\Phi\) individually at a very granular level: at each timestep of forward evaluation of the model, hidden unit, and on each distinct input-driven trial.
 </p>
 
-<h3>Decomposing the NTK into \(\mathcal{P}\) and \(\mathcal{K}\)</h3>
+<h3 id="kpflow">Decomposing the NTK into \(\mathcal{P}\) and \(\mathcal{K}\)</h3>
 
 <figure>
 <a href="schem_gd_flow.png"><img src="schem_gd_flow.png" width=80%/></a>
@@ -209,42 +209,119 @@ Simular to the previous use case, we can take the SVD of the full operator, \(\P
 </figure>
 
 <p>
-To summarize the work so far, I have discussed the NTK, expained why for recurrent dynamical models it is a linear operator on 3-tensors and finally I've discussed how to work with such a weird object. In this section, I will introduce the decomposition in my main paper, breaking the recurrent NTK for these general models into a product:
+To summarize the work so far, I have discussed the NTK, expained why for recurrent dynamical models it is a linear operator on 3-tensors and finally I've discussed how to work with such a weird object. 
+In this section, I will introduce the decomposition in my main paper, breaking the recurrent NTK for these general models into a product:
 $$\Phi = \mathcal{P} \mathcal{K} \mathcal{P}^*$$
 where \(\mathcal{P, K}\) are linear operators themselves, which I'll now define, and \(\mathcal{P}^*\) denotes the <i>Hermitian adjoint</i> of the operator \(\mathcal{P}\) (typically just the transpose of the discretized matrix). 
 </p>
 
+<p>
+<b>Derivation</b> Let's take a step back and consider how the backpropgation forms gradients in recurrent models. 
+This process is known as Backpropagation-Through-Time (BPTT) in discrete contexts and is provably identical to the Adjoint Method in continuous contexts. 
+</p>
+<p>
+<b>Computing the Adjoint (the \(\mathcal{P}^*\) operator):</b> With the error signal, \(\text{Err} := \nabla_h \ell(y, y^*)\), as above, we backpropagate to accumulate the error signal over time in reverse time, computing the so-called <i>adjoint</i> defined by 
+$$a := \nabla_h L = \nabla_h \langle \ell \rangle_t.$$
+In particular, the backpropagation stage computes the ajdoints backwards through time as:
+$$a(t) = J_h(t)^T a(t+1) + \text{Err}(t),$$
+where \(J_h(t) = d h(t+1) / d h(t) = d f / d h(t)\) is the state-Jacobian of the model dynamics. 
+In my formulation, this is exactly what the operator \(\mathcal{P}^*\) does, describing the transformation from the error signal, \(\text{Err}\), to the adjoint, \(a\), given exactly by backpropagating, as above. 
+Essentially, the operator \(\mathcal{P}\) accumulates perturbations to the hidden state forwards through time using \(J_h\)(, while its adjoint, \(\mathcal{P}^*\), backpropagates using \(J_h^T\), as above. 
+Thus, we can think of \(\mathcal{P}\) as a <i>Forward Propagation Operator</i> while its adjoint \(\mathcal{P}^*\) is a <i>Backward Propagation Operator</i>.
+This is described in more detail below. 
+<p>
 
 <p>
-I gave the operators the following names: 
-<br>
-<br>
-<ol style="max-width:65%; font-size: .8cm; text-align:center; text-indent: 0;">
-    <li> \(\mathcal{P}\) the <i>Propagation Operator</i> which integrates perturbations to the hidden state dynamics forwards over time. This is exactly the Green's function of the model dynamics!
-        <br><br>
-    <li> \(\mathcal{K}\) the <i>Parameter Operator</i> which filters tangential perturbations to the model instantaneous dynamics (the term \(f\) in dynamics) through the parameters, essentially producing a best estimate of how to achieve those changes through the model weights and biases.
-</ol>
+<b>Computing \(\delta \theta\) (the \(\mathcal{K}\) operator):</b> Once the adjoint is computed, the parameter perturbation GD will propose is given by
+$$\delta \theta = -\langle J_\theta^T \cdot a \rangle_{x, t},$$
+where \(J_\theta^T\) is the one-step Jacobian \(d f / d \theta\). This defines the \(\mathcal{K}\) operator. In particular, \(\mathcal{K}\) maps a particular tensor \(q\) of shape [B, T, H] to a new tensor of the same shape by 
+$$(\mathcal{K} q)[b, t, i] = J_\theta[b, t, i] \cdot \langle J_\theta^T \cdot a \rangle_{x,t}.$$
 </p>
 
 <p>
+In total, \(\mathcal{K} a = \mathcal{K} \mathcal{P}^* \text{Err}\) defines the one-step perturbations, \(\delta f\) to the model proposed by GD, before integrating these up over time. 
+Integrating them over time transforms them into the actual changes \(\delta h\) to the hidden state and is exactly explained by the forward operator \(\mathcal{P}\). 
+In particular, the full GD flow is 
+$$\delta h = - \mathcal{P K P^*} (\text{Err}),$$ 
+decomposing the NTK \(\Phi = \mathcal{P K P^*}\).
 </p>
-
-<h3>The \(\mathcal{P}\) Operator</h3>
 
 <p>
-First, we 
+WHY THE ORGANIZATION MATTERS. ALSO, GIVE P VS K RANDOM INPUTS.
 </p>
 
-<p>
-</p>
-
+<a href="index.html" style="text-decoration: none;">
 <div class="top_bar" style="left: 30px;">
-<a href="index.html" style="text-decoration: none;">goto: main</a>
+goto: main
+</div>
+</a>
+
+<a href="" style="text-decoration: none;">
+<div class="top_bar" style="right: 30px;">
+goto: top
+</div>
+</a>
+
+<div class="top_bar" style="top: 4vw; left: 4vw; bottom: auto; width: 6.5vw; height: 6.5vw; 
+    border-radius: 1px; border: 0;  image-rendering: pixelated; border: 1px solid grey;">
+	
+<label for="toggle" id="toggle-btn"  class="toc-clicker">
+<img style="width: 100%; height: 100%;" src="toc.png">
+</label>
+
+<input type="checkbox" id="toggle" hidden>
+
+<div id="toc" class="top_bar" style="top: 10.5vw; left: 4vw; bottom: auto; width: 15%; 
+height: 60%;  /* ADJUST */
+border-radius: 0; border: 0;  image-rendering: pixelated; border: 0; background: none;">
+
+<table class = "toctable" style="width: 100%; height: 100%; padding: 0; background: white; border-radius: 0; margin-top: 10px;">
+
+
+<tr><td style = "text-align: center; color: black;">
+<a href="#top">
+Unpacking K-P Flow
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#motiv">
+Broader Motivation and Prior Work
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#intro">
+Introduction
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#ntkflow">
+The Hidden State GD Flow and NTK
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#working">
+Working with Tensor Operators
+</a>
+</td></tr>
+
+
+<tr><td>
+<a href="#kpflow">
+Decomposing the NTK into \(\mathcal{P}\) and \(\mathcal{K}\) 
+</a>
+</td></tr>
+
+
+</table>
 </div>
 
-<div class="top_bar" style="right: 30px;">
-<a href="" style="text-decoration: none;">goto: top</a>
 </div>
+
+
 
 </body>
 </html>

@@ -24,7 +24,7 @@
 </head>
 <body style="">
 <div class="main_text">
-<h1>Isolated Contributions of <span style="color:#777;">Neuromodulators</span> on Gradient Descent Learning Using <span style="color:#777;">KP-Flow</span></h1>
+<h1 id="top">Isolated Contributions of <span style="color:#777;">Neuromodulators</span> on Gradient Descent Learning Using <span style="color:#777;">KP-Flow</span></h1>
 <hr>
 
 <table style="margin-left: auto; margin-right: auto; width: 80%;font-size:.8cm; border-collapse:separate; border:solid black 3px; border-radius:6px;">
@@ -121,7 +121,7 @@ i.e. the original jacobian, of shape [B, T H, M], but keeping only entries in \(
 -->
 
 
-<h2>General Formulation</h2>
+<h2 id="gen">General Formulation</h2>
 
 <p>
 Consider replacing the update
@@ -138,7 +138,7 @@ $$\mathcal{K}_M := J_\theta \otimes_M Q \otimes_M J_\theta^*$$
 As a reminder, the shape of \(J_\theta\) is [B, T, H, M] and Q is a matrix of shape [M, M] and the notation \(\otimes_M\) means "contract along the \(M\) dimension." So, \(Q \otimes_M J_\theta^*\) is a tensor of shape [M, H, T, B] and thus \(J_\theta \otimes_M Q \otimes_M J_\theta^*\) is a tensor of shape [B, T, H, H, T, B], i.e. a linear operator on [B, T, H], as desired :)
 </p>
 
-<hr>
+<hr  id="exmp">
 <p class="center_text" style="padding-top:0;"><b>A Worked Example</b></p>
 <br>
 <p>
@@ -161,7 +161,7 @@ $$Q \otimes_M J_\theta^* = \text{vec}(P_1^T P_2) \otimes \sigma^T.$$
 Note here \(\sigma^T\) is thought to be shape [H, T, B]. Finally, note \(\text{vec}(\text{Id}_{H \times H}) \otimes_M \text{vec}(P_1^T P_2)\) is just the trace, \(\text{Tr}(P_1^T P_2)\), so \(\mathcal{K}_Q\) is just a scalar multiple of \(\mathcal{K}\):
 $$\mathcal{K}_Q = J_\theta \otimes_M Q \otimes_M J_\theta^*$$
 $$= \text{Tr}(P_1^T P_2) \cdot (\sigma \otimes \sigma^T).$$
-Now, recall \(P_1, P_2\) are just diagonal, binary matrices, so \(\text{Tr}(P_1^T P_2) = \# \{i | P_1[i,i] =1 \text{ and } P_2[i,i] = 1\}\), i.e. the <i>number of common columns and rows selected</i>.
+Now, recall \(P_1, P_2\) are just diagonal, binary matrices, so \(\text{Tr}(P_1^T P_2) = \# \{i | P_1[i,i] =1 \text{ and } P_2[i,i] = 1\}\), i.e. the <i>number of common columns and rows selected</i>. Note neurons selected with \(P_1\) will have 
 </p>
 
 <figure>
@@ -184,13 +184,63 @@ This makes sense, since the resulting quantity has shape [B, T, H, K]. The Jacob
 
 
 
+<!-- Navbars -->
+<a href="index.html" style="text-decoration: none;">
 <div class="top_bar" style="left: 30px;">
-<a href="index.html" style="text-decoration: none;">goto: main</a>
+goto: main
+</div>
+</a>
+
+<a href="" style="text-decoration: none;">
+<div class="top_bar" style="right: 30px;">
+goto: top
+</div>
+</a>
+
+<div class="top_bar" style="top: 4vw; left: 4vw; bottom: auto; width: 6.5vw; height: 6.5vw; 
+    border-radius: 1px; border: 0;  image-rendering: pixelated; border: 1px solid grey;">
+	
+<label for="toggle" id="toggle-btn"  class="toc-clicker">
+<img style="width: 100%; height: 100%;" src="toc.png">
+</label>
+
+<input type="checkbox" id="toggle" hidden>
+
+<div id="toc" class="top_bar" style="top: 10.5vw; left: 4vw; bottom: auto; width: 15%; 
+height: 30%;  /* ADJUST */
+border-radius: 0; border: 0;  image-rendering: pixelated; border: 0; background: none;">
+
+<table class = "toctable" style="width: 100%; height: 100%; padding: 0; background: white; border-radius: 0; margin-top: 10px;">
+
+<tr><td style = "text-align: center; color: black;">
+<a href="#top">
+Isolated Contributions of Neuromodulators
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#setup">
+Setup
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#gen">
+General Formulation
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#exmp">
+A Worked example
+</a>
+</td></tr>
+
+</table>
+</div>
 </div>
 
-<div class="top_bar" style="right: 30px;">
-<a href="" style="text-decoration: none;">goto: top</a>
-</div>
+
 
 </body>
 </html>

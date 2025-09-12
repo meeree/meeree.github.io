@@ -33,7 +33,7 @@
 This blog post explores computing NTK metrics efficiently for recurrent models, using the operators in our pre-print <a href = "https://arxiv.org/abs/2507.06381">here</a>. Find related code in  <a href ="https://github.com/meeree/kpflow/blob/main/src/kpflow/trace_estimation.py">my package</a>.
 </p>
 
-<h2>Background</h2>
+<h2 id="background">Background</h2>
 
 <p>
 Here, I'll briefly describe the mathematical preliminaries. For a more detailed introduction, see the Appendix of the pre-print above.
@@ -63,7 +63,7 @@ The operator \(\Theta := \mathcal{P K P^*}\) is thus a more-general anologue of 
 In our case, however, the NTK is an operator on tensors in \(\mathbb{T}\), of shape [B, T, H] when discretized, i.e. it is a linear operator on three-tensors. 
 </p>
 
-<h2>Motivation</h2>
+<h2 id="motiv">Motivation</h2>
 
 <p>
 Prior work has used the NTK to quantify <i>rich versus lazy</i> learning. Rich learning occurs when the hidden state representation changes a lot after we train the model with GD. This can be summarized basically as:
@@ -75,7 +75,7 @@ $$\text{KA}(\Theta_0, \Theta_f) = \frac{\text{Tr}(\Theta_0^* \Theta_f)}{\sqrt{\t
 where Tr computes the trace of the linear operator. Note that when, for example, [B, T, H] = [100, 90, 256], which is a very small network with very few batches, the discretized operator \(Theta\) can be seen as a matrix with 2,304,000 rows and columns! <b><u>In this article, I will focus on efficiently computing this expression</u></b>.
 </p>
 
-<h2>Naive Approach</h2>
+<h2 id="naive">Naive Approach</h2>
 
 <p>
 Naively, we can explictly compute \(\Phi\) as an outer product of parameter derivatives. In particular, \(\Phi\) is a tensor-product of the all parameter derivatives of the hidden state, \(z\). We can thus construct it as follows:
@@ -104,13 +104,13 @@ Theta <span style="color: #333">=</span> J <span style="color: #333">@</span> J<
 </code>
 <br>
 
-<h2> Matrix-Free Approaches</h2>
+<h2 id="matrixfree"> Matrix-Free Approaches</h2>
 
 <p>
 The Naive approach explictly computes \(J_\theta\), which is very intractable, both in memory and compute. In the following sections, the methods introduced are <i>matrix-free</i>, relying only on applications of the operator \(\Theta\) to specific vectors, never actually computing it explictly.
 </p>
 
-<h2>Preliminary: Computing Actions with VJP and JVP</h2>
+<h3>Preliminary: Computing Actions with VJP and JVP</h3>
 
 <p>
 As in <a href="https://docs.pytorch.org/tutorials/intermediate/neural_tangent_kernels.html">this</a> tutorial, this action can be efficiently computed using built-in pytorch (or jax) functionality: <i>vjp</i> and <i>jvp</i>. 
@@ -122,7 +122,7 @@ $$\text{jvp}(\phi) = J_\theta \, \phi.$$
 These operations actually implicitly compute the products using automatic differentiation, without forming \(J_\theta\). Firstly, vjp uses backwards-mode automatic differentiation, i.e. backpropagation, while jvp uses forward-mode automatic differentiation, which is more memory intensive. 
 </p>
 
-<h2>Hutch++ and Nystrom++</h2>
+<h3>Hutch++ and Nystrom++</h3>
 
 <p>
 In my code, I implement the linear operators \(\mathcal{P}, \mathcal{K}\) as classes that can be converted into scipy <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.LinearOperator.html">LinearOperators</a>.
@@ -164,7 +164,7 @@ Below, I measured the runtime and estimates of the Hutch++ estimator described a
 <img src="stats_hubbpp.png"  style="max-width:200%; max-height:200%; width:1200px; height:315px;"/>
 
 
-<h2>Optimizing Cosine Alignment</h2>
+<h2 id="cos">Optimizing Cosine Alignment</h2>
 
 <p>
 The term I'm really interested in is the NTK cosine alignment, which involves the trace of \(A^T B, A^T A, B^T B\), for operator \(A, B\). 
@@ -210,7 +210,7 @@ In total, we get about a three times faster estimate with comparable accuracy, a
 
 <br>
 
-<h2>Summary</h2>
+<h2 id="summ">Summary</h2>
 
 <p>
 In summary I made an efficient estimator of the NTK alignment metric to compare how the NTK of a model at different points during GD training compare. I found that using Hutch++ was fast and accurate and simple to implement. 
@@ -222,13 +222,84 @@ With this code, <u>I found that comparing NTKs with [batches, timesteps, hidden 
 With such an efficient estimator, it may be possible to practically use this NTK comparison <i>during training</i>, but I'm not sure how or why yet. For now, it allows my collaborators and I to efficiently compare trained models very fast.
 </p>
 
+<!-- Navbars -->
+<a href="index.html" style="text-decoration: none;">
 <div class="top_bar" style="left: 30px;">
-<a href="index.html" style="text-decoration: none;">goto: main</a>
+goto: main
+</div>
+</a>
+
+<a href="" style="text-decoration: none;">
+<div class="top_bar" style="right: 30px;">
+goto: top
+</div>
+</a>
+
+<div class="top_bar" style="top: 4vw; left: 4vw; bottom: auto; width: 6.5vw; height: 6.5vw; 
+    border-radius: 1px; border: 0;  image-rendering: pixelated; border: 1px solid grey;">
+	
+<label for="toggle" id="toggle-btn"  class="toc-clicker">
+<img style="width: 100%; height: 100%;" src="toc.png">
+</label>
+
+<input type="checkbox" id="toggle" hidden>
+
+<div id="toc" class="top_bar" style="top: 10.5vw; left: 4vw; bottom: auto; width: 15%; 
+height: 50%;  /* ADJUST */
+border-radius: 0; border: 0;  image-rendering: pixelated; border: 0; background: none;">
+
+<table class = "toctable" style="width: 100%; height: 100%; padding: 0; background: white; border-radius: 0; margin-top: 10px;">
+
+
+<tr><td style = "text-align: center; color: black;">
+<a href="#top">
+Efficient NTK Metrics
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#background">
+Background
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#motiv">
+Motivation
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#naive">
+Naive Approach
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#matrixfree">
+Matrix-Free Approaches
+</a>
+</td></tr>
+
+
+<tr><td>
+<a href="#cos">
+Optimizing Cosine Alignment
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#summ">
+Summary
+</a>
+</td></tr>
+
+
+</table>
+</div>
 </div>
 
-<div class="top_bar" style="right: 30px;">
-<a href="" style="text-decoration: none;">goto: top</a>
-</div>
+
 
 </body>
 </html>
