@@ -313,12 +313,18 @@ Finally, these <i>local changes</i> \(\delta f\) are integrated over time to giv
 </p>
 
 <p>
-In total, there are two constraints on learning: (1) filtering through parameters, and (2) local changes. (1) means that dynamical changes can only be attained by perturbing \(\theta\). 
-Internally, there is a mean yielding this perturbation, which can lead to misdirection or zeroing of gradient signals.
-For example, if we have a dynamical system with a single parameter, the desired dynamical changes may be very complex, but clearly perturbing a single parameter will not be able to express a very wide range of such perturbations. 
-(2) comes from the temporal dependence between the hidden state \(h_j(t)\) and all prior hidden states, \(h_j(s)\). 
+In total, there are two constraints on learning: 
+</p> <p>
+<ul style="max-width:90%; list-style-type:none;">
+<li> <p><b>(1) Filtering through parameters</b> meaning that dynamical changes can only be attained by perturbing \(\theta\). 
+Internally, there is a mean yielding this perturbation, which can lead to misdirection or zeroing of gradient signals. For example, if we have a dynamical system with a single parameter, the desired dynamical changes may be very complex, but clearly perturbing a single parameter will not be able to express a very wide range of such perturbations. 
+</p> 
+<br>
+<li> <p><b>(2) Local changes</b> emerges from the temporal dependence between the hidden state \(h_j(t)\) and all prior hidden states, \(h_j(s)\). 
 Perturbations \(\delta h_j\) manifest specifically by first perturbing the tangents, \(\delta f\), then accumulating these. 
-</p>
+</p> 
+</ul>
+<br>
 
 <p>
 The two constraints described correspond perfectly to the operators \(\mathcal{K}\) and \(\mathcal{P}\). In particular, \(\mathcal{K}\) filters dynamical perturbations through parameters of the model, constraining the range of such perturbations. 
