@@ -288,13 +288,47 @@ where \(\mathcal{P, K}\) are linear operators themselves, which I'll now define,
 <p>
 </p>
 
+
+<figure>
+<a href="pert_schematic.png"><img src="pert_schematic.png" width=70%/></a>
+<figcaption><p><b>Fig 4</b> Hidden state trajectories conditioned on the task inputs \(x_j\). The model dynamics \(f\) specify the tangential velocity of each trajectory. Perturbing \(h\) is given as a sequence of perturbations: first the parameters, \(\delta \theta\), then the tangents, \(\delta f\) and finally the state, \(\delta h\).</p></figcaption>
+</figure>
+
 <p>
-<b>Informal Derivation</b> Before formally defining \(\mathcal{P, K}\) we can see what they should should do. Consider the discrete model dynamics
-$$h_j(t+1) = f(h(t), x_j(t+1), \theta).$$
-Suppose we want to see how much \(h(t+1)\) changes here. Well first, we perturb \(\delta \theta\). 
-Next, that leads to a change, \(\delta f_j(\), to the 
+Consider the model state on task input \(x_j\), which is given by simulating the model from time \(0\) to any \(t\),
+$$h_j(t) = \int_0^t f(h_j(t_0), x_j(t_0), \theta) \text{d} t_0.$$
+Then, there is a chain of perturbations leading to the change \(h_j(t)\) to the hidden state on trial \(j\) at time \(t\). 
+Firstly, there is a perturbation, \(\delta \theta\), to the parameters according to the GD step. 
+Next, this gives rise to a perturbation, \(\delta f\), to the tangential dynamics at <i>every</i> time and trial. 
+When there is a discrete number of timesteps T, H hidden units and B task inputs, \(\delta f\) is a tensor of shape [B, T, H]. 
+Finally, these <i>local changes</i> \(\delta f\) are integrated over time to give rise to the true hidden state change.  
 </p>
 
+<p>
+In total, there are two constraints on learning: (1) filtering through parameters, and (2) local changes. (1) means that dynamical changes can only be attained by perturbing \(\theta\). 
+Internally, there is a mean yielding this perturbation, which can lead to misdirection or zeroing of gradient signals.
+For example, if we have a dynamical system with a single parameter, the desired dynamical changes may be very complex, but clearly perturbing a single parameter will not be able to express a very wide range of such perturbations. 
+(2) comes from the temporal dependence between the hidden state \(h_j(t)\) and all prior hidden states, \(h_j(s)\). 
+Perturbations \(\delta h_j\) manifest specifically by first perturbing the tangents, \(\delta f\), then accumulating these. 
+</p>
+
+<p>
+The two constraints described correspond perfectly to the operators \(\mathcal{K}\) and \(\mathcal{P}\). In particular, \(\mathcal{K}\) filters dynamical perturbations through parameters of the model, constraining the range of such perturbations. 
+Furthermore, \(\mathcal{P}\) integrates tangential changes, \(\delta f\), accumulating them into \(\delta h\). Both are linear operators we formally define below.
+</p>
+
+<p>
+In total, the gradient flow operator \(\Phi\) can be decomposed in terms of \(\mathcal{P,K}\) as 
+$$\Phi = \mathcal{P K P^*},$$
+where \(\mathcal{P^*}\) is the <i>Hermitian adjoint</i> operator corresponding to \(\Phi\). 
+</p>
+
+<figure>
+<a href="poster_neuroai_final.png"><img src="poster_neuroai_final.png" width=70%/></a>
+<figcaption><p><b>Fig 5</b> Poster.</p></figcaption>
+</figure>
+
+<!--
 
 <p>
 <b>Formal Derivation</b> Let's take a step back and consider how the backpropgation forms gradients in recurrent models. 
@@ -329,7 +363,7 @@ decomposing the NTO \(\Phi = \mathcal{P K P^*}\).
 
 <p>
 WHY THE ORGANIZATION MATTERS. ALSO, GIVE P VS K RANDOM INPUTS.
-</p>
+</p>-->
 
 <a href="index.html" style="text-decoration: none;">
 <div class="top_bar" style="left: 30px;">
