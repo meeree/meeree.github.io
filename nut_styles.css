@@ -119,7 +119,7 @@ ol {
   display: block;
   max-width: 70%;
   margin: auto;
-  font-size: 0.6cm;
+    font-size: 0.8cm;
   border: 3px solid rgba(0,0,0,.1);
   border-radius: 5px;
   background: url(https://astro.uni-frankfurt.de/wp-content/uploads/2014/01/White-Paper-Texture-Background-520x390.jpg);
