@@ -331,11 +331,38 @@ The two constraints described correspond perfectly to the operators \(\mathcal{K
 Furthermore, \(\mathcal{P}\) integrates tangential changes, \(\delta f\), accumulating them into \(\delta h\). Both are linear operators we formally define below. The action of each operator is illustrated in Fig 6 above. 
 </p>
 
+<h3 id="formal">Formal Operator Definitions</h3>
+
 <p>
-In total, the gradient flow operator \(\Phi\) can be decomposed in terms of \(\mathcal{P,K}\) as 
-$$\Phi = \mathcal{P K P^*},$$
-where \(\mathcal{P^*}\) is the <i>Hermitian adjoint</i> operator corresponding to \(\mathcal{P}\). 
+<b>Parameter Operator</b> Firstly, let's define the \(\mathcal{K}\) operator, which constrains proposed tangential dynamical updates by filtering these through the model parameters. 
+In particular, \(\mathcal{K}\) is the <i>neural tangent operator for the model velocity</i>, instead of the hidden state itself:
+$$\mathcal{K} = \frac{d f}{d \theta} \cdot \frac{d f}{d \theta}^T.$$
+In the discrete case, where the hidden state is a tensor of shape [B, T, H], \(\mathcal{K}\) is a discrete matrix with entries:
+$$\mathcal{K}: \mathbb{R}^{B\times T \times H} \rightarrow \mathbb{R}^{B \times T \times H}$$
+$$\mathcal{K}[b, t, h, b_0, t_0, h_0] = \sum_{m=1}^M \frac{d f}{d \theta}[b, t, h, m] \frac{d f}{d \theta}[b_0, t_0, h_0, m].$$
+This is very similar to \(\Phi\), the only difference is that we take the NTO for the model velocity, \(f\), not the overall integrated state, \(h\). 
+In terms of the action of \(\mathcal{K}\), let 
+$$J^\theta_j(t) = \partial f(h_j(t), x_j(t), \theta) / \partial \theta,$$
+be the parameter Jacobian of the model dynamics, which is an H by H matrix. 
+Then, \(\mathcal{K}\) acts on a perturbation \(q\) in the dynamical space by 
+$$(\mathcal{K} q)_j(t) = J^\theta_j(t) \cdot \langle J^\theta_k(t_0)^T q_j(t_0) \rangle_{k, t_0},$$
+where \(\langle \cdot \rangle_{k, t_0}\) is an average over all times \(t_0\) and input trials, \(k\). 
 </p>
+
+<p>
+<b>Linear Propagator</b> Next, we define \(\mathcal{P}\), which effectively integrates the results from \(\mathcal{K}\). 
+In particular, given \(\delta f\) perturbing the model tangential velocity, \(\mathcal{P}\) accumulates these, yielding perturbations \(\delta h\) to the hidden state,
+$$\mathcal{P} : \delta f \mapsto \delta h.$$
+First, we define the <i>state-transition matrix</i> \(\Phi_j(t, t_0)\) for the trajectory \(h_j\) on input trial \(j\). This measures how small changes, \(\delta h_j(t_0)\), to the hidden state at time \(t_0\) propagate linearly forwards through time to affect the state \(\delta h_j(t)\) at a time \(t\). 
+Specifically, \(\Phi_j(t, t_0)\) is the H by H Jacobian matrix 
+$$\Phi_j(t, t_0) = \frac{d h_j(t)}{d h_j(t_0)}$$
+As an aside, the Lyapunov spectra of the model are actually derived from \(\Phi\): if we compute the singular values \(\sigma_i\) of \(\Phi_j(t, 0)\) and let \(\lambda_i = \log(\sigma_i) / t\), then the long-term Lyapunov exponents--describing the long term dynamics of the model on trial \(j\) change if we perturb the initial conditions--are the limit \(\lim_{t \rightarrow \infty} \lambda_i\). 
+</p> <p>
+Contrasting this, \(\mathcal{P}\) measures how perturbations propagate at <i>all</i> times and task inputs. Explictly, again in the discrete case where \(h\) is a tensor of shape [B,T,H], \(\mathcal{P}\) has entries
+$$\mathcal{P}[b, t, :, b_0, t_0, :] = \delta_{b, b_0} \sum_{s = t_0}^t \Phi_b(t, s) \in \mathbb{R}^{H \times H}$$
+Note the \(\delta_{b, b_0}\) means that \(\mathcal{P}\) is block-wise diagonal over the batch dimension: perturbations to the hidden state conditioned on two distinct task inputs do not affect one another. 
+</p>
+
 
 
 <!--
@@ -443,6 +470,12 @@ Working with Tensor Operators
 <tr><td>
 <a href="#kpflow">
 Decomposing the NTO into \(\mathcal{P}\) and \(\mathcal{K}\) 
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#formal">
+Formal Operator Definitions
 </a>
 </td></tr>
 
