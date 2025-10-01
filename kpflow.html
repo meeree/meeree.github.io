@@ -314,15 +314,14 @@ Finally, these <i>local changes</i> \(\delta f\) are integrated over time to giv
 
 <p>
 In total, there are two constraints on learning: 
-</p> <p>
-<ul style="max-width:90%; list-style-type:none;">
+</p>
+<ul style="max-width:100%; list-style-type:none;">
 <li> <p><b>(1) Filtering through parameters</b> meaning that dynamical changes can only be attained by perturbing \(\theta\). 
 Internally, there is a mean yielding this perturbation, which can lead to misdirection or zeroing of gradient signals. For example, if we have a dynamical system with a single parameter, the desired dynamical changes may be very complex, but clearly perturbing a single parameter will not be able to express a very wide range of such perturbations. 
 </p> 
 <br>
 <li> <p><b>(2) Local changes</b> emerges from the temporal dependence between the hidden state \(h_j(t)\) and all prior hidden states, \(h_j(s)\). 
 Perturbations \(\delta h_j\) manifest specifically by first perturbing the tangents, \(\delta f\), then accumulating these. 
-</p> 
 </ul>
 <br>
 
@@ -332,6 +331,12 @@ Furthermore, \(\mathcal{P}\) integrates tangential changes, \(\delta f\), accumu
 </p>
 
 <h3 id="formal">Formal Operator Definitions</h3>
+
+
+<figure>
+<a href="comp_graph.png"><img src="comp_graph.png" width=80%/></a>
+<figcaption><p><b>Fig 7</b> Schematic of computation graph, establishing dependencies in the model. \(\mathcal{K}\) reflects the dependencies emerging from parameters: how do state perturbations filter through parameters, while \(\mathcal{P}\) reflects internal state dependencies.</p>
+</figure>
 
 <p>
 <b>Parameter Operator</b> Firstly, let's define the \(\mathcal{K}\) operator, which constrains proposed tangential dynamical updates by filtering these through the model parameters. 
@@ -353,17 +358,56 @@ where \(\langle \cdot \rangle_{k, t_0}\) is an average over all times \(t_0\) an
 <b>Linear Propagator</b> Next, we define \(\mathcal{P}\), which effectively integrates the results from \(\mathcal{K}\). 
 In particular, given \(\delta f\) perturbing the model tangential velocity, \(\mathcal{P}\) accumulates these, yielding perturbations \(\delta h\) to the hidden state,
 $$\mathcal{P} : \delta f \mapsto \delta h.$$
-First, we define the <i>state-transition matrix</i> \(\Phi_j(t, t_0)\) for the trajectory \(h_j\) on input trial \(j\). This measures how small changes, \(\delta h_j(t_0)\), to the hidden state at time \(t_0\) propagate linearly forwards through time to affect the state \(\delta h_j(t)\) at a time \(t\). 
+First, we define the <i>state-transition matrix</i> \(\Phi_j(t, t_0)\) for the trajectory \(h_j\) on input trial \(j\). 
+Mathematically, it is the <a href="https://en.wikipedia.org/wiki/Green%27s_function"><i>Green's function</i></a> of the model.
+This measures how small changes, \(\delta h_j(t_0)\), to the hidden state at time \(t_0\) propagate linearly forwards through time to affect the state \(\delta h_j(t)\) at a time \(t\). 
 Specifically, \(\Phi_j(t, t_0)\) is the H by H Jacobian matrix 
 $$\Phi_j(t, t_0) = \frac{d h_j(t)}{d h_j(t_0)}$$
 As an aside, the Lyapunov spectra of the model are actually derived from \(\Phi\): if we compute the singular values \(\sigma_i\) of \(\Phi_j(t, 0)\) and let \(\lambda_i = \log(\sigma_i) / t\), then the long-term Lyapunov exponents--describing the long term dynamics of the model on trial \(j\) change if we perturb the initial conditions--are the limit \(\lim_{t \rightarrow \infty} \lambda_i\). 
 </p> <p>
 Contrasting this, \(\mathcal{P}\) measures how perturbations propagate at <i>all</i> times and task inputs. Explictly, again in the discrete case where \(h\) is a tensor of shape [B,T,H], \(\mathcal{P}\) has entries
 $$\mathcal{P}[b, t, :, b_0, t_0, :] = \delta_{b, b_0} \sum_{s = t_0}^t \Phi_b(t, s) \in \mathbb{R}^{H \times H}$$
-Note the \(\delta_{b, b_0}\) means that \(\mathcal{P}\) is block-wise diagonal over the batch dimension: perturbations to the hidden state conditioned on two distinct task inputs do not affect one another. 
+Note the \(\delta_{b, b_0}\) means that \(\mathcal{P}\) is block-wise diagonal over the batch dimension: <i>perturbations to the hidden state conditioned on two distinct task inputs do not affect one another.</i>	
 </p>
 
+<br>
+<hr>
 
+<h3 id="randomprobe">Randomly Probing Operators</h3>
+
+<p>
+Breaking down \(\Phi\) in this form begins to break it into simpler pieces that isolate particular parts of the Backpropagation-Through-Time process. 
+Programmatically speaking, \(\mathcal{P}\) describes the computational graph connections between states, while \(\mathcal{K}\) describes the graph connections from parameters to state.
+</p><p>
+On one hand, \(\mathcal{K}\) isolates the role dynamical parameters play. 
+For example, if we freeze certain weights during a GD step, the only part of the BPTT pipeline that changes is \(\mathcal{K}\). 
+Furthermore, it can have a simple form for complex models. In my main paper, I found that networks of Hodgkin-Huxley neurons have identical \(\mathcal{K}\) operator structure with a simple vanilla RNN. 
+</p><p>
+On the other hand, \(\mathcal{P}\) isolates the temporal dependencies in the model.
+If the states did not have temporal dependency, \(\mathcal{P}\) would simply be the identity. 
+Furthermore, complex discrete architectures (e.g. a transformer or network of complex, distinct units) might have very odd dependencies between the internal state. 
+In each case, \(\mathcal{P}\) may manifest in different forms that can be isolated mathematically and in code. 
+</p>
+
+<p>
+<b>Variants</b> We can describe alternative and similar learning rules using the developed framework. Furthermore, since the operators are implemented in our code, the operators (e.g. their alignment, SVD, rank, etc.) can be compared directly, explictly seeing how different variations of backpropgation align!
+</p>
+
+<ul style="max-width:100%; list-style-type:none;">
+<li> <p><b>Truncated BPTT </b> In the truncated learning rule, the recurrent dependencies between states are not reflected during backpropagation. 
+In particular, the mapping from the error signal to proposed corrections prior to filtering into parameters is simply the identity. 
+Thus, the NTO in this case is 
+$$\Phi_{trunc} := \mathcal{P K}$$
+without the operator \(\mathcal{P}^*\) which integrates how the error propagates recurrently due to internal model temporal dependencies.</p>
+<br>
+<li> <p><b>Feed-Back Alignment</b> In feedback alignment, the mapping from adjoints, \(a := \mathcal{P^*}(\text{Err})\), to parameter changes, \(\delta \theta\), is replaced by a random matrix \(B \in \mathbb{R}^{H \times H}\).
+In particular, the new learning rule is reflected by 
+$$\Phi_{FBA} = \mathcal{P} \frac{d f}{d \theta} \cdot (B \otimes \text{Id}_{B\cdot T\times B\cdot T}) \cdot \mathcal{P^*},$$
+where the \(\otimes \text{Id}\) reflects the fact that \(B\) is identical for all batches and times: it is just an H by H matrix. Note the main change here is replacing \(\mathcal{K}\)'s second term.  
+</p>
+<br>
+<li> <p><b>Hessian-Adapted Learning Rules</p>
+</ul>
 
 <!--
 
@@ -444,7 +488,7 @@ Broader Motivation and Prior Work
 
 <tr><td>
 <a href="#intro">
-Introduction
+Gradient Descent (GD) Setup
 </a>
 </td></tr>
 
@@ -479,6 +523,11 @@ Formal Operator Definitions
 </a>
 </td></tr>
 
+<tr><td>
+<a href="#randomprobe">
+Randomly Probing operators
+</a>
+</td></tr>
 
 </table>
 </div>
