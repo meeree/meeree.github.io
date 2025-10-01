@@ -78,6 +78,14 @@ An efficient and in-development package with examples is linked above. See accom
 <br>
 <br>
 
+
+
+
+<figure>
+<a href="poster_neuroai_final.png"><img src="poster_neuroai_final_lowres.png" width=100%/></a>
+<figcaption><p><b>Fig 1</b> Poster overview.</p></figcaption>
+</figure>
+
 <br>
 <hr>
 
@@ -133,7 +141,7 @@ $$\delta \theta := -\eta \nabla_\theta L.$$
 Here, \(\eta\) is a learning rate, which I'll just assume is \(1\) throughout the rest of this blog for simplicity. 
 </p>
 
-<h3 id = "ntkflow">The Hidden State GD Flow and NTK</h3>
+<h3 id = "gdflow">The Hidden State GD Flow</h3>
 
 <p>
 <b>Tracking the GD Flow</b> We would like to track certain quantities as they evolve under GD. The simplest quantity to track are the parameters, defining the so-called <i>parameter GD flow</i>. However, this quantity is ultimately a proxy for the actual dynamics of the hidden state, which also evolves as GD trains the model. We would like to track how this quantity itself evolves in a meaningful way. The hidden state dynamics can be envisioned as a large vector field, conditioned on the particular input you give the model. 
@@ -151,12 +159,12 @@ In this blog, I will refer to the Jacobian outer product \(\Phi := \frac{d h}{d 
 
 <hr>
 
-<h3>The Neural Tangent Operator</h3>
+<h3 id = "ntkflow">The Neural Tangent Operator</h3>
 <br>
 
 <figure>
 <a href="nto.png"><img src="nto.png" width=70%/></a>
-<figcaption><p><b>Fig 1</b> The NTO and NTK for a scalar-output multi-layer-perceptron neural network. The classical NTK \(\Theta\) is a matrix quantifying how GD changes align over batch inputs. By contrast, the NTO \(\Phi\) measures how the activations at every layer change. </p></figcaption>
+<figcaption><p><b>Fig 2</b> The NTO and NTK for a scalar-output multi-layer-perceptron neural network. The classical NTK \(\Theta\) is a matrix quantifying how GD changes align over batch inputs. By contrast, the NTO \(\Phi\) measures how the activations at every layer change. </p></figcaption>
 </figure>
 
 <p>
@@ -195,7 +203,7 @@ As mentioned in the prior section, the full empirical NTO for recurrent models i
 
 <figure>
 <a href="schematic_reduction.png"><img src="schematic_reduction.png" width=100%/></a>
-<figcaption><p><b>Fig 1</b> Schematic of heirarchy of <i>views</i> attainable by different reductions of the full hidden-state NTO operator (or related operators). </p></figcaption>
+<figcaption><p><b>Fig 3</b> Schematic of heirarchy of <i>views</i> attainable by different reductions of the full hidden-state NTO operator (or related operators). </p></figcaption>
 </figure>
 
 <p>
@@ -210,7 +218,7 @@ i.e. we average over the time axes. This operator takes in tensors of shape [B, 
 
 <figure>
 <a href="eigfuns_k.png"><img src="eigfuns_k.png" width=90%/></a>
-<figcaption><p><b>Fig 2</b> Eigenfunctions and effective rank of the parameter operator \(\langle \mathcal{K} \rangle_{h}\), reduced over the hidden dimension. </p></figcaption>
+<figcaption><p><b>Fig 4</b> Eigenfunctions and effective rank of the parameter operator \(\langle \mathcal{K} \rangle_{h}\), reduced over the hidden dimension. </p></figcaption>
 </figure>
 
 <p>
@@ -274,8 +282,8 @@ Simular to the previous use case, we can take the SVD of the full operator, \(\P
 <h3 id="kpflow">Decomposing the NTO into \(\mathcal{P}\) and \(\mathcal{K}\)</h3>
 
 <figure>
-<a href="schem_gd_flow.png"><img src="schem_gd_flow.png" width=80%/></a>
-<figcaption><p><b>Fig 3</b> Schematic of the K-P flow decomposition of the full NTO associated with a recurrent dynamical system, as detailed in this blog post. </p></figcaption>
+<a href="schem_gd_flow.png"><img src="schem_gd_flow.png" width=100%/></a>
+<figcaption><p><b>Fig 5</b> Schematic of the K-P flow decomposition of the full NTO associated with a recurrent dynamical system, as detailed in this blog post. </p></figcaption>
 </figure>
 
 <p>
@@ -290,8 +298,8 @@ where \(\mathcal{P, K}\) are linear operators themselves, which I'll now define,
 
 
 <figure>
-<a href="pert_schematic.png"><img src="pert_schematic.png" width=70%/></a>
-<figcaption><p><b>Fig 4</b> Hidden state trajectories conditioned on the task inputs \(x_j\). The model dynamics \(f\) specify the tangential velocity of each trajectory. Perturbing \(h\) is given as a sequence of perturbations: first the parameters, \(\delta \theta\), then the tangents, \(\delta f\) and finally the state, \(\delta h\).</p></figcaption>
+<a href="pert_schematic.png"><img src="pert_schematic.png" width=60%/></a>
+<figcaption><p><b>Fig 6</b> Hidden state trajectories conditioned on the task inputs \(x_j\). The model dynamics \(f\) specify the tangential velocity of each trajectory. Perturbing \(h\) is given as a sequence of perturbations: first the parameters, \(\delta \theta\), then the tangents, \(\delta f\) and finally the state, \(\delta h\).</p></figcaption>
 </figure>
 
 <p>
@@ -314,19 +322,15 @@ Perturbations \(\delta h_j\) manifest specifically by first perturbing the tange
 
 <p>
 The two constraints described correspond perfectly to the operators \(\mathcal{K}\) and \(\mathcal{P}\). In particular, \(\mathcal{K}\) filters dynamical perturbations through parameters of the model, constraining the range of such perturbations. 
-Furthermore, \(\mathcal{P}\) integrates tangential changes, \(\delta f\), accumulating them into \(\delta h\). Both are linear operators we formally define below.
+Furthermore, \(\mathcal{P}\) integrates tangential changes, \(\delta f\), accumulating them into \(\delta h\). Both are linear operators we formally define below. The action of each operator is illustrated in Fig 6 above. 
 </p>
 
 <p>
 In total, the gradient flow operator \(\Phi\) can be decomposed in terms of \(\mathcal{P,K}\) as 
 $$\Phi = \mathcal{P K P^*},$$
-where \(\mathcal{P^*}\) is the <i>Hermitian adjoint</i> operator corresponding to \(\Phi\). 
+where \(\mathcal{P^*}\) is the <i>Hermitian adjoint</i> operator corresponding to \(\mathcal{P}\). 
 </p>
 
-<figure>
-<a href="poster_neuroai_final.png"><img src="poster_neuroai_final.png" width=70%/></a>
-<figcaption><p><b>Fig 5</b> Poster.</p></figcaption>
-</figure>
 
 <!--
 
@@ -412,8 +416,14 @@ Introduction
 </td></tr>
 
 <tr><td>
+<a href="#gdflow">
+The Hidden State GD Flow
+</a>
+</td></tr>
+
+<tr><td>
 <a href="#ntkflow">
-The Hidden State GD Flow and NTK
+The Neural Tangent Operator
 </a>
 </td></tr>
 
@@ -426,7 +436,7 @@ Working with Tensor Operators
 
 <tr><td>
 <a href="#kpflow">
-Decomposing the NTK into \(\mathcal{P}\) and \(\mathcal{K}\) 
+Decomposing the NTO into \(\mathcal{P}\) and \(\mathcal{K}\) 
 </a>
 </td></tr>
 
