@@ -114,7 +114,7 @@ a {
     margin: auto;
     font-weight: 360;
 }
-
+/*
 ol {
   display: block;
   max-width: 70%;
@@ -140,7 +140,7 @@ ol ol > li {
 ol ol > li:before {
     content: counters(item, ".") ". ";
     margin-left: -100px;
-}
+}*/
 
 img {
     display: block;
@@ -220,21 +220,82 @@ table {
 }
 
 .toctable {
-    margin: 0;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
     border: 0;
-	background: white;
+	background: rgba(255, 255, 255, 0.94);
 	text-align: left;
+	width: 100%;
+	padding-top: 2vw;
+	border-radius: 10px;
+	padding-left: 4vw;
+}
+
+.toctable ol {
+	margin: 0;
+    border: 0;
+	background: none;
+	text-align: left;
+	width: 100%;
 }
 
 #toc {
 	display: none;
+	height: 100%;
+	width: 40%;
+	padding: 0;
 }
 
-.toctable a {
-	font-size: 2.9vw;
+.toctable li {
+	padding-left: 1vw;
+	font-size: 2.5vw;
+	padding-bottom: 2vw;
+    list-style-type: decimal;  /* or lower-roman, upper-alpha, etc. */
+}
+.toctable li::marker {
+  margin-left: 1vw;
 }
 
+.toctable ol {
+	padding-top: 2vw;
+}
+
+.toctable ol li {
+	padding-left: 1vw;
+	padding-bottom: 1vw;
+	list-style-type: lower-alpha;  /* or lower-roman, upper-alpha, etc. */
+}
+
+.toctable li a {
+	color: #069;
+	text-decoration: none;
+	font-weight: 550;
+}
+
+.toctable ol li a {
+	font-size: 2.5vw;
+	font-weight: 520;
+}
+
+/* toctable can either be made with an ol or a table */
+
+.toctable td {
+	padding-left: 2vw;
+	font-size: 2.5vw;
+}
+
+.toctable td a {
+	color: #069;
+	text-decoration: none;
+	font-weight: 550;
+}
+
+.toctable td a:visited {
+	color: #86a;
+}
+
+.toctable li a:visited {
+	color: #86a;
+}
 
 #toggle:checked ~ #toc {
 	display: block;
@@ -245,17 +306,6 @@ table {
 	cursor: pointer;
 }
 
-
-.toctable tr td {
-	border-left: 0;
-	border-right: 0;
-	border-top: 5px;
-}
-
-.toctable tr {
-	border-left: 0;
-	border-right: 0;
-}
 
 thead tr {
     background-color: #009879;

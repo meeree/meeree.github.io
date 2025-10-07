@@ -475,6 +475,11 @@ Below is an example code snippet from my package, computing eigenfunctions of so
 
 <h3 id="exmp1">Finally an Example: Vanilla RNN and Hodgkin Huxley</h3>
 
+<hr>
+
+<h3 id="simp">Application: Simplicity Bias</h3>
+
+
 
 <a href="index.html" style="text-decoration: none;">
 <div class="top_bar" style="left: 30px;">
@@ -489,7 +494,7 @@ goto: top
 </a>
 
 <div class="top_bar" style="top: 4vw; left: 4vw; bottom: auto; width: 6.5vw; height: 6.5vw; 
-    border-radius: 1px; border: 0;  image-rendering: pixelated; border: 1px solid grey;">
+    border-radius: 0px; border: 0;  image-rendering: pixelated; border: 1px solid grey;">
 	
 <label for="toggle" id="toggle-btn"  class="toc-clicker">
 <img style="width: 100%; height: 100%;" src="toc.png">
@@ -497,15 +502,37 @@ goto: top
 
 <input type="checkbox" id="toggle" hidden>
 
-<div id="toc" class="top_bar" style="top: 10.5vw; left: 4vw; bottom: auto; width: 15%; 
-height: 60%;  /* ADJUST */
+<div id="toc" class="top_bar" style="top: 10.5vw; left: 4vw; bottom: auto; 
+/*height: 40%;   ADJUST */
 border-radius: 0; border: 0;  image-rendering: pixelated; border: 0; background: none;">
 
+
+<ol class = "toctable">
+    <li style = "text-align: center; list-style-type:none;"> <a href="#top" style = "color: black;">Unpacking K-P Flow </a>
+    <li  value="1"> <a href="#motiv">Broader Motivation and Prior Work </a>
+	<li> <a href="#intro">Introduction</a> 
+	<ol>
+		<li> <a href="#gdflow">The Hidden State GD Flow </a>
+		<li> <a href="#ntkflow">The Neural Tangent Operator </a>
+		<li> <a href="#working">Optional: Working with Tensor Operators </a>
+		<li> <a href="#kpflow">Decomposing the NTO into \(\mathcal{P}\) and \(\mathcal{K}\)  </a>
+		<li> <a href="#formal">Formal Operator Definitions</a>
+		<li> <a href="#language">A General Language: Variants of GD in Tensor-Operator Form</a>
+	</ol>
+	<li> <a href="#exmp1">Examples</a>
+	<ol>
+		<li> <a href="#exmp1">Finally an Example: Vanilla RNN and Hodgkin Huxley</a>
+	</ol>
+	<li> <a href="#simp">Application: Simplicity Bias</a>
+	<ol>
+	</ol>
+</ol>
+
+
+<!--
 <table class = "toctable" style="width: 100%; height: 100%; padding: 0; background: white; border-radius: 0; margin-top: 10px;">
-
-
-<tr><td style = "text-align: center; color: black;">
-<a href="#top">
+<tr><td style = "text-align: center;">
+<a href="#top" style = "color: black;">
 Unpacking K-P Flow
 </a>
 </td></tr>
@@ -516,13 +543,13 @@ Broader Motivation and Prior Work
 </a>
 </td></tr>
 
-<tr><td>
+<tr><td class="tocsub">
 <a href="#intro">
 Gradient Descent (GD) Setup
 </a>
 </td></tr>
 
-<tr><td>
+<tr><td class="tocsub">
 <a href="#gdflow">
 The Hidden State GD Flow
 </a>
@@ -567,7 +594,7 @@ Finally an Example: Vanilla RNN and Hodgkin Huxley
 
 
 
-</table>
+</table>-->
 </div>
 </div>
 
