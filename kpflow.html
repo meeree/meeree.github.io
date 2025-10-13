@@ -121,6 +121,12 @@ An efficient and in-development package with examples is linked above. See accom
 
 <h1 id="intro">Introduction</h1>
 
+<figure>
+<a href="structured_gd_inputs.png"><img src="structured_gd_inputs.png" width=85%/></a>
+<figcaption><p><b>Fig 2</b> Schematic of network model \(\phi(x, \theta)\), which produces a hidden state over time given input \(x\) and parameters \(\theta\).
+The hidden state gradient flow (right) describes how the trajectories \(h_j(t)\) evolve. Here, \(\hat x(t)\) is an unseen input during training, and \(\hat h(t)\) is the corresponding hidden state. 
+</figure>
+
 <h3>Gradient Descent (GD) Setup</h3>
 
 <p>
@@ -168,7 +174,7 @@ In this blog, I will refer to the Jacobian outer product \(\Phi := \frac{d h}{d 
 
 <figure>
 <a href="nto.png"><img src="nto.png" width=70%/></a>
-<figcaption><p><b>Fig 2</b> The NTO and NTK for a scalar-output multi-layer-perceptron neural network. The classical NTK \(\Theta\) is a matrix quantifying how GD changes align over batch inputs. By contrast, the NTO \(\Phi\) measures how the activations at every layer change. </p></figcaption>
+<figcaption><p><b>Fig 3</b> The NTO and NTK for a scalar-output multi-layer-perceptron neural network. The classical NTK \(\Theta\) is a matrix quantifying how GD changes align over batch inputs. By contrast, the NTO \(\Phi\) measures how the activations at every layer change. </p></figcaption>
 </figure>
 
 <p>
@@ -215,7 +221,7 @@ As mentioned in the prior section, the full empirical NTO for recurrent models i
 
 <figure>
 <a href="schematic_reduction.png"><img src="schematic_reduction.png" width=100%/></a>
-<figcaption><p><b>Fig 3</b> Schematic of heirarchy of <i>views</i> attainable by different reductions of the full hidden-state NTO operator (or related operators). </p></figcaption>
+<figcaption><p><b>Fig 4</b> Schematic of heirarchy of <i>views</i> attainable by different reductions of the full hidden-state NTO operator (or related operators). </p></figcaption>
 </figure>
 
 <p>
@@ -230,7 +236,7 @@ i.e. we average over the time axes. This operator takes in tensors of shape [B, 
 
 <figure>
 <a href="eigfuns_k.png"><img src="eigfuns_k.png" width=90%/></a>
-<figcaption><p><b>Fig 4</b> Eigenfunctions and effective rank of the parameter operator \(\langle \mathcal{K} \rangle_{h}\), reduced over the hidden dimension. </p></figcaption>
+<figcaption><p><b>Fig 5</b> Eigenfunctions and effective rank of the parameter operator \(\langle \mathcal{K} \rangle_{h}\), reduced over the hidden dimension. </p></figcaption>
 </figure>
 
 <p>
@@ -295,7 +301,7 @@ Simular to the previous use case, we can take the SVD of the full operator, \(\P
 
 <figure>
 <a href="schem_gd_flow.png"><img src="schem_gd_flow.png" width=100%/></a>
-<figcaption><p><b>Fig 5</b> Schematic of the K-P flow decomposition of the full NTO associated with a recurrent dynamical system, as detailed in this blog post. </p></figcaption>
+<figcaption><p><b>Fig 6</b> Schematic of the K-P flow decomposition of the full NTO associated with a recurrent dynamical system, as detailed in this blog post. </p></figcaption>
 </figure>
 
 <p>
@@ -311,7 +317,7 @@ where \(\mathcal{P, K}\) are linear operators themselves, which I'll now define,
 
 <figure>
 <a href="pert_schematic.png"><img src="pert_schematic.png" width=60%/></a>
-<figcaption><p><b>Fig 6</b> Hidden state trajectories conditioned on the task inputs \(x_j\). The model dynamics \(f\) specify the tangential velocity of each trajectory. Perturbing \(h\) is given as a sequence of perturbations: first the parameters, \(\delta \theta\), then the tangents, \(\delta f\) and finally the state, \(\delta h\).</p></figcaption>
+<figcaption><p><b>Fig 7</b> Hidden state trajectories conditioned on the task inputs \(x_j\). The model dynamics \(f\) specify the tangential velocity of each trajectory. Perturbing \(h\) is given as a sequence of perturbations: first the parameters, \(\delta \theta\), then the tangents, \(\delta f\) and finally the state, \(\delta h\).</p></figcaption>
 </figure>
 
 <p>
@@ -339,7 +345,7 @@ Perturbations \(\delta h_j\) manifest specifically by first perturbing the tange
 
 <p>
 The two constraints described correspond perfectly to the operators \(\mathcal{K}\) and \(\mathcal{P}\). In particular, \(\mathcal{K}\) filters dynamical perturbations through parameters of the model, constraining the range of such perturbations. 
-Furthermore, \(\mathcal{P}\) integrates tangential changes, \(\delta f\), accumulating them into \(\delta h\). Both are linear operators we formally define below. The action of each operator is illustrated in Fig 6 above. 
+Furthermore, \(\mathcal{P}\) integrates tangential changes, \(\delta f\), accumulating them into \(\delta h\). Both are linear operators we formally define below. The action of each operator is illustrated in Fig 7 above. 
 </p>
 
 <h3 id="formal">Formal Operator Definitions</h3>
@@ -347,7 +353,7 @@ Furthermore, \(\mathcal{P}\) integrates tangential changes, \(\delta f\), accumu
 
 <figure>
 <a href="comp_graph.png"><img src="comp_graph.png" width=90%/></a>
-<figcaption><p><b>Fig 7</b> Schematic of computation graph, establishing dependencies in the model. \(\mathcal{K}\) reflects the dependencies emerging from parameters: how do state perturbations filter through parameters, while \(\mathcal{P}\) reflects internal state dependencies.</p>
+<figcaption><p><b>Fig 8</b> Schematic of computation graph, establishing dependencies in the model. \(\mathcal{K}\) reflects the dependencies emerging from parameters: how do state perturbations filter through parameters, while \(\mathcal{P}\) reflects internal state dependencies.</p>
 </figure>
 
 <p>
@@ -404,6 +410,9 @@ Furthermore, complex discrete architectures (e.g. a transformer or network of co
 In each case, \(\mathcal{P}\) may manifest in different forms that can be isolated mathematically and in code. 
 </p>
 
+<br>
+<hr class="wave">
+
 <p>
 <b>Variants</b> We can describe alternative and similar learning rules using the developed framework. Furthermore, since the operators are implemented in our code, the operators (e.g. their alignment, SVD, rank, etc.) can be compared directly, explictly seeing how different variations of backpropgation align!
 </p>
@@ -454,6 +463,8 @@ Furthermore, my approach doesn't explictly account for stochasticity in the task
 </p>
 </ul>
 
+<hr class="wave">
+
 <p>
 As we see in the above, once the tensor-based operators are defined (which is a pain), we can use them to define a <i>language of learning rules</i>. 
 Importantly, for particular models, there are explictly provable properties of the individual operators, as we will see below. 
@@ -467,7 +478,7 @@ Below is an example code snippet from my package, computing eigenfunctions of so
 <br>
 <figure>
 <a href="code_snippet.png"><img src="code_snippet.png" width=100%/></a>
-<figcaption><p><b>Fig 8</b> Example code snippet from my <a href="https://github.com/meeree/kpflow/">kpflow package</a> and plotted (reduced) eigenfunctions.</p>
+<figcaption><p><b>Fig 9</b> Example code snippet from my <a href="https://github.com/meeree/kpflow/">kpflow package</a> and plotted (reduced) eigenfunctions.</p>
 </figure>
 
 <br>
@@ -479,7 +490,34 @@ Below is an example code snippet from my package, computing eigenfunctions of so
 
 <h3 id="simp">Application: Simplicity Bias</h3>
 
+<figure>
+<a href="schematic_gd_flow_compressed.png"><img src="schematic_gd_flow_compressed.png" width=100%/></a>
+<figcaption><p><b>Fig 10</b> Simplified version of Fig 6 for reference. </p></figcaption>
+</figure>
 
+<p>
+Let's now dig into the innner workings of the operators, their overlap, dominant modes, and the effective rank of their outputs on a particular task. 
+For review, let's define what each quantity means:
+</p>
+<ul>
+	<li> <p>\(\text{Err}\): The one-step error signal. In the case of MSE loss, \(\text{Err}_j(t) = W_{out}^T (W_{out} h_j(t) + b_{out} - y^*_j(t))\).</p>
+	<li> <p>\(a\): The adjoint signal, \(a_j(t) = \nabla_{h_j(t)} L\). This defines the steepest descent direction at the exact point \(h_j(t)\) in trajectory space. In other words, the exact corrections "functional GD" would produce, if we didn't filter through weights and biases. </p>
+	<li> <p>\(\delta \theta\): The perturbations (e.g., to weights and biases) that GD produces.</p> 
+	<li> <p>\(\delta f\): The true perturbations to the one-step dynamics that GD produces due to filtering through parameters.</p>
+	<li> <p>\(\delta h\): The perturbations to the hidden state that GD produces, attained by integrating the one-step changes.
+</ul>
+<p>
+Let's try to characterize these quantities. 
+</p>
+
+<p>
+<b>In Progress:</b> Suppose we let \(y = K v\) where \(v \in \mathbb{R}^{B \times T \times H\), \(K\) is an operator on this space. 
+What do we need to do to determine how \(K\) constraints the effective dimension of \(y\), capturing variance over B and T space?
+To do this, we first form the Grammian 
+$$G_{avg} = y \otimes_{B, T} y^*,$$
+where \(y^*\) is a assumed to be the reversed tensor of shape \(H \times T \times B\). Expanding, 
+$$y \otimes_{B, T} y^* = (K v) \otimes_{B, T} (v^* K^*)$$
+</p>
 
 <a href="index.html" style="text-decoration: none;">
 <div class="top_bar" style="left: 30px;">
@@ -503,7 +541,6 @@ goto: top
 <input type="checkbox" id="toggle" hidden>
 
 <div id="toc" class="top_bar" style="top: 10.5vw; left: 4vw; bottom: auto; 
-/*height: 40%;   ADJUST */
 border-radius: 0; border: 0;  image-rendering: pixelated; border: 0; background: none;">
 
 
