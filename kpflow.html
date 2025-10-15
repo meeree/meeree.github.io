@@ -356,6 +356,13 @@ Furthermore, \(\mathcal{P}\) integrates tangential changes, \(\delta f\), accumu
 <figcaption><p><b>Fig 8</b> Schematic of computation graph, establishing dependencies in the model. \(\mathcal{K}\) reflects the dependencies emerging from parameters: how do state perturbations filter through parameters, while \(\mathcal{P}\) reflects internal state dependencies.</p>
 </figure>
 
+
+<figure>
+<a href="example_comp_graph.png"><img src="example_comp_graph.png" width=90%/></a>
+<figcaption><p><b>Fig 9</b> An example computation graph for a discrete MLP neural network with 5 layers of the same size, mirroring Fig 8.
+</figure>
+
+
 <p>
 <b>Parameter Operator</b> Firstly, let's define the \(\mathcal{K}\) operator, which constrains proposed tangential dynamical updates by filtering these through the model parameters. 
 In particular, \(\mathcal{K}\) is the <i>neural tangent operator for the model velocity</i>, instead of the hidden state itself:
@@ -478,7 +485,7 @@ Below is an example code snippet from my package, computing eigenfunctions of so
 <br>
 <figure>
 <a href="code_snippet.png"><img src="code_snippet.png" width=100%/></a>
-<figcaption><p><b>Fig 9</b> Example code snippet from my <a href="https://github.com/meeree/kpflow/">kpflow package</a> and plotted (reduced) eigenfunctions.</p>
+<figcaption><p><b>Fig 10</b> Example code snippet from my <a href="https://github.com/meeree/kpflow/">kpflow package</a> and plotted (reduced) eigenfunctions.</p>
 </figure>
 
 <br>
@@ -492,7 +499,7 @@ Below is an example code snippet from my package, computing eigenfunctions of so
 
 <figure>
 <a href="schematic_gd_flow_compressed.png"><img src="schematic_gd_flow_compressed.png" width=100%/></a>
-<figcaption><p><b>Fig 10</b> Simplified version of Fig 6 for reference. </p></figcaption>
+<figcaption><p><b>Fig 11</b> Simplified version of Fig 6 for reference. </p></figcaption>
 </figure>
 
 <p>
