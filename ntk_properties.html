@@ -1,0 +1,904 @@
+<html style="background-image: linear-gradient(to bottom, #e5ffcd, #d9ffd8, #d1ffe3, #cbffed, #cafff6, #c8fbfb, #caf7fe, #cef2ff, #d6e9ff, #e9defc, #fad3e8, #ffcdcd);">
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body style="">
+<div class="main_text">
+<h1 id="top">Space-Time Bias of the NTK for Recurrent Models</h1>
+<hr>
+
+<table style="margin-left: auto; margin-right: auto; width: 80%;font-size:.8cm; border-collapse:separate; border:solid black 3px; border-radius:6px;">
+
+<tr>
+<td  colspan=2 style="background-color: white; ">
+<b>Relevant Links</b>
+</td>
+</tr>
+
+<tr>
+<td style="width:50%; background-color: #eeeeee;">
+<a href = "kpflow.html">Previous Blog</a>
+</td>
+
+<td  style="width:50%; background-color: #eeeeee;">
+<a href = "https://github.com/meeree/kpflow/">Pip Pytorch Package</a>
+</td>
+</tr>
+</table>
+
+<br>
+
+<p class = "center_text">
+<u>TLDR</u><br>
+<i><b>Q: </b>The NTK describes GD learning. How does it distort error signals?</i><br>
+<i><b>A: </b>We can characterize its properties with common linear algebra tools.</i>
+</p>
+
+<br>
+<br>
+
+\(
+\def\tr{{\text{tr}}}
+\def\G{{\mathcal{G}}}
+\def\K{{\mathcal{K}}}
+\def\P{{\mathcal{P}}}
+\def\Q{{\mathcal{Q}}}
+\def\d{{\text{d}}}
+\def\R{{\mathbb{R}}}
+\def\E{{\mathbb{E}}}
+\def\Err{{\text{Err}}}
+\def\Res{{\text{Res}}}
+\def\diag{{\text{diag}}}
+\def\back{{\leftarrow}}
+\)
+
+
+
+<p class="center_text">
+<b style="font-size: .89cm;">Synopsis</b><br>
+In this blog I work out the NTK for the entire hidden state of a recurrent model. Specializing to a heirarchy of more and more complex case (autonomous, scalar valued weights -> non-autonomous scalar weights -> linear RNN -> non-linear RNN). 
+</p>
+<p class="center_text">
+Amazingly, we can explicitly prove many general properties of the NTK, even for finite-width non-linear models with zero assumptions!
+</p>
+<p  class="center_text">
+Get ready for lots of math using tensors, vanilla and higher-order SVDs, partial traces, effective ranks, separability, and differential/integral operators. 
+</p>
+<br>
+<br>
+
+<hr>
+
+<h1 id="intro">Introduction: Learning Rules as Linear Operators</h1>
+
+
+<figure>
+<a href="configuration_space.png"><img src="configuration_space.png" width=40%/></a>
+<figcaption><p><b>Fig 1</b> Schematic of the perspective presented. The model state at any GD iteration (\(s\)) is a parameterized object \(h_s = \phi(\theta_s) \in S\) given parameters \(\theta_s \in P\). 
+The full state is a single point in the so-called configuration space and its evolution over GD it a trajectory (shown) in this space. 
+The configuration space NTK describes the local geometry of this space. Each GD iteration, an error signal is plugged into the NTK, producing a small correction to the hidden state. </p></figcaption>
+</figure>
+
+<p>
+We can characterize GD learning in generic models as follows. 
+Consider a dynamical mapping \(\phi : P \rightarrow S\), so that 
+$$h := \phi(\theta) \in S, \text{ for } \theta \in P$$
+denotes the <i>state</i> of the model (e.g., all activations at every layer, state over all times and inputs, etc). Here, \(P\) denotes the <b><i>parameter space</i></b>. 
+Furthermore, we let \(S\) denotes the so-called <b><i>configuration space</i></b>, i.e. the space of <i>every</i> variable involved in the model computation (or the ones we want to track). 
+</p>
+
+<p>
+Each perturbation in the parameter space, \(\theta \mapsto \theta - \eta \delta \theta\), gives rise to a perturbation to the state space. 
+In particular, define the configuration-space Jacobian, 
+$$\mathcal{J} := \frac{d h}{d \theta}$$
+Then, if we define some loss, \(L : S \rightarrow P\), and perform GD, \(\delta \theta := \frac{d L}{d \theta}\), the configuration-space state changes by 
+$$\delta h = -\mathcal{J} \mathcal{J}^T \cdot \frac{\partial L}{\partial h},$$
+assuming changes are small enough that linearization applies. We let 
+$$\Phi := \mathcal{J} \mathcal{J}^T$$
+denote the <i>Configuration-Space Neural Tangent Kernel (CS-NTK)</i>. 
+Thus, \(\Phi\) describesthe local geometry of GD learning on the submanifold \(h(P) \subset S\) of the full configuration space. 
+A single evaluation of the model on all specified inputs corresponds to a point in the configuration space, and when the model is trained with GD, this produces a trajectory (gradient flow) in the configuration space according to the prescribed error signal (tangent vectors in this space) and CS-NTK (local coordinates).  
+</p>
+
+
+<h2>A Simple Motivating Example</h2>
+
+<p>
+First, we describe a simple motivating example. Consider the dynamical system without any input, 
+$$h(t+1) = g h(t), \quad h(0) := h_0$$
+where \(g\) is a scalar and \(h\) is a vector in \(\mathbb{R}^n\). 
+Suppose we simulate this dynamical system for \(n_t\) timesteps. 
+Then, we can see 
+$$h(t) = h_0 g^{t}$$ 
+We can choose the configuration space \(S\) as the realization of \(h\) over all times \(t > 0\), so 
+$$S = \mathbb{R}^{n_t \times n}$$ 
+Suppose \(g\) is a trainable parameter that is iteratively tuned to minimize some loss function. 
+Then, we have an associated configuration space Jacobian, \(\mathcal{J} = d h / d g\) and the configuration space NTK \(\Phi = \mathcal{ J J}^T\). 
+As in my previous blog, we can then decompose \(\Phi\) according to 
+$$\Phi = \mathcal{P K P}^T,$$
+where
+$$\mathcal{P} = \begin{pmatrix} g & g^2 & g^3 & \dots \\ 0 & g & g^2 & \dots \\ 0 & 0 & g & \dots \\ \vdots & \vdots & \vdots & \ddots \end{pmatrix} \otimes I_n$$ 
+and 
+$$\mathcal{K}  =  v v^T \otimes I_n \quad \text{ where } v  = \| h_0 \| \cdot [1, g, g^2,\dots, g^{n_t}]^T$$
+Note that \(\mathcal{P}\) is full rank over both the spatial and temporal dimensions. 
+On the other hand, \(\mathcal{K}\) is full rank over the spatial dimension but a rank one outer product over the temporal dimension. 
+In total, we can compute
+$$\Phi = \mathcal{P K P}^T = (w w^T \otimes I_n) \quad \text{ where } w_t = \| h_0\| g^t \frac{1 - g^{2 (n_t - t )}}{1 -g^2}$$
+Hence, the CS-NTK operator is rank 1 over the temporal dimension (bottle-necked by the \(\mathcal{K}\) operator) and full rank over the spatial dimension. 
+As we will see, <b>this means that \(\Phi\) can express outputs over <i>any</i> spatial dimension in \(\mathbb{R}^n\), but on any given input spatial-temporal trajectory, its output only explores a one-dimensional subspace of \(\mathbb{R}^n\).</b>
+In other words, gradient corrections can be arbitrarily controlled to steer in any direction, but the observed corrections are extremely limited. 
+</p>
+
+
+<br>
+<hr class="wave">
+
+<figure>
+<a href="filter_viz.png"><img src="filter_viz.png" width=70%/></a>
+<figcaption><p><b>Fig 1</b> Visualization of the scalar weight values \(w_t\) over time \(t\) for the NTK in this simple example. Note that in all cases they preferentially bias towards initial times, \(t\) and decay to zero. Here, \(n_t = 20\) is the total number of timesteps. At \(t = n_t\), \(w_t = 0\).</p></figcaption>
+</figure>
+
+
+<hr class="wave">
+<br>
+
+<p>
+How does the operator \(\Phi\) then act on a particular trajectory input? Suppose \(q \in S\) is an arbitrary element of the configuration space, so we can think of it is a matrix with rows corresponding to times and columns corresponding to hidden units (spatial dimension). 
+Then, \(\Phi\)'s action can be thought of as a two-step process. 
+First, perform a weight sum over the entries of \(q\) over time, defining a new vector, \(p\):
+$$p := \sum_{t=1}^{n_t} w_t \cdot q(t) \in \mathbb{R}^n$$
+Then, the output of \(\Phi\) simply distributes this single vector accross time according with different weights over time:
+$$\Phi q = \begin{pmatrix} w_1 p^T \\ w_2 p^T \\ w_3 p^T \\ \vdots \end{pmatrix} \in S$$
+Thus, we see that \(\Phi\) performs a weighted sum over time on an input, then distributes that new single vector over times. 
+In total its output on any trajectory is at most one-dimensional in the spatial dimension, \(\mathbb{R}^n\). 
+<b>Even if \(q\), the input perturbation to the NTK, explores the entirety of this physical space, \(\Phi\) still compresses it to a single physical dimension!</b>
+</p>
+
+
+<h2>Example 2: Non-Autonomous Case</h2>
+
+<p>
+Consider a slightly more complex example with actual task inputs.
+Specifically, let \(x_j(t) \in \mathbb{R}^n\) denote an input to our dynamical system, and suppose \(1 \leq j \leq n_x\), the input count. 
+Then, consider the dynamics
+$$h_j(t+1) = g h_j(t) + k x_j(t), \quad h_j(0) := h_0,$$
+where \(g, k\) are scalars that are both trained with GD with some loss function and we simulate the model for \(n_t\) timesteps. 
+</p>
+
+<p>
+First, we must define the configuration space. Specifically, let's say we want to track the evolution of the hidden state. 
+In PyTorch, the hidden state would be a three tensor of shape \([n_x, n_t, n]\) over the inputs, \(x_j\), times, \(t\), and physical hidden units. 
+This motivates our choice of configuration space
+$$S = \mathbb{R}^{n_x \times n_t \times n}$$
+We want to identify the structure of the configuration-space NTK operator \(\Phi : S \rightarrow S\). As in my prior blog, this decomposes as \(\Phi = \mathcal{P K P}^T\).
+The entries of \(\mathcal{P}\) as a matrix are defined by the state-to-state Jacobian's at distinct times:
+$$\mathcal{P}[i, t, :, j, s, :] = \delta_{i, j} \cdot \frac{d h_j(t)}{d h_j(s)} \in \mathbb{R}^{n \times n},$$
+$$\text{ for } 1 \leq i, j \leq n_x, 1 \leq t, s \leq n_t$$
+Specifically, this Jacobian (in the literature known as the "state transition matrix") is a product of single-step Jacobians:
+$$\frac{d h_j(t)}{d h_j(s)} = \prod_{t_0 = s}^{t-1} \frac{d h_j(t_0+1)}{d h_j(t_0)} = \prod_{t_0 = s}^{t-1} g \cdot I_n = g^{t-s} \cdot I_n$$
+The interesting thing here is that, even though the dynamics are now non-autonomous with an input term \(x\), \(\mathcal{P}\)'s entries are identical for all input choices, \(1 \leq j \leq n_x\) in the expression above. 
+In particular, we can write
+$$\mathcal{P} =  \begin{pmatrix} g & g^2 & g^3 & \dots \\ 0 & g & g^2 & \dots \\ 0 & 0 & g & \dots \\ \vdots & \vdots & \vdots & \ddots \end{pmatrix} \otimes I_n \otimes I_{n_x}$$
+The operator \(\mathcal{K}\) <b>isolates the fact that we have an additional input term.</b> 
+In particular, define a 3-tensor \(v \in \mathbb{R}^{n_x \times n_t \times 2 n}\), the so-called <i>augmented activity</i> consisting of the hidden and input activities concatenated over time. 
+Specifically, assume \(v\) has entries
+$$v_{j, t, :} = [ h_j(t), x_j(t) ] \in \mathbb{R}^{2n}$$
+Let \(V \in\mathbb{R}^{(n_x \cdot n_t) \times 2n}\) denote the matrix version of this tensor, flattening the time and input axes together. 
+Then, up to some re-ordering of indicies,
+$$\mathcal{K} = V V^T \otimes I_n$$ 
+We see \(\mathcal{K}\) is arbitrarily expressive (controllable) in the spatial dimension. 
+</p>
+
+<p>
+The time-input complexity of \(\mathcal{K}\) is what bottle-necks in this scenario. 
+In particular, let's work out the effective rank of the non-spatial part of \(\mathcal{K}\). 
+We see immediately that 
+$$\text{effrank}_{n_x \cdot n_t}(\mathcal{K})= \text{effrank}(V V^T)$$
+Now, \(V V^T\) is a massive \(n_x \cdot n_t\) by \(n_x \cdot n_t\) matrix. 
+However, conveniently, its effective rank is the same as the effective rank of the other Grammian product, \(V^T V\), which contracts over these dimensions and is \(2n\) by \(2n\).
+So, 
+$$\text{effrank}_{n_x \cdot n_t}(\mathcal{K})= \text{effrank}(V^T V) \leq 2 n$$
+We see immediately that \(\mathcal{K}\) bottle-necks more than \(\mathcal{P}\), which has full rank. 
+The effective rank on the left above can be at most \(n_t \cdot n_x\), but we see in reality it is \(\leq 2 n\), which is usually smaller.
+</p>
+
+<p>
+Note \(V^T V\) is the second moment of the augmented (hidden, input) activity, so its effective rank reflects the dimension of this activity (possibly skewed since there is no zero-centering, as in a covariance).
+In typical scenarios (but not in total generality), that mean contribution decreases the effective rank, so we <b>typically</b> can conclude
+$$\text{effrank}_{n_x \cdot n_t}(\mathcal{K}) \leq \text{effdim}\left([ h_j(t), x_j(t)]_{j,t}\right)$$
+I.e., \(\mathcal{K}\) is bottle-necked on any given input error signal to produce an output that is bounded by the effective dimension of the (hidden, input) augmented activity. 
+</p>
+
+<p>
+Finally, let's work out the full cs-NTK. 
+We see
+$$\Phi = (W W^T) \otimes I_n$$
+where 
+$$W = (\begin{pmatrix} g & g^2 & g^3 & \dots \\ 0 & g & g^2 & \dots \\ 0 & 0 & g & \dots \\ \vdots & \vdots & \vdots & \ddots \end{pmatrix} \otimes I_{n_x}) \cdot V$$
+Explicitly, for each input block, \(V_{j}\), the product looks like
+$$W_j = \begin{pmatrix} g & g^2 & g^3 & \dots \\ 0 & g & g^2 & \dots \\ 0 & 0 & g & \dots \\ \vdots & \vdots & \vdots & \ddots \end{pmatrix} \cdot \begin{pmatrix} h_j(1)^T & x_j(1)^T \\
+                                                                                                                                                             h_j(2)^T & x_j(2)^T \\
+																																							 \vdots & \vdots \\
+																																							 h_j(n_t)^T & x_j(n_t)^T \end{pmatrix}$$
+</p>
+
+<h3>One-Dimensional Dynamics Case</h3>
+
+<p>
+For illustration, imagine that our augmented activity exists in a low dimensional subspace. For simplicity, assume it is a dimension one subspace. 
+Specifically, then we can write
+$$[h_j(t)^T, x_j(t)^T] = [\hat h_j(t), \hat x_j(t)] \cdot u^T,$$
+where \(\hat h_j(t), \hat x_j(t)\) are scalars and \(u \in \mathbb{R}^{2n}\) is a fixed (assumed unit) vector specifying the one-dimensional hidden and input spaces.
+We can then write \(V\) as a rank 1 outer product matrix 
+$$V = v \cdot u^T,$$
+where \(v \in \mathbb{R}^{(n_x \cdot n_t)}\) is a vector in the flattened input-time space. Note then that
+$$V V^T = v v^T$$
+We see that \(\mathcal{K}\) acts similarly in a two-step way like in the first example above. 
+Specifically, application of \(v^T\) to a tensor \(q \in \mathbb{R}^{n_x \times n_t \times n}\) performs a weight sum of the vector values of \(q\) over all time and batches, producing a single value \(p \in \mathbb{R}^n\). 
+Then, application of \(v\) to \(p\) distributes this value over the time-input space according to the weights in \(v\). 
+Specifically, note that the outputs are all in the direction of \(p\), i.e. the output is one-dimensional in the physical space \(\mathbb{R}^n\)!
+In total, <b>we see the \(\mathcal{K}\) operator is unbiased: it can be steered to produce outputs in any direction \(\mathbb{R}^n\) by choosing an appropriate error input, but the corrections it does produce when the activity is one-dimensional are also only one-dimensional.</b>
+Another interesting observation is that the direction, \(u\), of the manifold on which the activity existed did not factor into \(\mathcal{K}\) at all.
+Indeed, we could rotate the activity to exist in any subspace and we would get the same final result, as long as the values in \(v\) (relative scales over time and inputs in the subspace) are preserved. 
+</p>
+
+<h3>General Case</h3>
+
+<p>
+In the general case, the augmented dynamics do not exist in a one-dimensional subspace. 
+But, similar tricks apply. 
+Specifically, write in SVD form
+$$V = \sum_{i=1}^r \sigma_i v_i \cdot u_i^T$$
+where the \(v_i, u_i\) terms constitute orthonormal bases in their respective spaces. Then, 
+$$V V^T = \sum_{i=1}^r \sigma_i^2 v_i \cdot v_i^T$$
+For a tensor input \(q\) to the operator \(\mathcal{K}\). We view \(q\) as an element of the bi-partitioned space \(\mathbb{R}^{(n_x \cdot n_t) \times n}\). 
+Let \(p_i\) denote the weighted-sum fixed vector output \(v_i^T q \in \mathbb{R}^n\). 
+We have
+$$\mathcal{K} q = \sum_{i=1}^r \sigma_i^2 v_i p_i^T,$$
+Each \(v_i p_i^T \in \mathbb{R}^{(n_x \cdot n_t) \times n}\) is a 3-tensor consisting of weighted copies of the singular vector \(p_i\), i.e. it is at most one-dimensional spatially.
+So, this expression explores at most \(r\) spatial dimensions. 
+If the activity is very low rank, so \(\sigma_i^2\) decays rapidly, we can truncate to a few terms, getting an even lower-dimensional output of \(\mathcal{K}\).
+We see in total that the effective rank of \(V\) dampens the dimensionality of the output of \(\mathcal{K}\) on any particular input, confirming the math above. 
+</p>
+
+<p>
+<b>My summarized intution is as follows.</b>
+(1) The expected outputs of \(\mathcal{K}\) share spatial characteristics with the actual (hidden, input) augmented activity, including a dimensionality bound and similar spectral energy (singular value distribution).  
+However, (2) it is not biased in any way towards the actual activity directions (the terms \(u_i\) above), which completely evaporate. 
+</p>
+
+<p>
+We can make (1) more formal. 
+Specifically, suppose we gave \(\mathcal{K}\) an input \(X \in \mathbb{R}^{(n_x \cdot n_t) \times n)}\) that is isotropic spatially with mean zero entries. 
+Formally, we say \(\mathbb{E}[X] = 0\), \(\mathbb{E}[X^T X] = I_n\). 
+We can define the spatial mean as \(\mathbb{1}^T X \in \mathbb{R}^n\), and we can see clearly this also has mean zero. 
+Let \(Y = \mathcal{K} X\) denote the random variable output of the operator applied to \(X\). 
+Let's quantify the spatial bias and distribution of \(Y\). 
+Firstly, we can see 
+$$\mathbb{E}_X [Y] = \mathbb{E}_X [\sum_{i=1}^r \sigma_i^2 v_i v_i^T X] = \sum_{i=1}^r \sigma_i^2 v_i v_i^T \mathbb{E}_X [X] = 0$$
+so the mean of every entry of \(Y\) is zero and, in particular, the mean in \(\mathbb{R}^n\) over the time-input space is also zero. 
+Next, the distribution. 
+$$\mathbb{E}_X[Y^T Y] = \mathbb{E}_X [\mathcal{K} X X^T \mathcal{K}] = \mathcal{K} \mathbb{E}_X [X X^T] \mathcal{K} = \mathcal{K} \mathcal{K}^T$$
+Hence, the \(Y\) shares left singular vectors \(\mathcal{K}\), which are inherited exactly from the augmented activity, \(V\):
+$$\mathbb{E}_X[\text{svecs}_{left}(Y)] = \text{svecs}_{left}(V)$$ 
+It also shares the same singular values, up to squaring. But it does not share right singular vectors.
+We can think of this as follows. 
+The augmented activity can be written as a sum of individual spatial dimensions in particular time-input modes. 
+Likewise, the expected output of \(\mathcal{K}\) shares these time-input modes, but not the exact spatial dimensions. 
+So, \(Y\) will have the same time-input character as the augmented activity, but the away it is spatially aranged could differ. 
+<b>This confirms the intuition in (1) and (2) above: updates are unbiased in the spatial dimension, but inherit effective rank and time-input manifold structure!</b>
+</p>
+
+<h2>Non-linear RNN Example</h2>
+
+<p>
+Now consider an input-drive RNN. Specifically, suppose we sample a batch \(x_1, \dots, x_{n_x}\) of input trajectories and let \(h_j(t)\) denote the model hidden state at discrete time \(t \leq n_t\) on input \(x_j\).
+We assume the dynamics have the form 
+$$h_j(t+1) = W \phi(h_j(t)) + W_{in} x_j(t)$$
+and we train the RNN on a task with fixed output weights that are not trained (for simplicity). 
+We assume \(h_j(t) \in \mathbb{R}^n\) so there are \(n\) physical hidden units in the network.
+Finally, we assume \(x_j(t) \in \mathbb{R}^{n_{in}}\).  
+Let's examine the structure of the configuration space NTK on this more complex example. 
+</p>
+
+<p>
+As in example 2, we choose 
+$$S = \mathbb{R}^{n_x \times n_t \times n}$$ 
+We define the operator \(\Phi : S \rightarrow S\), the configuration space NTK.
+Again, as in my prior blog, we can decompose \(\Phi = \mathcal{P K P^T}\). 
+Define a matrix \(V \in \mathbb{R}^{n_x \cdot n_t, n + n_{in}}\), the concatenated hidden, input activity:
+$$V = \begin{pmatrix} \text{mat}(\phi(h)) \\ \text{mat}(x) \end{pmatrix} \in \mathbb{R}^{n_x \times n_t, n + n_{in}}$$
+Then, we can show \(\mathcal{K}\) is identical (up to some rearanging of coordinates) to the operator
+$$\mathcal{K} = (V V^T) \otimes I_n \in \mathbb{R}^{n_x \cdot n_t \cdot n, n_x \cdot n_t \cdot n}$$ 
+Immediately, we see \(\mathcal{K}\) is full-rank over the spatial hidden unit dimension:
+$$\text{effrank}_n(\mathcal{K}) = n$$
+</p>
+
+<p>
+Let's determine the effective rank of \(\mathcal{K}\) over the non-spatial batch \(\times\) time dimension. 
+But, note \(\mathcal{K}\) is a separable operator when partitioned into physcial and non-physcial parts. 
+In particular, the partial trace over hidden units, \(\text{tr}_n(\mathcal{K})\) is simply
+$$\text{tr}_n(\mathcal{K}) = \text{tr}(I_n) \cdot (V V^T) = n \cdot (V V^T) \in \mathbb{R}^{n_x \cdot n_t, n_x \cdot n_t}$$
+Thus, we see the batch \(\times\) time part of \(\mathcal{K}\) has SVD coinciding with the SVD of the (hidden, input) concatenated activity \(V\)!
+In particular, 
+$$\text{effrank}_{n_t \times n_x}(\mathcal{K}) = \text{effrank}(V V^T) = \text{effrank}(V^T V)$$
+Interestingly, the term \(V^T V\) is an \(n \times n\) second-moment matrix quantifying variability of the (hidden, input) activity over all batches and times, without subtracting the mean. 
+So, if this non-centered activity exists in a low-dimensional subspace of dimension \(r\) we see \(\mathcal{K}\) can only produce outputs that explore \(r\) spatial dimensions!
+</p>
+
+<p>
+In total, we observe that \(\mathcal{K}\)'s expressiveness over physical space, \(\mathbb{R}^n\), is bottle-necked by the (hidden, input) effective dimension over all batches and time. 
+Since it acts like an identity over the \(n\)-space, if we give it infinitely many isotropic random inputs, it will not show any bias towards a particular hidden dimension. 
+However, each particular correction it generates is limited in physical effective dimension by the current (hidden, input) effective dimension at each GD iteration. 
+</p>
+
+
+
+<br>
+<hr class="wave">
+
+<h2>General Case: Schmidt Rank/NTK Separability</h2>
+
+<p>
+<b>Separable Operators are Nice:</b> So far, most of the operators we've seen are separable over space versus observationis (time-trial) domain. Specifically, we can show 
+$$\mathcal{P} \cong\mathcal{P}_{n_x \cdot n_t} \otimes \mathcal{P}_{n}, \mathcal{K} \cong\mathcal{K}_{n_x \cdot n_t} \otimes \mathcal{K}_{n}$$
+where \(\cong\) means "same up to isomorphism" where the isomorphism here just shuffles the full tensor domain coordinates in observations versus space (technically I should use this notation almost everywhere, but I'm lazy and we get the point). 
+In the scalar-valued linear RNN, this was the case, in both the autonomous and non-autonomous examples above. 
+</p>
+
+<p>
+When the operator is separable, we can easily capture notions of space-time bottle-necking. 
+Specifically, if 
+\(\mathcal{K} \cong\mathcal{K}_{n_x \cdot n_t} \otimes \mathcal{K}_{n},\)
+the partial trace
+$$\text{tr}_n(\mathcal{K}) = \text{tr}(\mathcal{K}_{n}) \cdot \mathcal{K}_{n_x \cdot n_t} \in \mathbb{R}^{n_x \cdot n_t \times n_x \cdot n_t},$$
+and
+$$\text{tr}_{n_x \cdot n_t}(\mathcal{K}) = \text{tr}(\mathcal{K}_{n_x \cdot N_t}) \cdot \mathcal{K}_{n} \in \mathbb{R}^{n \times n}$$
+so we see that the spatial effective rank is just the effective rank of \(\mathcal{K}_n\), and likewise for time-trials axis. 
+</p>
+
+<p>
+<b>Quantifying Separability:</b> In the non-linear RNN case, only \(\mathcal{K}\) was separable: \(\mathcal{P}\) is not separable over the spatial domain since. 
+Intuitively, this is because \(W \sigma'(h(t))\), the one-step Jacobian, can vary over time, trials and hidden units, so we can't separate it into a single simple action on all hidden units.  
+</p>
+
+<p>
+The separability of the RNN \(\mathcal{K}\) was due to the structure of the parameterization with weights outside the non-linearity. 
+This is not in general going to hold. 
+Indeed a GRU will not have a separable form of \(\mathcal{K}\).
+However, in practice I find <b>(*)</b> it is <i>very</i> close to the form \(\mathcal{K}_{gru} \otimes I_n\), similar to the RNN, which is separable.
+</p>
+
+<p>
+How can formalize this notion? This can be done using the so-called <b>Schmidt decomposition</b> which is a notion of SVD for tensors.
+Note before, when the operators were separable, we can apply SVD to spacial and time-trials part individually. 
+The Schmidt decomposition is distinct from this. 
+It asks how many tensor product separable terms we need to capture the operator. 
+</p>
+
+<p>
+Specifically, for any operator on the observations versus space time domain above, \(\mathcal{G}\), we can write
+$$\mathcal{G} \cong \sum_{r=1}^R \sigma_r A_r \otimes B_r$$
+where each \(A_r \in \mathbb{R}^{n_t \cdot n_x \times n_t \cdot n_x}\), the space-time observational parts, and each \(B_r \in \mathbb{R}^{n \times n}\), the spatial part, and finally under the Frobenius matrix inner product the matrices are a bi-orthogonal system:
+$$\text{tr}(A_{r}^T A_{\ell}) = \text{tr}(B_{r}^T B_{\ell}) = \delta_{r,\ell} \in \{0, 1\}$$
+Here, \(R\) is the so-called <i>Schmidt rank</i> or <i>tensor rank</i> of the operator \(\mathcal{G}\) and the \((\sigma_r)_{r=1}^R\) are the <i>Schmidt singular values</i>.
+The latter capture how distributed the operator is over its separable components.
+We can define the Schmidt effective rank just like PR dimension as 
+$$\text{effrank}_{\text{Schmidt}}(\mathcal{G}) = \frac{\left( \sum_{r=1}^R \sigma_r^2 \right)^2}{\sum_{r=1}^R \sigma_r^4} \in [0, R]$$
+In the separable case, we see the exact Schmidt rank is \(1\). 
+Now, we can formalize <b>(*)</b> as: the effective Schmidt rank of \(\mathcal{K}\) for the GRU is close to \(1\). 
+Even deeper, I'd hypothesize that in the limit for the GRU
+$$\text{Hypothesis (GRU): } \text{effrank}_{\text{Schmidt}}(\mathcal{K}) \rightarrow 1 \text{ as } n \rightarrow \infty$$
+</p>
+
+<p>
+<b>Matrix-Free Schmidt Rank is Too Hard:</b> 
+Unfortunately, estimating the Schmidt rank in a matrix-free way seems very hard and for now I've used some simpler approaches to approximately understand it, as detailed below. 
+The reason for this difficulty is as follows. 
+The Schmidt decomposition is concerned with how an operator \(\mathcal{G}\) acts in a space versus observations bi-paritioned space. 
+Specifically, \(\mathcal{G} : \mathbb{R}^{n_x \times n_t \times n} \rightarrow \mathbb{R}^{n_x \times n_t \times n}\) in the recurrent case we've been discussing.
+However, the Schmidt effective rank denominator term above is obtained by considering a map \(R(\mathcal{G}) : \mathbb{R}^{n^2} \rightarrow \mathbb{R}^{(n_x \cdot n_t)^2}\), given by re-ordering the indices of \(\mathcal{G}\) as a matrix.
+This is totally easy if we have the matrix, but in the matrix-free world, it's total hell. 
+</p>
+
+<p>
+<b>Stupid Simple Lower Bound:</b>
+An alternative simple approach to get an idea of how separable an operator \(\G\) is as follows.
+Specifically, if we feed \(\G\) with a rank-1 outer product \(u \cdot v^T\) with \(u \in \mathbb{R}^{n_x \cdot n_t}, v \in \mathbb{R}^n\), the output is rank-1 provided \(\G\) is separable.
+If the operator is separable, only one singular value should be required to capture all the variance in the output. 
+If \(R\) singular values are needed to capture the output variance, then \(\G\) has Schmidt rank \(\geq R\), since each separable term can only produce a rank-1 spatial output.
+Stated in math, 
+$$\quad \text{effrank}_{\text{Schmidt}}(\G) \geq \text{effrank}(\G u v^T)$$
+$$\forall u \in \mathbb{R}^{n_x \cdot n_t}, v \in \mathbb{R}^{n}$$
+So, a simple algorithm is to provide \(G\) with many random such rank-1 outer products and observe the spatial singular values of the output, \(\G u v^T\), producing skree-plots of the spatial singular values of the output.
+</p>
+
+
+<h3>Some Experiments: Schmidt Rank of NTK for Common Models</h3>
+
+<p>
+At this point, it makes sense to actually build some practical intuition, measuring the degree to which the NTK is separable (Schmidt [effective] rank) for some common models.  
+</p>
+
+<p>
+<b>Vanilla RNN (activation inside): </b> Above, we saw the vanilla RNN 
+\(h_j(t+1) = W \phi(h_j(t)) + W_{in} x_j(t)\) 
+has separable \(\K\) parameter operator, even when \(\phi = I_n\) (linear RNN) or \(W, W_{in} = g, k\) are scalar-valued parameters. 
+Let's confirm this is actually true. Providing this operator with 30 random \(u v^T\) inputs generated the plot below. 
+</p>
+
+
+<br>
+<figure>
+<a href="basic_rnn_schmidt_rank.png"><img src="basic_rnn_schmidt_rank.png" width=100%/></a>
+<figcaption><p><b>Fig 2</b> Lower bounds on the Schmidt rank according to the observation above. We draw \(30\) random such rank-1 space-time matrices \(u v^T\), feed them into the operator \(\K\), observing the output effective rank over space, plotting the mean and quartiles. In this case, there's no variation because it's perfectly separable!</p></figcaption>
+</figure>
+<br>
+
+<p>
+Here, I drew the weights \(W\) randomly with Xavier initialization scaled by a gain parameter \(g\) and tried three choices of the neuron count \(n\). 
+In all cases, we see that spatially rank one inputs to the operator produce spatially rank one outputs, i.e. it is exactly separable, as expected!
+Note, as shown above, the weights can be arbitrary here: <b>it's due to the model structure, not specific parameter choice that the \(\K\) operator is provably always separable</b>.
+</p>
+
+
+<br>
+<figure>
+<a href="gru_schmidt_rank.png"><img src="gru_schmidt_rank.png" width=100%/></a>
+<figcaption><p><b>Fig 3</b> GRU Case of \(\mathcal{K}\) operator. See Fig 2 caption.
+</figure>
+<br>
+
+<p>
+Here, I used a wider range of \(W\) recurrent scales, which I've found it appropriate for the GRU: the transition to chaos happens at a larger \(g\), around \(4\). 
+In all cases of \(n\) we see that increasing \(g\) leads to a more distributed operator with higher Schmidt rank. 
+Furthermore, as \(n \rightarrow \infty\), we see that the Schmidt rank can blow up like crazy for large \(g\), but the oppposite trend occurs for small \(g\). 
+Let's revise the hypothesis then: 
+$$\text{New Hypothesis (GRU): } \text{ for } g = 1, \text{effrank}_{\text{Schmidt}}(\mathcal{K}) \rightarrow 1 \text{ as } n \rightarrow \infty$$
+</p>
+
+
+<br>
+<figure>
+<a href="gru_schmidt_rank_vs_n.png"><img src="gru_schmidt_rank_vs_n.png" width=80%/></a>
+<figcaption><p><b>Fig 3</b> GRU Schmidt rank lower bounds versus number of neurons, \(n\), with \(g = 1\) (default GRU initialization).
+</figure>
+<br>
+
+<p>
+Above, I plotted the Schmidt rank lower bound versus \(n\) and indeed we see it decreases. 
+Computing this for larger \(n\) becomes very slow and intensive, so it's better to try prove it. 
+
+</p>
+
+
+<h1>Evolution of the \(\K\) Operator Over GD</h1>
+
+<p>
+The KP-flow NTK decomposition is especially nice for the vanilla RNN \(h_j(t+1) = W \phi(h_j(t)) + W_{in} x_j(t)\) since the operator \(\K\) is provably seperable, spatially unbiased and has an SVD we can write down simply. 
+This inspires us to ask the following:
+$$\text{Can we track } \K \text{ as the model is trained with GD for finite width vanilla RNNs?}$$
+The motivating thing is that the properties of \(\K\) (spatially unbiasedness and separability) are very similar to those which appear in the infinite width limit for the full NTK in other peoples' work. 
+</p>
+
+<p>
+We have
+$$\K = V V^T \otimes I_n$$
+where \(V\)'s definition depends on what's being trained.
+Note then that 
+$$\Phi = \Psi \Psi^T$$
+with
+$$\Psi = \P (V \otimes I_n)$$
+In other words, \(\Phi\) is a Grammian corresponding to the "square root operator" \(\Psi\). 
+Note we usually define \(\Phi = (\d h / \d \theta) (\d h / \d \theta)^T\), where in the middle we contract over parameters of the model.
+The factorization above is distinct since \(\Psi\) is an operator entirely on the configuration space: <b>there is no parameter contraction here!</b>
+Importantly, the spectral properties of \(\Phi\) inherit from \(\Psi\) exactly so we can study \(\Psi\) instead of \(\Phi\). 
+</p>
+
+<h3>Case 1: Just Training Input Weights</h3>
+
+<p>
+If we just train the inputs weights, \(V \in \mathbb{R}^{n_x \cdot n_t \times n_{in}}\) is a bipartitioning of the input activity, with unraveled index \(j,t\) given by
+$$V_{j,t} = x_j(t) \in \mathbb{R}^{n_{in}}$$  
+so \(\K\) clearly does not change during training! 
+Let's take an SVD of \(V\),
+$$V = U \Sigma W^T$$
+Suppose we use a thin SVD here: let \(R_{in}\) be the number of non-zero singular values, so \(U \in \mathbb{R}^{(n_x \cdot n_t) \times R_{in}}\) consist of time-trial modes and \(W \in \mathbb{R}^{n_{in} \times R_{in}}\) specifies the respectively coupled spatial modes.
+Here, \(R_{in}\) is the effective rank of the input activity. 
+Consequently,
+$$V V^T = U \Sigma^2 U^T,$$
+evaporating the spatial modes but preserving the time-trial mode structure, with singular values distorted by squaring. 
+We then see that 
+$$\Phi = \P (U \Sigma^2 U^T \otimes I_n) \P^T$$
+so the "half NTK part" is 
+$$\Psi = \P (U \Sigma \otimes I_n)$$
+which is technically a mapping from the effective, smaller space \(\R^{R_{in} \times n}\) into the full configuration space \(\R^{n_x \cdot n_t \cdot n}\). 
+</p>
+
+<h2>TODO: Move/Incorporate This Part</h2>
+
+<p>
+<b>Example: One-Dimensional Spatial Input</b> Consider the case when \(n_{in} = 1\), so the input \(x_j(t)\) is one-dimensional. 
+Then, by construction \(R_{in} = n_{in} = 1\), assuming the inputs are not all zero, with \(W = 1, \Sigma = \sigma\), both scalars. 
+Importantly, then <b>\(V V^T\) is rank one</b> and so the full operator \(\Phi\) has full matrix rank at most \(n\). 
+We can make this concrete. 
+In this case, the nullspace of the operator \(\K\) is 
+$$\ker(\K) = V^\perp \otimes \R^n$$
+So, since \(\P\) is always invertible (following from Oseledets' theorem), we have 
+$$\ker(\Phi) = (\P^T)^{-1} (V^\perp \otimes \R^n)$$
+which has dimension \((n_t n_x - 1) \cdot n\), covering almost the entire configuration space!
+From this, it is clear that the <b>vast majority of objective functions we choose will lead to zero learning.</b> 
+</p>
+
+<p>
+<b>What is \((\mathcal{P}^T)^{-1}\)?</b> Quickly, we will take a step back and derive \(\P^{-1}\) and \((\P^T)^{-1}\), which, amazingly, are a lot simpler than the operator \(\P\) itself. 
+To motivate this, note \(\P\) integrates corrections to a trajectory, so it's an integral operator and intuitively \(\P^{-1}\) should then be a finite-difference operator, which we will see.
+Specifically, \(\P^{-1} = \text{diag}(\P_1^{-1}, \dots, P_{n_x}^{-1})\), where each input-conditioned operator can be written as a block matrix
+$$\P_j^{-1} = \begin{pmatrix} I_n & 0 & 0 & \dots & 0 \\
+                              -\frac{\d h_j(2)}{\d h_j(1)} & I_n & 0 & \dots & 0 \\
+							  0 & -\frac{\d h_j(3)}{\d h_j(2)} & I_n & \dots & 0 \\
+							  \vdots & \vdots & \vdots & \ddots & \vdots \\
+							  0 & 0 & 0 & \dots & I_n \end{pmatrix}$$
+i.e., the one-step dynamics Jacobian on the lower diagonal and identities on the diagonal. 
+From now on, we'll let \(J_j(t) := \d h_j(t+1) / \d h_j(t)\). 
+It's clear this operator \(\P^{-1}\) then implements a one-step forward-time finite difference between along all trial-dependent trajectories.
+Likewise, \((\P^T)^{-1}\) is reverse-time one-step finite difference, given by transposing the operator above (flipping lower diagonal to upper diagonal and transposing the Jacobians). 
+</p>
+
+<p>
+Using the above, we can write \((\P^T)^{-1}\) as a tensor-product sum (Schmidt decomposition form),
+$$(\P^T)^{-1} = \sum_{j,t}(E_{j,j,t,t} \otimes I_n -  E_{j,j,t,t+1} \otimes J_j(t)^T) = I_{(n_x \cdot n_t) \times n} - \sum_{j,t} E_{j,j,t,t+1} \otimes J_j(t)^T$$
+Here, \(E_{i, j, t, s} \in \mathbb{R}^{n_x \cdot n_t \times n_x \cdot n_t}\) is the tensor with a one in entry \(i,j,t,s\) and zero everywhere else. 
+Now for the nice simple case: in the <i>linear RNN case</i>, we have \(J_j(t) = W\), so this becomes
+$$\text{Linear Case: } \quad (\P^T)^{-1} = I_{n_x \cdot n_t} \otimes (I_n - W^T)$$
+which is <b>separable</b>! 
+In this case, we see 
+$$\ker(\Phi) = (I_{n_x \cdot n_t} \otimes (I_n - W^T)) (V^\perp \otimes \R^n) = V^\perp \otimes \R^n,$$
+i.e. the <b>kernel of the full operator is identical to the kernel of \(\K\) for linear RNNs!</b>
+Note we implicitly assumed \(I_n - W^T\) is full rank here, but that's pretty much always the case in practice.
+Finally, after all this work, we can say that with a linear RNN the operator \(\K\) completely determines bottle-necking explicitly, with \(\P\)'s effect completely evaporating!
+</p>
+
+<br>
+<hr class="wave">
+
+
+<p>
+<b>Studying the Differential Operator (NTK Inverse) and Transferring to the Integral Operator (NTK):</b>
+Below, it is simpler to study the NTK inverse. 
+To motivate this, note that 
+$$\begin{pmatrix} 1 & 0 & 0 & 0 \\ g & 1 & 0 & 0 \\ g^2 & g & 1 & 0 \\ g^3 & g^2 & g & 1 \end{pmatrix}^{-1} = \begin{pmatrix} 1 & 0 & 0 & 0 \\ -g & 1 & 0 & 0 \\ 0 & -g & 1 & 0 \\ 0 & 0 & -g & 1 \end{pmatrix}$$
+The matrix on the left looks like the NTK for the gain parameter autonomous RNN above. 
+It is an integral operator given by that Toeplitz matrix.
+On the right is the NTK inverse, which represents a finite difference (forward time) differential operator.
+Importantly, we see that the right matrix is very simple: only two non-zero diagonals (main and lower). 
+It's much sparser, and this is the case in general for the NTK associated with any non-linear model (as I'll show in the examples).
+So, it's easier to form and study the associated NTK inverse.
+</p>
+
+<p>
+But the NTK is the final goal for our analysis, so how do turn analysis of the NTK inverse into results about the non-inverse NTK?
+In general, the NTK is PSD, i.e. we can write it as 
+$$\Phi = \Psi \Psi^T$$
+So its singular values are its eigenvalues.
+Then, the eigendecomposition is of the form
+$$\Phi = U \Sigma^2 U^T$$
+Then, 
+$$\Phi^{-1} = U \Sigma^{-2} U^T$$
+So, \(\Phi\) and \(\Phi^{-1}\) share singular value operators \(U\) and we invert the singular values. 
+So, if we determine the spectral properties of the NTK inverse, we can easily translate these into spectral properties of the NTK.
+Intuitively, small singular values of the integral operator correspond to massive singular values of the differential operator. 
+</p>
+
+<p>
+<b>Linear RNN Analysis</b> We can directly construct the NTK for the linear case.
+Let \(L_m\) denote the \(m\) by \(m\) matrix with ones on the lower-diagonal and zeros elsewhere.
+First work with the inverse of \(\P\), since the temporal structure of this operator only has entries in the main and lower diagonal (finite difference).
+Specifically, 
+$$\P^{-1} = I_{n_x} \otimes (I_{n_t} \otimes I_n - L_{n_t} \otimes W)$$
+So,
+$$\P^{-1} = I_{(n_x \cdot n_t)\times n} - (I_{n_x} \otimes L_{n_t}) \otimes W$$
+Let \(D = V^+\) be its pseudo inverse. Then, 
+$$\K^+ = D D^T \otimes I_n$$
+Finally, let \(D_\back\) denote \(D\) shifted one backwards in time for all trials and hidden units (with zeros in the \(t=n_t\) rows). 
+Then, we have the formula 
+$$\Phi^+ = A_0 \otimes I_n - A_1 \otimes W^T - A_1^T \otimes W + A_2 \otimes (W W^T)$$
+$$ \text{With: } \quad A_0 := D D^T, A_1 := D D^T_\leftarrow, A_2 = D_\back D^T_\back$$
+These measure correlatations in \(D\) at the same times, time staggerred and at the same times but both shifted back.
+
+In particular, \(A_0\) and \(A_2\) capture nearly identical things and, if the dynamics are "slow" we can basically assume \(A_0 = A_1 = A_1^T = A_2\), yielding
+$$ \text{Slow dynamics: } \Phi^+ \approx D D^T \otimes (I_n - 2 \text{Sym}(W) + W W^T)$$ 
+$$ \approx D D^T \otimes (I_n - W) (I_n - W^T)$$
+This is a nice separable form and I'd like to invert back to get \(\Phi\), but sadly this does not work. 
+Specifically, if the error above is \(\epsilon\), then the error in the \(\Phi\) approximation will scale like \(1/\epsilon\) and it's not happy days.
+</p>
+
+<p>
+The problem with going from the approximate story to the full NTK is ill-conditioning: some tiny singular values can mess everything up. 
+Typically, the spatial term \(I_n- W\) is well-conditioned (except at the <b>edge of chaos</b> where \(W\)'s eigenvalues are close to \(1\)). 
+The thing that can mess the singular values up is \(D\). 
+If \(V\) has singular values \(\Sigma_V\), then \(D\) has singular values \(\Sigma_V^{-1}\), truncating the zeros. 
+Now, the condition number is sharedm \(\kappa(VV^T) = \kappa(D D^T)\). 
+So, if we make \(V V^T\) nicely conditioned by projecting onto the space where activity actually exists, then invert that Grammian, we will get a nice \(D D^T\) that we can work with. 
+</p>
+
+<p>
+I'll skip the math for now, let's just assume that \(\Phi_{active}\) defines the NTK after nice conditioning, i.e. truncating singular values of the temporal part (the spatial part \(I_n - W\) is usually nice). 
+Then, with this operator, we can say
+$$\Phi_{active} = (V V^T)_{active} \otimes ((I_n - W) (I_n - W^T))^{-1}$$
+</p>
+
+
+<hr class="wave">
+<br>
+
+<p>
+<b>A Procedure for Isolating Null Error Directions:</b>
+What can the inverse of the NTK tell us? 
+Well, if \(\varepsilon \in \R^{n_x \times n_t \times n}\) is a 3-tensor signature that is in the effective nullspace of the NTK (corresponding to a small singular/eigen direction), \(\Phi^{-1} \varepsilon\) will produce a massive output.
+In other words, the large singular values of \(\Phi^{-1}\) tell us exactly which signatures error signals will produce very small corrections during learning. 
+</p>
+
+<p>
+Let's workout the eigenvalues of \(\P\). 
+We have 
+$$\P^{-1} = I_{n_x \cdot n_t \times n_x} - I_{n_x} \otimes L_{n_t} \otimes W$$
+Then, the eigendirections of \(P^{-1}\) are the eigendirections of the right term, and the eigenvalues are \(1 - \lambda_i\) where \(\lambda_i\) are the eigenvalues of the right term. 
+Next, 
+</p>
+
+<hr class="wave">
+<br>
+
+
+<p>
+Note, more simply (I'm realizing this now), for the linear RNN we can write
+$$\P = (I_{n_x} \otimes I_{n_t} \otimes I_n -  I_{n_x} \otimes I^{(1)}_{n_t} \otimes W)^{-1}$$
+where \(I^{(1)}_{n_t}\) is the \(n_t\) by \(n_t\) matrix with ones on the lower diagonal. This yields
+$$\P = I_{n_x}\otimes (I_{n_t} \otimes I_n - I_{n_t}^{(1)} \otimes W)^{-1}$$
+We see \(\P\) acts like \(W\) on the spatial part and time parts only. 
+On the other hand, \(\K\) acts only on the temporal part,
+$$\K = (V V^T \otimes I_n)$$
+Define \(M := (V V^T)^+\), so, we get
+$$(\P \K \P)^+ = \P^{-T} \K^+ \P^{-1}$$
+Specifically,
+$$(\P \K \P)^+ = [I_{n_x}\otimes (I_{n_t} \otimes I_n - I_{n_t}^{(-1)} \otimes W^T) ](M \otimes I_n) [I_{n_x}\otimes (I_{n_t} \otimes I_n - I_{n_t}^{(1)} \otimes W)]$$
+$$ = (M \otimes I_n - I_{n_t}^{(-1)} M \otimes W^T)(I_{n_x}\otimes (I_{n_t} \otimes I_n - I_{n_t}^{(1)} \otimes W))$$
+$$ = M \otimes I_n - 2 \text{Sym}(I_{n_t}^{(-1)} M) \otimes W^T + I_{n_t}^{(-1)} M I_{n_t}^{(1)} \otimes W^T W$$
+The term \(I_{n_t}^{(-1)} M\) is the time-offset Grammian of activity in \(V^+\) at times \(t\) and times \(t+1\) with zero a time \(n_t\).
+The term \(I_{n_t}^{(-1)} M I_{n_t}^{(1)}\) is a Grammian of activity correlates between time \(t\) and time \(t+2\). 
+
+Note the first time comes exactly from \(\K\) and is temporally bottle-necked by \(M\).
+
+
+<!--
+$$\P \K \P^T = (I_{n_x \cdot n_t} \otimes (I_n - W)^{-1}) (V V^T \otimes I_n) (I_{n_x \cdot n_t} \otimes (I_n - W^T)^{-1})$$
+which becomes
+$$\Phi = V V^T \otimes ((I_n - W^T)(I_n - W))^{-1}$$
+This beautiful form allows us to isolate the spatial and non-spatial parts of the NTK exactly and quantify bottle-necking in a very clean way. 
+
+Specifically, the temporal bottle-necking is given by
+$$\text{effrank}_{n_x \cdot n_t}(\Phi) = \text{effrank}(V V^T)$$
+Furthermore, letting \(\tau_i\) be the singular values of \(I_n - W\), the spatial bottle-necking is given by 
+$$ \text{effrank}_{n}(\Phi) = \frac{\left(\sum_i \frac{1}{\tau_i^2}\right)^2}{\sum_i \frac{1}{\tau_i^4}}$$
+We can characterize the spatial bias by this. 
+Specifically, this is the degree to which the spatial part aligns with the identity matrix (isotropic and hence unbiased). 
+-->
+</p>
+
+<p>
+<b>Non-linear case</b> Let's investigate how nicely this separability result holds for the non-linear RNN.
+In this case, note that the \(j\) task input block of \(\P^{-1}\) has the form
+$$\P_j^{-1} = \begin{pmatrix} I_n & 0 & 0 & \dots & 0 \\
+                              -J_j(1) & I_n & 0 & \dots & 0 \\
+							  0 & -J_j(2) & I_n & \dots & 0 \\
+							  \vdots & \vdots & \vdots & \ddots & \vdots \\
+							  0 & 0 & \dots & I_n \end{pmatrix}$$
+where \(J_j(t) = W \text{diag}(\sigma'(h_j(t)))\). So, we see 
+$$\P = (I_{(n_x \cdot n_t) \times n} - (I_{n_x \cdot n_t} \otimes W) \cdot D)^{-1}$$
+where 
+$$D = \sigma'(\diag_1(h)),$$
+i.e. the object \(\sigma'(h_j(t))\) in \(\R^{(n_x \cdot n_t) \times n}\), made into a diagonal operator, then shifted down one to the lower diagonal.
+Here, \(\diag_1\) shifts down one the diagonal.  
+We see that \(D\) is the source of non-separability, so it needs extra treatment. 
+Define \(G = \sigma'(h_j(t))\), the "gating activity" over all time and trials, so \(G \in \R^{(n_x \cdot n_t) \times n}\) and \(D = \diag_1(G)\). 
+Perform an SVD on this gating activity, 
+$$G = U_G \Sigma_G V^T_G = \sum_{r=1}^{R_G} \sigma^g_r u^g_r (v^g_r)^T$$
+with \(U_G \in \R^{(n_x \cdot n_t) \times R_G}, \Sigma_G \in \R^{R_G\times R_G}, V \in \R^{n \times R_G}\) for some rank \(R_G\). Then, 
+$$D = \sum_{r=1}^{R_G} \sigma^g_r \diag_1(u^g_r) \otimes \diag_1(v^g_r)$$
+is the Schmidt decomposition of \(D\). Consequently, 
+$$\P = (I_{(n_x \cdot n_t) \times n} - \sum_{r=1}^{R_G}  \sigma^g_r (\diag(u^g_r) \otimes W\diag_1(v^g_r)))^{-1}$$
+</p>
+
+<p>
+This does not combine nicely with \(\K\) due to the inverse.
+But this gives me another wacky thing to try: why not just stay in inverse world. 
+But \(\K\) is usually not invertible, so we use the pseudo-inverse, \(\K^\dagger\). 
+We can easily verify,
+$$\Phi^\dagger = \P^{-T} \K^{\dagger} \P^{-1}$$
+which involves the true inverse of \(\P\) (which is nice, as above), and the pseudo inverse of \(\K\). 
+Directly, we can verify that 
+$$\K^\dagger = ((V^\dagger)^T V^\dagger)\otimes I_n$$
+So, from the above, 
+$$\P^{-T} \K^{\dagger} = ((V^\dagger)^T V^\dagger) \otimes I_n - \sum_{r=1}^{R_G}  \sigma^g_r ((V^\dagger)^T V^\dagger \diag_1(u^g_r) \otimes \diag_1(v^g_r) W^T)$$
+So, 
+$$\Phi^\dagger = ((V^\dagger)^T V^\dagger) \otimes I_n - 2\sum_{r=1}^{R_G} \sigma^g_r \cdot (V^\dagger)^T V^\dagger \diag_1(u^g_r) \otimes \text{Sym}(W \diag_1(v^g_r))$$
+$$ \quad + \sum_{r=1}^{R_G} \sum_{\ell=1}^{R_G} \sigma_r^g \sigma_\ell^g \cdot (V^\dagger)^T V^\dagger \diag_1(u^g_r) \diag_1(u^g_\ell) \otimes (W \diag_1(v_r^g) \diag_1(v_\ell^g) W^T)$$
+</p>
+
+
+<br>
+<hr class="wave">
+
+<p>
+Consider a candidate error signal in the nullspace of \(\K\) above, 
+$$\{\varepsilon_j(t)\}_{j,t} \in (V^\perp \otimes \R^n)$$
+let's see what \((\P^T)^{-1}\) does to this signal. Specifically this operator transforms the signal by 
+$$\{\varepsilon_j(t)\}_{j,t} \mapsto \{\varepsilon_j(t) -J_j(t)^T \varepsilon_j(t+1)\}$$
+</p>
+
+
+<p>
+Let's concentrate on a regression loss case, without tunable output weights \(W_{out}\) and a per-trial target trajectory \(y_j^*(t) \in \R^{n_{out}}\), 
+$$L = \E_{j, t} \| W_{out} h_j(t) - y_j^*(t)\|$$
+which results in a residual error signal
+$$\Err_j(t) = W_{out}^T (W_{out} h_j(t) - y_j^*(t))$$
+Notably, define \(\Res \in \R^{n_t \times n_x \times n_{out}}\) by \(\Res_j(t) = W_{out} h_j(t) - y_j^*(t)\), so 
+$$\Err \cong (I_{n_t \cdot n_x} \otimes W_{out}^T) (\Res) \in \R^{(n_t \cdot n_x) \times n}$$
+which is nice because the operator applied to \(\Res\) here separable over the time-trial versus space bipartition of the configuration space. 
+</p>
+
+<p>
+<b>KEY THING: ROTATING WITH \(W_{out}\) cannot change time structure. If \(\P\) is seperable, this is easiest case.<b/>
+Let \(\Phi_{out} : \R^{n_x \cdot n_t \cdot n_{out}} \rightarrow \R^{n_x \cdot n_t \cdot n}\) define the map from residuals to changes, \(\delta h\) (i.e., the NTK conditioned on the error structure we're using here), so we see
+$$\Phi_{out} = \P \K \P^T (I_{n_t \cdot n_x} \otimes W_{out}^T)$$
+and consequently
+</p>
+
+<p>
+<b>An Example Task:</b> As above, it's been very helpful to consider simple examples that provide intuition for the general study.
+Let's consider a specific task input structure, specifying \(x_j(t)\) for all times \(t \leq n_t\) and trials \(j \leq n_x\), without a loss function or target prescription, since the NTK at a particular iteration does not depend on these. 
+Consider a <b>delay response task</b> with three time windows: stimulus, memory and response, starting at times \(1, n_{t_1}, n_{t_2}\), respectively. 
+Let \(h_{stim}(t), h_{mem}(t), h_{resp}(t)\) be delta functions for the three time periods (1 when \(t\) is in the time range and 0 elsewhere). 
+Then, we assume
+$$x_j(t) = X_{stim,j} h_{stim}(t) + X_{mem,j} h_{mem}(t) + X_{resp,j} h_{resp}(t)$$
+where \(X_{stim}, X_{mem}, X_{resp} \in \mathbb{R}^{n_x \times n_{in}}\) are static matrices and we'll let the input dimension \(n_{in}\) be unspecified. 
+We see that the task inputs have separable outer product structure over time and trials:
+$$V \cong \sum_{\ell \in \substack{stim\\ mem\\ resp}} X_{\ell} h_{\ell}^T$$
+Where again \(\cong\) means "up to re-grouping and re-ordering of the indices."
+The \(h\) vectors specify time behavior and the \(X\) matrices specify individual trial-to-trial variability. 
+We get 
+$$V V^T \cong \sum_{\ell_0 \in \substack{stim\\ mem\\ resp}} \sum_{\ell_1 \in \substack{stim\\ mem\\ resp}} h_{\ell_0} X_{\ell_0}^T X_{\ell_1} h_{\ell_1}$$
+The time signatures are distinct, so 
+$$h_{\ell_0}^T h_{\ell_1} = \|h_{\ell_0}\| \delta_{\ell_0, \ell_1}$$
+</p>
+
+
+<h3>Case 2: Just Training Hidden Weights</h3>
+
+<p>
+If we just train the hidden weights, \(V = H \in \mathbb{R}^{n_x \cdot n_t \times n}\) is a bipartitioning of the hidden activity, 
+$$H_{j,t} = h_j(t)$$  
+so \(\K\) does indeed change during training. 
+Let's consider how the Grammian \(H H^T\) changes after a single GD step. We have
+$$\delta h = - \Phi(\text{Err})$$
+So
+$$\delta (H H^T) = (\delta H) H^T + H (\delta H)^T$$
+Hence
+$$\delta \K = - ((\Phi (\text{Err})) H^T - H (\Phi (\text{Err}))^T) \otimes I_n$$
+So
+$$\delta \K_{i, t, s, j} = [(\delta h_i(t))^T h_j(s) + h_i(t)^T \delta h_j(s)] \otimes I_n$$
+$$= - [(\P\K \P^T) (\text{Err})$$
+</p>
+
+
+<h1>Other RNNs: Non-Static Weights, Untied Weights, etc...</h1>
+
+<br>
+<hr class="wave">
+
+
+
+<!--
+<h1>Recurrent Context</h1>
+
+<p>
+Consider training the internal parameters of a recurrent model (fixing readout weights and biases, for simplicity). Specifically, suppose it is simulated for times \(t = 1 \cdots n_t\) and on inputs \(x_1, \dots, x_{n_x}\). 
+The dynamics on each fixed input \(j\) are 
+$$h_j(t+1) = f(h_j(t), x_j(t), \theta) \in \mathbb{R}^{n}.$$
+Then, define the configuration space as 
+$$S = \mathbb{R}^{n_x \times n_t \times n},$$
+so the full parameterized model is given by the mapping \(\phi : P \rightarrow S\), 
+$$\phi(\theta)_{j, t} := h_j(t) \in \mathbb{R}^n$$
+Letting \(\mathcal{J}\) be the Jacobian of \(\phi\), 
+$$\mathcal{J} = \frac{d \phi}{d \theta}$$
+Now, define a fixed readout loss, 
+$$L(h, y) := \mathbb{E}_{j, t} \left[ \ell(W_{out} h_j(t) + b_{out}, y^*_j(t)) \right]$$
+where \(W_{out}, b_{out}\) are fixed, for simplicity. Then, the full GD dynamics are 
+$$\delta h = -\frac{1}{n_t n_x} \Phi W_{out}^T \nabla_y \ell(y)$$
+For example, if \(\ell(y, y^*) = \|y - y^*\|^2\), corresponding to MSE loss, we get 
+$$\text{ MSE Loss:  } \, \, \delta h = \frac{2}{n_t n_x} \Phi \cdot W_{out}^T (y^* - (W_{out} h + b_{out}))$$
+</p>
+
+
+<figure>
+<a href="effdims_highd_inp_targ.png"><img src="effdims_highd_inp_targ.png" width=100%/></a>
+<figcaption><p><b>Fig 1</b> Dimensions in chain for a GRU model at initalization.</p></figcaption>
+</figure>
+
+<p>
+Consider Fig 1 above. In it, we plot the effective dimension of all quantities involved in a GD step for a forecasting task with high-D input, target. 
+On the x-axis, we vary the initial scale, \(g\), or the GRU model's weights. 
+Fundamentally, the confusing thing to me is that (for \(g = 0\)) we see the hidden and adjoint state are high-D, but the actual correction, \(\delta f\), is very low-D. 
+</p>
+
+<p>
+How can an operator that has high rank over a particular space still product low-rank things, even when given high rank things over that space?
+Specifically, consider an operator over \(\mathbb{R}^{T \times H}\), i.e. physical things over time. Define the operator 
+\(\Omega = e_1 e_1^T \otimes I_H\). Then, \(\Omega\) is full rank over \(\mathbb{R}^H\) and rank one over time. 
+When we put a trajectory \((h(1), h(2), ..., h(T))\) into \(\Omega\), it outputs \((h(1), 0, ..., 0)\), i.e. it just picks the first time and drops everything else. 
+Note that if \(T \geq H\), we can choose \(h(t) = e_t \in \mathbb{R}^H\), i.e. standard coordinates in the H space, to get a full rank trajectory input. 
+However, the output is just a single vector at time 1, i.e. rank 1. 
+Thus, the <b>operator bottle-necks in the time dimension, giving rise to spatial bottle-necking!</b>
+</p>
+
+<p>
+Note another interesting thing. If we feed \(H\) separate trajectories into the operator \(\Omega\), defined by constantly being at a fixed coordinate at time 1 \(h_j(1) = e_j\), and zero otherwise, \(h_j(t) = 0, t > 1\), 
+then \(\Omega h_j(t) = h_j(t)\) so it spans the whole physical space over these \(H\) trajectories. Thus, <b>\(\Omega\) can explore the entire space (due to the \(H\)-dimension being full rank), but on any particular input its output is at most rank 1 in the physical space!</b>
+</p>
+-->
+
+<a href="index.html" style="text-decoration: none;">
+<div class="top_bar" style="left: 30px;">
+goto: main
+</div>
+</a>
+
+<a href="" style="text-decoration: none;">
+<div class="top_bar" style="right: 30px;">
+goto: top
+</div>
+</a>
+
+<div class="top_bar" style="top: 4vw; left: 4vw; bottom: auto; width: 6.5vw; height: 6.5vw; 
+    border-radius: 0px; border: 0;  image-rendering: pixelated; border: 1px solid grey;">
+	
+<label for="toggle" id="toggle-btn"  class="toc-clicker">
+<img style="width: 100%; height: 100%;" src="toc.png">
+</label>
+
+<input type="checkbox" id="toggle" hidden>
+
+<div id="toc" class="top_bar" style="top: 10.5vw; left: 4vw; bottom: auto; 
+border-radius: 0; border: 0;  image-rendering: pixelated; border: 0; background: none;">
+
+
+<ol class = "toctable">
+    <li style = "text-align: center; list-style-type:none;"> <a href="#top" style = "color: black;">NTK Properties</a>
+	<li> <a href="#intro">Introduction</a> 
+</ol>
+
+
+</div>
+</div>
+
+
+
+</body>
+</html>
