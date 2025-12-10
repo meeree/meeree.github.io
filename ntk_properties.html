@@ -66,6 +66,12 @@
 \def\Res{{\text{Res}}}
 \def\diag{{\text{diag}}}
 \def\back{{\leftarrow}}
+\def\j{{\mathfrak{j}}}
+\def\V{{\mathcal{V}}}
+\def\pt{{\mathcal{D}_t}}
+\def\Cov{{\text{Cov}}}
+\def\effrank{{\text{effrank}}}
+\def\bias{{\text{bias}}}
 \)
 
 
@@ -614,7 +620,10 @@ Specifically,
 $$\P^{-1} = I_{n_x} \otimes (I_{n_t} \otimes I_n - L_{n_t} \otimes W)$$
 So,
 $$\P^{-1} = I_{(n_x \cdot n_t)\times n} - (I_{n_x} \otimes L_{n_t}) \otimes W$$
-Let \(D = V^+\) be its pseudo inverse. Then, 
+Note, if we let \(D_{n_t}\) denote the "finite difference operator over time" with ones on the diagonal, negatives ones on the lower diagonal, i.e. \(D_{n_t} = I_{n_t} - L_{n_t}\), we can write the above as
+$$\P^{-1} = I_{(n_x \cdot n_t)} \otimes (I_n - W) + I_{n_x} \otimes D_{n_t} \otimes W,$$
+which agrees with the continuous time case below. 
+Let \(D = (V^T)^+\) be its pseudo inverse. Then, 
 $$\K^+ = D D^T \otimes I_n$$
 Finally, let \(D_\back\) denote \(D\) shifted one backwards in time for all trials and hidden units (with zeros in the \(t=n_t\) rows). 
 Then, we have the formula 
@@ -645,9 +654,265 @@ $$\Phi_{active} = (V V^T)_{active} \otimes ((I_n - W) (I_n - W^T))^{-1}$$
 </p>
 
 
+<br>
+<br>
+
+<figure>
+<a href="time_shift.png"><img src="time_shift.png" width=50%/></a>
+<figcaption><p><b>Fig 6</b> Schematic of the time shift in the section below, applied to three basis functions. In this case, the three temporal modes are piecewise constant over time and correspond to task durations (e.g. as in stimulus, memory, response time periods for a delay response task). </p></figcaption>
+</figure>
+
+<p>
+<b>SVD form: </b>
+Assume \(V = U \Sigma W^T\) with a thin SVD (so we can actually invert it). Then, \(D = (V^T)^+ = U \Sigma^{-1} W^T\) and \(D D^T = U \Sigma^{-2} U^T\), so same temporal modes, reciprocal singular values. 
+We then have
+$$D_\back = (I_{n_x} \otimes L_{n_t}) D = (I_{n_x} \otimes L_{n_t}) U \Sigma^{-1} V^T = U_\back \Sigma^{-1} V^T$$
+where \(U_\back\) are the temporal modes shifted back one. 
+So, the spatial modes are preserved.
+However, importantly, this is <b>not an SVD</b> since \(U_\back\) is not necessarilly orthogonal anymore, we're losing the information at the final times. 
+But we can still work with it.
+Specifically, note 
+$$A_0 = U \Sigma^{-2} U^T; A_1 = U \Sigma^{-2} U_\back; A_2 = U_\back \Sigma^{-2} U_\back$$
+</p>
+
+<p>
+<b>Partial Traces: </b>
+Let's look at partial traces. 
+$$\tr_{n_x \cdot n_t}(\Phi^+) = \|D \|^2_F I_n - \langle D, D_\back\rangle (W^T + W) + \|D_\back\|^2_F (WW^T)$$
+We can write 
+$$\|D\|^2_F = \sum_{t=1}^{n_t} \|D(t)\|^2_F$$
+$$\langle D D_\back\rangle = \sum_{t=2}^{n_t} \langle D(t), D(t-1) \rangle_F $$
+$$\|D_\back\|^2_F = \|D\|^2_F - \|D(n_t)\|^2_F$$
+where each \(D(t)\) is assumed to be a matrix over trials versus space.  
+So, if we assume the \(D(n_t)\) terms are kept reasonably small, 
+$$\tr_{n_x \cdot n_t}(\Phi^+) \approx \|D \|^2_F (I_n + WW^T) - \langle D, D_\back\rangle (W^T + W)$$
+</p>
+
+<p>
+<b>Continuous Time-ification</b> 
+Let's consider replacing the dynamics, \(h_j(t+1) = f(h_j(t), x_j(t),\theta) \) with 
+$$h_j(t+1) = f^\tau(h_j(t), x_j(t), \theta) := (1-\tau) h_j(t) + \tau f(h_j(t), x_j(t), \theta)$$
+This corresponds to Euler steps with step-size \(\tau\) on the continuous analogue of the discrete ODE, which has velocity \(f - h\), i.e. the dynamics are \(\dot h = -h + f(h)\). 
+Then, the recurrent and parameter one-step Jacobians become
+$$J^\tau_\theta = J_\theta, J^\tau_h = (1 - \tau) I_n + \tau J_h$$
+Hence, 
+$$\K^\tau = \K$$
+but \(\P^\tau\) will differ. 
+In the linear RNN case, we get
+$$(\P^\tau)^{-1} = I_{n_x} \otimes ((I_{n_t} - L_{n_t}) \otimes I_n + \tau L_{n_t} \otimes (I_n - W))$$
+The left term acts like \((I_{n_t} - L_{n_t}) Z = \Delta Z\), the finite difference velocity operator.
+So
+$$(\Phi^\tau)^+ = B_0 \otimes I_n - \tau B_1 \otimes (I_n - W)^T - \tau B_1^T \otimes (I_n - W) + \tau^2 B_2 \otimes ((I_n - W) (I_n - W^T))$$
+$$\text{With: } \quad B_0 := (\Delta D)(\Delta D)^T, B_1 := (\Delta D)D_\back^T, B_2 = D_\back D_\back^T$$
+</p>
+
+
+
 <hr class="wave">
 <br>
 
+<p>
+<b>True Continuous Time</b>
+Instead of making the discrete time math turn into continuous time by letting the step size go to zero, we can just write everything as operators over continuous time and (for the hell of it) continuous trial input sample space.
+This makes things way more confusing since vectors are replaced by functions with continuous indices, hence why I try not to do it. 
+But it can provide some good insights. 
+Suppose we have the dynamics
+$$\dot h_\j(t) = f(h_\j(t), x_\j(t), \theta)$$
+Here, \(h \in \R^n\), \(\j \sim \mathfrak{J}\) is a (continuous or discrete) sample index where \(\mathfrak{J}\) is measurable, selecting a trajectory \(x_\j\) and \(t \in [0, n_t]\) for some continuous time \(n_t \in \R_{\geq 0}\). 
+The configuration space can formally then be chosen as (for example), 
+$$\text{Continuous CS Space } \quad S := \int_{\mathfrak{J}}^\oplus L^2([0, n_t]; \R^n) \d \mu(\j)$$
+This looks very ugly, but it is really not super bad to work with. 
+As is standard, a selection \(\j \sim \mathfrak{J}\) is called a <i>fiber</i> and generalizes selecting a discrete index \(j\). 
+An arbitrary \(q \in S\) can be decomposed into a "direct integral" over the measurable sample space \(\mathfrak{J}\)
+$$q = \int_\mathfrak{J}^\oplus q_\j \d \j$$
+Here, \(\d \j\) corresponds to samples form the space \(\mathfrak{J}\).
+Specifically, each \(q_\j \in L^2([0, n_t]; \R^n)\) is a trajectory in \(\R^n\). 
+In the discrete case, \(\int^\oplus_{\mathfrak{J}}\) is replaced by simple concatenation for vectors and \(\text{diag}\) for operators on the space, creating a block diagonal operator from many individual operators. 
+</p>
+
+<p>
+Let
+$$J^\theta_\j(t) = \frac{\d f(h_\j(t), x_\j(t), \theta)}{\d \theta}; J^h_\j(t) = \frac{\d f(h_\j(t), x_\j(t), \theta)}{\d h_\j(t)}$$
+denote the one-step flow Jacobians. 
+Define \(J^h_\j(t \gets 0)\) as the state-transition from time \(0\) to time \(t\).
+Let 
+$$\mathcal{J}^\theta = \int_{\mathfrak{J}}^\oplus \int_{[0,n_t]}^\oplus J^\theta_\j(t) \d t \d \j,$$
+be a big linear operator basically corresponding to a big block diagonal matrix (in the discrete case) of all parameter Jacobians. 
+Then,
+$$\K = \mathcal{J}^\theta \circ (\mathcal{J}^\theta)^*$$
+where \(*\) computes the adjoint operator (conjugate transpose in discrete case). 
+For the \(\P\) operator, first define an intermediate operator defining the linear transition from time \(0\) to time \(t\) for all trials and times,
+$$\mathcal{J}^h = \int_{\mathfrak{J}}^\oplus \int_{[0,n_t]}^\oplus J^h_\j(t \gets 0) \d t \d \j$$
+Discretely, this is just a giant diagonal matrix over time and trials with the state-transition matrices from time \(0\) to time \(t\) at each time diagonal block.
+Further, define the Volterra time-integral operator on this space, \((\V q)_\j(t) = \int_0^t q_\j(s) \d s\), which is tensor product from the scalar-valued trajectory Volterra operator. 
+Then, \(\P\) has the form
+$$\P = \mathcal{J}^h \circ \V \circ (\mathcal{J}^h)^{-1}$$
+This is a pretty ugly form, but, as in discrete time, the inverse is nicer to write out. 
+Specifically, this has inverse \(\V^{-1} = \pt\), the derivative over time operator!
+In discrete time, \(\V\) corresponds to the matrix of all ones on the lower diagonal (Kronecker multiplied by the identity over time and hidden units), and \(\pt\) corresponds to the matrix with ones on the diagonal and negative ones on the lower diagonal.
+We can see from the form above that 
+$$\P^{-1} = \mathcal{J}^h \circ \pt \circ (\mathcal{J}^h)^{-1}$$
+Now, from the product rule,
+$$\pt \circ (\mathcal{J}^h)^{-1} = (\mathcal{J}^h)^{-1} \circ \pt + \int_{\mathfrak{J}}^\oplus \int_{[0,n_t]}^\oplus \frac{\d}{\d t} J^h_\j(0 \gets t) \d t \d \j$$
+Hence, 
+$$\P^{-1}= \pt + \int_{\mathfrak{J}}^\oplus \int_{[0,n_t]}^\oplus J^h_\j(t \gets 0) \frac{\d}{\d t} J^h_\j(0 \gets t) \d t \d \j$$
+For the second term, from the state-transition matrix definition, 
+$$\frac{\d}{\d t} J^h_\j(0 \gets t)^{-1} = - J^h_\j(0 \gets t) J^h_\j(t)$$
+So, 
+$$\P^{-1} = \pt - \int_{\mathfrak{J}}^\oplus \int_{[0,n_t]}^\oplus J^h_\j(t) \d t \d \j$$
+So, \(\P^{-1}\) consists of multiplying by the one-step Jacobians and computing a velocity. 
+Specifically, suppose \(q \in S\) is a bundle of trial-dependent trajectories and let \(\dot q\) denote its velocity. Then, \((\P^{-1} q)_\j(t) = J_\j^h(t) q_\j(t) + \dot q_\j(t)\). 
+Note, importantly, that \(\pt\) is a separable operator over trials and space, specifically it's a tensor product with the identity over space and trials with the scalar-valued trajectory time derivative operator.
+</p>
+
+<p>
+<b>Linear RNN</b>
+Consider the continuous linear RNN, 
+$$\dot h_\j(t) = -h_\j(t) + W h_\j(t) + W_{in} x_\j(t)$$
+Then, as in the discrete case, if we let \(v = h \oplus x\), 
+$$\K \cong (v \otimes_{n} v) \otimes I_n$$ 
+where \(\otimes_n\) means "take tensor product then take partial trace over \(n\) axis." 
+Furthermore, we have \(J_\j^h(t) \equiv (I_n - W)\) everywhere, so 
+$$\P^{-1} \cong \pt - I_{\j,t} \otimes (I_n - W)$$
+Note the form is (as expected) extremely similar to the discrete case. Here, \(I_{\j,t}\) is simpler notation to denote the identity on the space \(\mathfrak{J} \otimes [0, n_t]\).
+</p>
+
+<p>
+Now, if we define \(d\) to be the pseudo-inverse \(d = v^+\), exploring the "approximately orthogonal" directions to the subspace \(v\) explores, we have 
+$$\K^{-1} = (d \otimes_n d) \otimes I_n$$
+Assuming the trajectories we input have initial condition \(0\), we have \(\pt^* = -\pt\).
+We then can compute
+$$\P^{-*} \K^{-1} \P^{-1} \cong -\pt ((d \otimes_n d) \otimes I_n) \pt + [\pt, (d \otimes_n d) \otimes I_n] + (d \otimes_n d) \otimes ((I_n - W^T) (I_n - W))$$
+From some ugly expansion of Leibniz rule for the derivative commutator, we can then write this as 
+$$= (d \otimes_n d) \otimes ((I_n - W^T) (I_n - W)) - ((d \otimes_n d) \otimes I_n) \pt^2 + ((\dot d \otimes_n d + d \otimes_n \dot d) \otimes I_n) \circ (I_S - \pt)$$
+</p>
+
+<p>
+Now, let's try to simplify and work with the operator above. 
+In general, we call this operator the NTK <i>precision operator</i>, inspired by the precision matrix, which is the inverse covariance matrix, in statistics. 
+This makes perfect sense because the NTK really is like a "covariance operator" because it is SPD. 
+The operator \(\Phi^{-1}\) defines the mapping \(\delta h \mapsto \Err\), the inverse of the usual NTK.
+If \(\Err \mapsto \delta h\) produces very little correction (associated with small singular values), the inverse mapping has very large singular values, and vice-versa. 
+Note that \(\pt = D_t \otimes I_{n}\) where \(D_t\) is the scalar-valued trajectory time-derivative operator over the time-trial space (note we can further factor it as a tensor product over the trial space, but I don't need to).
+So, we can write the above as 
+$$\Phi^{-1} = A_0 \otimes R - ((d \otimes_n d) \otimes I_n) \circ (D_t^2 \otimes I_{n}) + ((\dot d \otimes_n d + d \otimes_n \dot d) \otimes I_n) \circ ((I_{\j,t} - D_t) \otimes I_n)$$
+where \(A_0, R\) are described in a second. 
+Using this form, noting all the \(I_n\) terms on the right, we can further simplify
+$$\Phi^{-1} = A_0 \otimes R + A_1 \otimes I_n$$
+with 
+$$A_0 = d \otimes_n d$$
+$$R = (I_n - W^T)(I_n - W)$$
+$$A_1 = -(d \otimes_n d) D_t^2 + (\dot d \otimes_n d + d \otimes_n \dot d) \circ (I_{\j,t} - D_t)$$
+So, <i>we've decomposed the NTK precision operator as a sum of two separable time-trials versus space terms!</i>
+</p>
+
+
+<br>
+<br>
+
+<figure>
+<a href="ntk_precision_operator.png"><img src="ntk_precision_operator.png" width=70%/></a>
+<figcaption><p><b>Fig 7</b> 
+</figure>
+
+
+<p>
+The thing to study with the precision (inverse) operator is \(\langle q, \Phi^{-1} q \rangle\) for any \(q \in S\).
+Specifically, note since \(\Phi = \Psi \Psi^T\) is a PSD covariance, this equals \(\|\Psi^{-T} q\|^2_F\), i.e. how much the inverse stretches that direction.
+Assuming \(q\) is unit length, this is just the Rayleigh quotient, \(R(q)\).
+Now, if \(R(q)\) is close to zero, it implies \(\Phi\) has tons of variance in that direction and if \(R(q)\) is large, it implies \(\Phi\) collapses that dimension. 
+For unit \(q\), we have 
+$$R(q) = q^T (A_0 \otimes R) q + q^T (A_q \otimes I_n) q$$
+$$R(q) = q^T (A_0 q R) q + q^T (A_q \otimes I_n) q$$
+</p>
+
+<p>
+If we diagonalize the Grammian resolvent \(R^{-1} = ((I_n-W^T)(I_n-W))^{-1}\) into eigenvectors \(q_j\) with eigenvalues \(\lambda_j^{-2}\), and diagonalize \(d\) into temporal modes \(b_k\) with eigenvalues \(\sigma_k^{-2}\), the natural tensor-product basis for the operator is 
+$$\{u_{k,j} := b_k \otimes q_j\}_{k, j}$$
+If we plug this in, we have 
+$$\Phi^{-1} u_{k,j} = (A_0 b_k) \otimes (R q_j) + (A_1 b_k) \otimes q_j$$
+$$ = (\sigma_k^{-2} \lambda_j^{-2} b_k + A_1 b_k) \otimes q_j$$
+Assuming unit length \(q_j, b_k\) modes, this yields the simple formula
+$$R(u_{k,j}) = (\sigma_k \lambda_j)^{-2} + b_k^T A_1 b_k$$
+Assuming the second term can be neglected for a second, we see that \(\Phi\) has high variance in directions where \(\lambda_j, \sigma_k\) are large, i.e. with time modes defined by \(v = d^+\) and space modes close to the edge of chaos.
+</p>
+
+<p>
+Now for the ugly term... 
+$$b_k^T A_1 b_k = b_k^T \left(-A_0 \circ D_t^2 + (\dot d \otimes_n d + d \otimes_n \dot d) \circ (I_{\j,t} - D_t)\right) b_k$$
+Think of \(D\) as the quasi matrix with time-trial rows, \(n\) columns, so \(d \otimes_n d\) acts like D D^T. 
+First, let's assume \(\dot d\) exists primarily in the exact same subspace as the position \(d\), so we can write \(\dot D = D C^T\) for some \(C \in \R^{n \times n}\).
+Then, \(A_1\) looks like
+$$A_1 = -D D^T \circ D_t^2 + D (C + C^T) D^T \circ (I_{\j,t} - D_t)$$
+</p>
+
+
+<hr class="wave">
+
+<p>
+The operator \(\Phi^{-1}\) defines the mapping \(\delta h \mapsto \Err\), the inverse of the usual NTK.
+If \(\Err \mapsto \delta h\) produces very little correction (associated with small singular values), the inverse mapping has very large singular values, and vice-versa. 
+Consider a generic input \(\delta h\) to the inverse operator. 
+Parameterize in space versus time-trials the trajectories \(v\), 
+$$v = U \Sigma W^T \Rightarrow d = U \Sigma^{-1} W^T,$$
+and hence 
+$$d \otimes_n d = U \Sigma^{-2} U^T$$
+Then, a nice trick (assuming none of the \(\Sigma\) are exactly zero), is to parameterize the generic input \(\delta h\) according to these time-trial modes, with arbitrary spatial modes (for now), 
+$$\delta h := U \tilde \Sigma^2 \tilde W$$
+The diagonal variances \(\tilde \sigma_i^2\) describe the distribution of \(\delta h\) over \(v\)'s time-trial modes. 
+Then, we can write
+$$\delta h_\j(t) = \sum_{i=1}^n \sigma_\j^2 u_\j(t) w_\j \in \R^n, \quad \forall \j \in \mathfrak{J}, t \in [0, n_t]$$
+We really care about variance relative ratios, but, if we assume \(\sum_i \tilde \sigma_i^2 = 1\), i.e. \(\delta h\) has unit norm, we're good to go. 
+Then, we get
+$$((d \otimes_n d) \otimes I_h)(\delta h) = (U \Sigma^{-2} U^T)(U \tilde \Sigma \tilde W) = U (\Sigma^{-2} \tilde \Sigma^2) \tilde W,$$
+so the spatial and temporal modes are the same, but they are now distributed with variances \(\sigma_{out,i}^2 = \sigma_i^{-2} \tilde \sigma_i^2\).
+The relative variance ratios determine the spatial distribution of the output.
+To compute this, note that
+$$\sum_i \sigma_{out,i}^2 = \langle \sigma^{-2}, \tilde \sigma^{2} \rangle$$
+so 
+TODO
+</p>
+
+<p>
+We can be more careful about formally defining spacial and temporal bias. 
+We can then measure the covariance matrix 
+$$\Cov_n(\G) := \tr_{n_x \cdot n_t}(\G \G^*),$$
+measuring the expected spatial distribution over infinitely many inputs, and 
+$$\Cov_{n_x \cdot n_t}(\G) := \tr_{n}(\G \G^*),$$
+measuring the expect time-trials distribution of outputs.
+
+Specifically, the <i>spacial bias</i> can be defined as 
+$$\text{bias}_n(\G) := \cos(\Cov_n(\G), I_n) = \sqrt{\frac{\text{effrank}(\Cov_{n}(\G))}{n}}$$
+and likewise for the <i>temporal bias</i>
+$$\text{bias}_{n_x \cdot n_t}(\G) := \cos(\Cov_{n_x \cdot n_t}(\G), I_{n_x \cdot n_t}) = \sqrt{\frac{\text{effrank}(\Cov_{n_x \cdot n_t}(\G))}{n_x \cdot n_t}}$$
+
+Now, what if we only have access to the inverse of the operator, \(\G^{-1}\), and want to determine the spatial and temporal bias of the original operator. 
+Here is a slick procedure to do so. 
+
+Specifically, suppose we have some collection \(Y = (y_1, ..., y_M)\) in the output space with 
+$$(\G^{-1} Y)(\G^{-1} Y)^T = X X^T = I_{S}$$
+Then, we see that 
+$$\Cov(G) = Y Y^T$$
+So, if we can find vectors \(y_1, ..., y_M\) that produce isotropic random outputs, we have characterized the covariance of the original operator. 
+One additional trick is to only look for \(y_j\) such that \(\G y_j = u_j v_j^T\) with \(u_j u_j^T = I_{n_x \cdot n_t}, v_j v_j^T = I_{n}, \tr(u_j) = 0, \tr(v_j) = 0\), since we can verify this yields the same result. 
+This is simpler, however, since a general isotropic time-space tensor could be a sum of rank one terms like this, not a single term. 
+</p>
+
+<p>
+Bias tells us about the range of outputs the operator can produce given infinitely many arbitrary isotropic inputs. 
+But what if we want to see the expected dimension of updates for a single isotropic input?
+For this, we define the <i>effective bias</i> (i.e. for a single random input) as 
+$$\text{effbias}_n(\G) := \E[\cos(\tr_{n_x \cdot n_t}(\G \G^*), I_n)]$$
+and likewise
+$$\text{effbias}_{n_x \cdot n_t}(\G) := \E[\cos(\tr_{n}(\G \G^*), I_{n_x \cdot n_t})]$$
+These tell us: <i>given random isotropic inputs in space or time, are the outputs isotropic, or highly biased (dominated by some low-D dimensions)?</i>.
+</p>
+
+
+
+<hr class="wave">
+
+<br>
 <p>
 <b>A Procedure for Isolating Null Error Directions:</b>
 What can the inverse of the NTK tell us? 
@@ -655,13 +920,6 @@ Well, if \(\varepsilon \in \R^{n_x \times n_t \times n}\) is a 3-tensor signatur
 In other words, the large singular values of \(\Phi^{-1}\) tell us exactly which signatures error signals will produce very small corrections during learning. 
 </p>
 
-<p>
-Let's workout the eigenvalues of \(\P\). 
-We have 
-$$\P^{-1} = I_{n_x \cdot n_t \times n_x} - I_{n_x} \otimes L_{n_t} \otimes W$$
-Then, the eigendirections of \(P^{-1}\) are the eigendirections of the right term, and the eigenvalues are \(1 - \lambda_i\) where \(\lambda_i\) are the eigenvalues of the right term. 
-Next, 
-</p>
 
 <hr class="wave">
 <br>
