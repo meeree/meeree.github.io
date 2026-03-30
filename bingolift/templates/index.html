@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Lift Logger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.5;
+    }
+
+    h1, h2 {
+      margin-bottom: 0.5rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      min-width: 120px;
+    }
+
+    input, button {
+      padding: 8px;
+      font-size: 15px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 16px 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 16px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    #plot-img {
+      max-width: 100%;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+      display: none;
+    }
+
+    #status {
+      margin-top: 10px;
+      color: #444;
+    }
+
+    .danger {
+      background: #f5d7d7;
+    }
+
+    #plot-controls-panel {
+      display: none;
+      border: 1px solid #ccc;
+      padding: 12px;
+      margin: 12px 0 20px 0;
+      background: #f8f8f8;
+    }
+
+    .small-note {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lift Logger</h1>
+  <p>Log lifts locally in your browser, generate a plot with Flask, and import/export CSV.</p>
+
+  <h2>Add Lift</h2>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="date">Date</label>
+      <input type="date" id="date">
+    </div>
+
+    <div class="form-group">
+      <label for="weight">Weight</label>
+      <input type="number" id="weight" step="any" placeholder="315">
+    </div>
+
+    <div class="form-group">
+      <label for="sets">Sets</label>
+      <input type="number" id="sets" placeholder="5">
+    </div>
+
+    <div class="form-group">
+      <label for="reps">Reps</label>
+      <input type="number" id="reps" placeholder="3">
+    </div>
+  </div>
+
+  <div class="button-row">
+    <button id="add-lift-btn" type="button">Add Lift</button>
+    <button id="plot-btn" type="button">Generate Plot</button>
+    <button id="plot-controls-toggle" type="button">Plot Controls</button>
+    <button id="export-btn" type="button">Export CSV</button>
+    <button id="clear-btn" type="button" class="danger">Clear All Data</button>
+    <input type="file" id="import-file" accept=".csv,text/csv">
+    <button id="import-btn" type="button">Import CSV</button>
+  </div>
+
+  <div id="plot-controls-panel">
+    <h2>Plot Controls</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="vmin">Minimum Value</label>
+        <input type="number" id="vmin" step="any" placeholder="auto">
+        <div class="small-note">Leave blank to auto-detect.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="vmax">Maximum Value</label>
+        <input type="number" id="vmax" step="any" placeholder="auto">
+        <div class="small-note">Leave blank to auto-detect.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="increment">Increment</label>
+        <input type="number" id="increment" step="any" value="10">
+        <div class="small-note">Defaults to 10.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <h2>Plot</h2>
+  <img id="plot-img" alt="Generated lift plot">
+
+  <h2>Logged Lifts</h2>
+  <table id="lift-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Weight</th>
+        <th>Sets</th>
+        <th>Reps</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const STORAGE_KEY = "lift_log_data";
+
+    const dateInput = document.getElementById("date");
+    const weightInput = document.getElementById("weight");
+    const setsInput = document.getElementById("sets");
+    const repsInput = document.getElementById("reps");
+
+    const vminInput = document.getElementById("vmin");
+    const vmaxInput = document.getElementById("vmax");
+    const incrementInput = document.getElementById("increment");
+
+    const addLiftBtn = document.getElementById("add-lift-btn");
+    const plotBtn = document.getElementById("plot-btn");
+    const plotControlsToggle = document.getElementById("plot-controls-toggle");
+    const plotControlsPanel = document.getElementById("plot-controls-panel");
+    const exportBtn = document.getElementById("export-btn");
+    const clearBtn = document.getElementById("clear-btn");
+    const importBtn = document.getElementById("import-btn");
+    const importFile = document.getElementById("import-file");
+
+    const statusBox = document.getElementById("status");
+    const liftTableBody = document.querySelector("#lift-table tbody");
+    const plotImg = document.getElementById("plot-img");
+
+    function getLifts() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return [];
+      }
+    }
+
+    function saveLifts(lifts) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lifts));
+    }
+
+    function renderTable() {
+      const lifts = getLifts();
+      liftTableBody.innerHTML = "";
+
+      lifts.forEach((lift, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${lift.date}</td>
+          <td>${lift.weight}</td>
+          <td>${lift.sets}</td>
+          <td>${lift.reps}</td>
+          <td><button type="button" data-index="${index}" class="delete-btn">Delete</button></td>
+        `;
+        liftTableBody.appendChild(tr);
+      });
+
+      document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const index = Number(btn.dataset.index);
+          const lifts = getLifts();
+          lifts.splice(index, 1);
+          saveLifts(lifts);
+          renderTable();
+          statusBox.textContent = "Lift deleted.";
+        });
+      });
+    }
+
+    function addLift() {
+      const date = dateInput.value;
+      const weight = weightInput.value;
+      const sets = setsInput.value;
+      const reps = repsInput.value;
+
+      if (!date || !weight || !sets || !reps) {
+        statusBox.textContent = "Fill in date, weight, sets, and reps.";
+        return;
+      }
+
+      const lifts = getLifts();
+      lifts.push({
+        date: date,
+        weight: Number(weight),
+        sets: Number(sets),
+        reps: Number(reps)
+      });
+
+      saveLifts(lifts);
+      renderTable();
+
+      statusBox.textContent = "Lift added.";
+
+      weightInput.value = "";
+      setsInput.value = "";
+      repsInput.value = "";
+    }
+
+    async function generatePlot() {
+      const lifts = getLifts();
+
+      if (lifts.length === 0) {
+        statusBox.textContent = "No lift data to plot.";
+        return;
+      }
+
+      const controls = {
+        vmin: vminInput.value === "" ? null : Number(vminInput.value),
+        vmax: vmaxInput.value === "" ? null : Number(vmaxInput.value),
+        increment: incrementInput.value === "" ? 10 : Number(incrementInput.value)
+      };
+
+      if (Number.isNaN(controls.vmin)) controls.vmin = null;
+      if (Number.isNaN(controls.vmax)) controls.vmax = null;
+
+      if (Number.isNaN(controls.increment) || controls.increment <= 0) {
+        statusBox.textContent = "Increment must be a positive number.";
+        return;
+      }
+
+      statusBox.textContent = "Generating plot...";
+
+      try {
+        const response = await fetch("https://lift-backend.onrender.com/plot.png", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ lifts, controls })
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text);
+        }
+
+        const blob = await response.blob();
+        const imageUrl = URL.createObjectURL(blob);
+        plotImg.src = imageUrl;
+        plotImg.style.display = "block";
+        statusBox.textContent = "Plot generated.";
+      } catch (err) {
+        statusBox.textContent = "Error: " + err.message;
+      }
+    }
+
+    function exportCSV() {
+      const lifts = getLifts();
+
+      if (lifts.length === 0) {
+        statusBox.textContent = "No data to export.";
+        return;
+      }
+
+      const header = ["date", "weight", "sets", "reps"];
+      const rows = lifts.map(lift => [
+        lift.date,
+        lift.weight,
+        lift.sets,
+        lift.reps
+      ]);
+
+      const csvLines = [
+        header.join(","),
+        ...rows.map(row => row.join(","))
+      ];
+
+      const csvContent = csvLines.join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "lift_log.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      URL.revokeObjectURL(url);
+      statusBox.textContent = "CSV exported.";
+    }
+
+    function importCSV() {
+      const file = importFile.files[0];
+      if (!file) {
+        statusBox.textContent = "Choose a CSV file first.";
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        try {
+          const text = event.target.result;
+          const lines = text.trim().split(/\r?\n/);
+
+          if (lines.length < 2) {
+            throw new Error("CSV is empty or missing rows.");
+          }
+
+          const header = lines[0].split(",").map(x => x.trim().toLowerCase());
+          const expected = ["date", "weight", "sets", "reps"];
+
+          for (let i = 0; i < expected.length; i++) {
+            if (header[i] !== expected[i]) {
+              throw new Error("CSV header must be: date,weight,sets,reps");
+            }
+          }
+
+          const imported = [];
+
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            const parts = line.split(",").map(x => x.trim());
+            if (parts.length !== 4) continue;
+
+            const row = {
+              date: parts[0],
+              weight: Number(parts[1]),
+              sets: Number(parts[2]),
+              reps: Number(parts[3])
+            };
+
+            if (
+              !row.date ||
+              Number.isNaN(row.weight) ||
+              Number.isNaN(row.sets) ||
+              Number.isNaN(row.reps)
+            ) {
+              continue;
+            }
+
+            imported.push(row);
+          }
+
+          saveLifts(imported);
+          renderTable();
+          statusBox.textContent = `CSV imported. ${imported.length} rows loaded.`;
+        } catch (err) {
+          statusBox.textContent = "Import failed: " + err.message;
+        }
+      };
+
+      reader.readAsText(file);
+    }
+
+    function clearAllData() {
+      localStorage.removeItem(STORAGE_KEY);
+      renderTable();
+      plotImg.style.display = "none";
+      plotImg.src = "";
+      statusBox.textContent = "All local data cleared.";
+    }
+
+    plotControlsToggle.addEventListener("click", () => {
+      const isVisible = plotControlsPanel.style.display === "block";
+      plotControlsPanel.style.display = isVisible ? "none" : "block";
+    });
+
+    addLiftBtn.addEventListener("click", addLift);
+    plotBtn.addEventListener("click", generatePlot);
+    exportBtn.addEventListener("click", exportCSV);
+    importBtn.addEventListener("click", importCSV);
+    clearBtn.addEventListener("click", clearAllData);
+
+    renderTable();
+  </script>
+</body>
+</html>
