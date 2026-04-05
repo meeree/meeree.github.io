@@ -166,7 +166,8 @@
       font-size: 0.95rem;
     }
 
-    #plot-img {
+    #plot-img,
+    #summary-img {
       width: 100%;
       max-width: 100%;
       border: 1px solid var(--border);
@@ -335,6 +336,7 @@
 
   <h2>Plot</h2>
   <img id="plot-img" alt="Generated lift plot">
+  <img id="summary-img" alt="Generated lift session summary plot">
 
   <h2 id="active-lift-heading">Logged Lifts</h2>
   <table id="lift-table">
@@ -380,6 +382,7 @@
     const statusBox = document.getElementById("status");
     const liftTableBody = document.querySelector("#lift-table tbody");
     const plotImg = document.getElementById("plot-img");
+    const summaryImg = document.getElementById("summary-img");
 
     function getTodayString() {
       return new Date().toISOString().split("T")[0];
@@ -435,6 +438,8 @@
     function clearPlotDisplay() {
       plotImg.style.display = "none";
       plotImg.src = "";
+      summaryImg.style.display = "none";
+      summaryImg.src = "";
     }
 
     function renderLiftSelector() {
@@ -585,24 +590,47 @@
       statusBox.textContent = "Generating plot...";
 
       try {
-        const response = await fetch(`${API_BASE}/plot.png`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ lifts, controls, lift_name: liftName })
-        });
+        const payload = JSON.stringify({ lifts, controls, lift_name: liftName });
 
-        if (!response.ok) {
-          const text = await response.text();
+        const [gridResponse, summaryResponse] = await Promise.all([
+          fetch(`${API_BASE}/plot.png`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: payload
+          }),
+          fetch(`${API_BASE}/summary.png`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: payload
+          })
+        ]);
+
+        if (!gridResponse.ok) {
+          const text = await gridResponse.text();
           throw new Error(text);
         }
 
-        const blob = await response.blob();
-        const imageUrl = URL.createObjectURL(blob);
-        plotImg.src = imageUrl;
+        if (!summaryResponse.ok) {
+          const text = await summaryResponse.text();
+          throw new Error(text);
+        }
+
+        const [gridBlob, summaryBlob] = await Promise.all([
+          gridResponse.blob(),
+          summaryResponse.blob()
+        ]);
+
+        plotImg.src = URL.createObjectURL(gridBlob);
         plotImg.style.display = "block";
-        statusBox.textContent = "Plot generated.";
+
+        summaryImg.src = URL.createObjectURL(summaryBlob);
+        summaryImg.style.display = "block";
+
+        statusBox.textContent = "Plots generated.";
       } catch (err) {
         statusBox.textContent = "Error: " + err.message;
       }
