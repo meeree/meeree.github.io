@@ -5,262 +5,247 @@
   <title>Lift Logger</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    :root {
-      --bg: #0f1115;
-      --panel: #171a21;
-      --panel-2: #1d2230;
-      --text: #e8ecf1;
-      --muted: #a8b0bd;
-      --border: #2a3140;
-      --accent: #6ea8fe;
-      --accent-2: #8fd3ff;
-      --danger: #ff7b7b;
-      --success: #79d79b;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
-      --radius: 16px;
-    }
+	  :root {
+	    --bg: #0f1115;
+	    --panel: #171a21;
+	    --panel-2: #1d2230;
+	    --text: #e8ecf1;
+	    --muted: #a8b0bd;
+	    --border: #2a3140;
+	    --accent: #6ea8fe;
+	    --accent-2: #8fd3ff;
+	    --danger: #ff7b7b;
+	    --success: #79d79b;
+	    --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+	    --radius: 16px;
+	  }
 
-    * {
-      box-sizing: border-box;
-    }
+	  * {
+	    box-sizing: border-box;
+	  }
 
-    body {
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 32px 20px 64px;
-      line-height: 1.5;
-      background: linear-gradient(180deg, #0c0e13 0%, #121722 100%);
-      color: var(--text);
-    }
+	  body {
+	    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	    max-width: 1100px;
+	    margin: 0 auto;
+	    padding: 32px 20px 64px;
+	    line-height: 1.5;
+	    background: linear-gradient(180deg, #0c0e13 0%, #121722 100%);
+	    color: var(--text);
+	  }
 
-    h1, h2 {
-      margin: 0 0 10px 0;
-      line-height: 1.15;
-    }
+	  h1, h2 {
+	    margin: 0 0 10px 0;
+	    line-height: 1.15;
+	  }
 
-    h1 {
-      font-size: 2.3rem;
-      letter-spacing: -0.03em;
-    }
+	  h1 {
+	    font-size: 2.3rem;
+	    letter-spacing: -0.03em;
+	  }
 
-    h2 {
-      font-size: 1.1rem;
-      margin-top: 28px;
-      color: var(--accent-2);
-    }
+	  h2 {
+	    font-size: 1.1rem;
+	    margin-top: 28px;
+	    color: var(--accent-2);
+	  }
 
-    p {
-      color: var(--muted);
-      margin-top: 0;
-    }
+	  p {
+	    color: var(--muted);
+	    margin-top: 0;
+	  }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 14px;
-      margin-bottom: 16px;
-      background: rgba(23, 26, 33, 0.9);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px;
-      box-shadow: var(--shadow);
-    }
+	  .form-row {
+	    display: grid;
+	    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	    gap: 14px;
+	    margin-bottom: 16px;
+	    background: rgba(23, 26, 33, 0.9);
+	    border: 1px solid var(--border);
+	    border-radius: var(--radius);
+	    padding: 18px;
+	    box-shadow: var(--shadow);
+	  }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
+	  .form-group {
+	    display: flex;
+	    flex-direction: column;
+	    min-width: 0;
+	  }
 
-    .form-group label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
+	  .form-group label {
+	    font-size: 0.85rem;
+	    font-weight: 600;
+	    color: var(--muted);
+	    margin-bottom: 6px;
+	  }
 
-    input, button, select {
-      padding: 10px 12px;
-      font-size: 15px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      transition: 0.18s ease;
-    }
+	  input, button, select {
+	    padding: 10px 12px;
+	    font-size: 15px;
+	    border-radius: 12px;
+	    border: 1px solid var(--border);
+	    background: var(--panel-2);
+	    color: var(--text);
+	    transition: 0.18s ease;
+	  }
 
-    input::placeholder {
-      color: #7e8797;
-    }
+	  input::placeholder {
+	    color: #7e8797;
+	  }
 
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.18);
-    }
+	  input:focus, select:focus {
+	    outline: none;
+	    border-color: var(--accent);
+	    box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.18);
+	  }
 
-    button {
-      cursor: pointer;
-      font-weight: 600;
-      background: linear-gradient(180deg, #253149 0%, #1b2436 100%);
-    }
+	  button {
+	    cursor: pointer;
+	    font-weight: 600;
+	    background: linear-gradient(180deg, #253149 0%, #1b2436 100%);
+	  }
 
-    button:hover {
-      transform: translateY(-1px);
-      border-color: var(--accent);
-    }
+	  button:hover {
+	    transform: translateY(-1px);
+	    border-color: var(--accent);
+	  }
 
-    button:active {
-      transform: translateY(0);
-    }
+	  button:active {
+	    transform: translateY(0);
+	  }
 
-    .button-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 16px 0;
-    }
+	  .button-row {
+	    display: flex;
+	    gap: 10px;
+	    flex-wrap: wrap;
+	    margin: 16px 0;
+	  }
 
-    #add-lift-btn,
-    #plot-btn,
-    #plot-controls-toggle,
-    #export-btn,
-    #import-btn {
-      background: linear-gradient(180deg, #2b3a57 0%, #22304a 100%);
-    }
+	  #add-lift-btn,
+	  #plot-btn,
+	  #plot-controls-toggle,
+	  #export-btn,
+	  #import-btn {
+	    background: linear-gradient(180deg, #2b3a57 0%, #22304a 100%);
+	  }
 
-    #clear-btn,
-    .danger {
-      background: linear-gradient(180deg, #5b2730 0%, #452027 100%);
-      border-color: #6d2d38;
-      color: #ffd7d7;
-    }
+	  #clear-btn,
+	  .danger {
+	    background: linear-gradient(180deg, #5b2730 0%, #452027 100%);
+	    border-color: #6d2d38;
+	    color: #ffd7d7;
+	  }
 
-    #lift-select,
-    #import-file {
-      min-width: 180px;
-    }
+	  #lift-select,
+	  #import-file {
+	    min-width: 180px;
+	  }
 
-    #plot-controls-panel {
-      display: none;
-      border: 1px solid var(--border);
-      padding: 18px;
-      margin: 12px 0 20px 0;
-      background: rgba(23, 26, 33, 0.95);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-    }
+	  #plot-controls-panel {
+	    display: none;
+	    border: 1px solid var(--border);
+	    padding: 18px;
+	    margin: 12px 0 20px 0;
+	    background: rgba(23, 26, 33, 0.95);
+	    border-radius: var(--radius);
+	    box-shadow: var(--shadow);
+	  }
 
-    .small-note {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 6px;
-    }
+	  .small-note {
+	    font-size: 12px;
+	    color: var(--muted);
+	    margin-top: 6px;
+	  }
 
-    #status {
-      margin-top: 12px;
-      margin-bottom: 8px;
-      color: var(--muted);
-      min-height: 24px;
-      font-size: 0.95rem;
-    }
+	  #status {
+	    margin-top: 12px;
+	    margin-bottom: 8px;
+	    color: var(--muted);
+	    min-height: 24px;
+	    font-size: 0.95rem;
+	  }
 
-    #plot-img,
-    #summary-img {
-      width: 100%;
-      max-width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      margin-top: 14px;
-      display: none;
-      background: #0b0d11;
-      box-shadow: var(--shadow);
-    }
+	  #plot-img {
+	    width: 100%;
+	    max-width: 100%;
+	    border: 1px solid var(--border);
+	    border-radius: 18px;
+	    margin-top: 14px;
+	    display: none;
+	    background: #0b0d11;
+	    box-shadow: var(--shadow);
+	  }
 
-    table {
-      width: 100%;
-      margin-top: 14px;
-      border-collapse: separate;
-      border-spacing: 0;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      background: rgba(23, 26, 33, 0.95);
-    }
+	  table {
+	    width: 100%;
+	    margin-top: 14px;
+	    border-collapse: separate;
+	    border-spacing: 0;
+	    overflow: hidden;
+	    border: 1px solid var(--border);
+	    border-radius: 18px;
+	    box-shadow: var(--shadow);
+	    background: rgba(23, 26, 33, 0.95);
+	  }
 
-    thead th {
-      background: #1c2330;
-      color: var(--accent-2);
-      font-weight: 700;
-      letter-spacing: 0.01em;
-    }
+	  thead th {
+	    background: #1c2330;
+	    color: var(--accent-2);
+	    font-weight: 700;
+	    letter-spacing: 0.01em;
+	  }
 
-    th, td {
-      padding: 12px 14px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
+	  th, td {
+	    padding: 12px 14px;
+	    text-align: left;
+	    border-bottom: 1px solid var(--border);
+	  }
 
-    tbody tr:last-child td {
-      border-bottom: none;
-    }
+	  tbody tr:last-child td {
+	    border-bottom: none;
+	  }
 
-    tbody tr:nth-child(even) {
-      background: rgba(255, 255, 255, 0.02);
-    }
+	  tbody tr:nth-child(even) {
+	    background: rgba(255, 255, 255, 0.02);
+	  }
 
-    tbody tr:hover {
-      background: rgba(110, 168, 254, 0.08);
-    }
+	  tbody tr:hover {
+	    background: rgba(110, 168, 254, 0.08);
+	  }
 
-    td button {
-      padding: 6px 10px;
-      font-size: 0.86rem;
-      border-radius: 10px;
-    }
+	  td button {
+	    padding: 6px 10px;
+	    font-size: 0.86rem;
+	    border-radius: 10px;
+	  }
 
-    .sets-cell {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
+	  @media (max-width: 720px) {
+	    body {
+	      padding: 22px 14px 42px;
+	    }
 
-    .mini-btn {
-      padding: 3px 8px;
-      font-size: 0.8rem;
-      line-height: 1.2;
-      border-radius: 8px;
-    }
+	    h1 {
+	      font-size: 1.8rem;
+	    }
 
-    @media (max-width: 720px) {
-      body {
-        padding: 22px 14px 42px;
-      }
+	    .button-row {
+	      flex-direction: column;
+	      align-items: stretch;
+	    }
 
-      h1 {
-        font-size: 1.8rem;
-      }
+	    #lift-select,
+	    #import-file,
+	    .button-row button {
+	      width: 100%;
+	    }
 
-      .button-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      #lift-select,
-      #import-file,
-      .button-row button {
-        width: 100%;
-      }
-
-      th, td {
-        padding: 10px 10px;
-        font-size: 0.92rem;
-      }
-    }
-  </style>
+	    th, td {
+	      padding: 10px 10px;
+	      font-size: 0.92rem;
+	    }
+	  }
+	</style>
 </head>
 <body>
   <h1>Lift Logger</h1>
@@ -329,14 +314,20 @@
         <input type="number" id="increment" step="any" value="10">
         <div class="small-note">Defaults to 10.</div>
       </div>
+
+      <div class="form-group">
+        <label for="summary-months-back">Summary Plot Window (months back)</label>
+        <input type="number" id="summary-months-back" step="any" placeholder="all">
+        <div class="small-note">Leave blank for all data.</div>
+      </div>
     </div>
   </div>
 
   <div id="status"></div>
 
-  <h2>Plot</h2>
+  <h2>Plots</h2>
   <img id="plot-img" alt="Generated lift plot">
-  <img id="summary-img" alt="Generated lift session summary plot">
+  <img id="summary-img" alt="Generated lift summary plot">
 
   <h2 id="active-lift-heading">Logged Lifts</h2>
   <table id="lift-table">
@@ -369,6 +360,7 @@
     const vminInput = document.getElementById("vmin");
     const vmaxInput = document.getElementById("vmax");
     const incrementInput = document.getElementById("increment");
+    const summaryMonthsBackInput = document.getElementById("summary-months-back");
 
     const addLiftBtn = document.getElementById("add-lift-btn");
     const plotBtn = document.getElementById("plot-btn");
@@ -383,20 +375,6 @@
     const liftTableBody = document.querySelector("#lift-table tbody");
     const plotImg = document.getElementById("plot-img");
     const summaryImg = document.getElementById("summary-img");
-
-    function getTodayString() {
-      return new Date().toISOString().split("T")[0];
-    }
-
-    function resetDateToToday() {
-      dateInput.value = getTodayString();
-    }
-
-    function normalizeLiftName(name) {
-      const trimmed = (name || "").trim();
-      if (!trimmed) return "";
-      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-    }
 
     function getAllLifts() {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -417,12 +395,12 @@
     }
 
     function setActiveLift(liftName) {
-      localStorage.setItem(ACTIVE_LIFT_KEY, normalizeLiftName(liftName) || "Bench");
+      localStorage.setItem(ACTIVE_LIFT_KEY, liftName);
     }
 
     function getUniqueLiftNames() {
       const all = getAllLifts();
-      const names = [...new Set(all.map(row => normalizeLiftName(row.lift)).filter(Boolean))];
+      const names = [...new Set(all.map(row => row.lift).filter(Boolean))];
       if (!names.includes("Bench")) {
         names.unshift("Bench");
       }
@@ -432,7 +410,7 @@
     function getCurrentLiftRows() {
       const all = getAllLifts();
       const activeLift = getActiveLift();
-      return all.filter(row => normalizeLiftName(row.lift) === activeLift);
+      return all.filter(row => row.lift === activeLift);
     }
 
     function clearPlotDisplay() {
@@ -471,38 +449,11 @@
         tr.innerHTML = `
           <td>${lift.date}</td>
           <td>${lift.weight}</td>
-          <td>
-            <div class="sets-cell">
-              <span>${lift.sets}</span>
-              <button type="button" data-index="${filteredIndex}" class="increment-sets-btn mini-btn">+1</button>
-            </div>
-          </td>
+          <td>${lift.sets}</td>
           <td>${lift.reps}</td>
           <td><button type="button" data-index="${filteredIndex}" class="delete-btn">Delete</button></td>
         `;
         liftTableBody.appendChild(tr);
-      });
-
-      document.querySelectorAll(".increment-sets-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const filteredIndex = Number(btn.dataset.index);
-          const activeLift = getActiveLift();
-          const all = getAllLifts();
-
-          const matchingGlobalIndices = all
-            .map((row, i) => ({ row, i }))
-            .filter(item => normalizeLiftName(item.row.lift) === activeLift);
-
-          const globalIndex = matchingGlobalIndices[filteredIndex]?.i;
-          if (globalIndex === undefined) return;
-
-          all[globalIndex].sets = Number(all[globalIndex].sets || 0) + 1;
-          saveAllLifts(all);
-
-          renderTable();
-          clearPlotDisplay();
-          statusBox.textContent = "Sets incremented by 1.";
-        });
       });
 
       document.querySelectorAll(".delete-btn").forEach(btn => {
@@ -513,7 +464,7 @@
 
           const matchingGlobalIndices = all
             .map((row, i) => ({ row, i }))
-            .filter(item => normalizeLiftName(item.row.lift) === activeLift);
+            .filter(item => item.row.lift === activeLift);
 
           const globalIndex = matchingGlobalIndices[filteredIndex]?.i;
           if (globalIndex === undefined) return;
@@ -530,7 +481,7 @@
     }
 
     function addLift() {
-      const lift = normalizeLiftName(liftInput.value) || getActiveLift();
+      const lift = liftInput.value.trim() || getActiveLift();
       const date = dateInput.value;
       const weight = weightInput.value;
       const sets = setsInput.value;
@@ -558,7 +509,6 @@
 
       statusBox.textContent = `Lift added to ${lift}.`;
 
-      resetDateToToday();
       weightInput.value = "";
       setsInput.value = "";
       repsInput.value = "";
@@ -576,7 +526,8 @@
       const controls = {
         vmin: vminInput.value === "" ? null : Number(vminInput.value),
         vmax: vmaxInput.value === "" ? null : Number(vmaxInput.value),
-        increment: incrementInput.value === "" ? 10 : Number(incrementInput.value)
+        increment: incrementInput.value === "" ? 10 : Number(incrementInput.value),
+        summary_months_back: summaryMonthsBackInput.value === "" ? null : Number(summaryMonthsBackInput.value)
       };
 
       if (Number.isNaN(controls.vmin)) controls.vmin = null;
@@ -590,47 +541,24 @@
       statusBox.textContent = "Generating plot...";
 
       try {
-        const payload = JSON.stringify({ lifts, controls, lift_name: liftName });
+        const response = await fetch(`${API_BASE}/plot.png`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ lifts, controls, lift_name: liftName })
+        });
 
-        const [gridResponse, summaryResponse] = await Promise.all([
-          fetch(`${API_BASE}/plot.png`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: payload
-          }),
-          fetch(`${API_BASE}/summary.png`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: payload
-          })
-        ]);
-
-        if (!gridResponse.ok) {
-          const text = await gridResponse.text();
+        if (!response.ok) {
+          const text = await response.text();
           throw new Error(text);
         }
 
-        if (!summaryResponse.ok) {
-          const text = await summaryResponse.text();
-          throw new Error(text);
-        }
-
-        const [gridBlob, summaryBlob] = await Promise.all([
-          gridResponse.blob(),
-          summaryResponse.blob()
-        ]);
-
-        plotImg.src = URL.createObjectURL(gridBlob);
+        const blob = await response.blob();
+        const imageUrl = URL.createObjectURL(blob);
+        plotImg.src = imageUrl;
         plotImg.style.display = "block";
-
-        summaryImg.src = URL.createObjectURL(summaryBlob);
-        summaryImg.style.display = "block";
-
-        statusBox.textContent = "Plots generated.";
+        statusBox.textContent = "Plot generated.";
       } catch (err) {
         statusBox.textContent = "Error: " + err.message;
       }
@@ -713,7 +641,7 @@
             let row;
             if (hasLiftColumn && parts.length === 5) {
               row = {
-                lift: normalizeLiftName(parts[0]),
+                lift: parts[0],
                 date: parts[1],
                 weight: Number(parts[2]),
                 sets: Number(parts[3]),
@@ -753,7 +681,6 @@
           renderLiftSelector();
           renderTable();
           clearPlotDisplay();
-          resetDateToToday();
           statusBox.textContent = `CSV imported. ${imported.length} rows loaded.`;
         } catch (err) {
           statusBox.textContent = "Import failed: " + err.message;
@@ -769,7 +696,6 @@
       renderLiftSelector();
       renderTable();
       clearPlotDisplay();
-      resetDateToToday();
       statusBox.textContent = "All local data cleared.";
     }
 
@@ -783,7 +709,6 @@
       renderLiftSelector();
       renderTable();
       clearPlotDisplay();
-      resetDateToToday();
     });
 
     addLiftBtn.addEventListener("click", addLift);
@@ -794,7 +719,6 @@
 
     renderLiftSelector();
     renderTable();
-    resetDateToToday();
   </script>
 </body>
 </html>
