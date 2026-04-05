@@ -166,7 +166,8 @@
 	    font-size: 0.95rem;
 	  }
 
-	  #plot-img {
+	  #plot-img,
+	  #summary-img {
 	    width: 100%;
 	    max-width: 100%;
 	    border: 1px solid var(--border);
@@ -314,18 +315,12 @@
         <input type="number" id="increment" step="any" value="10">
         <div class="small-note">Defaults to 10.</div>
       </div>
-
-      <div class="form-group">
-        <label for="summary-months-back">Summary Plot Window (months back)</label>
-        <input type="number" id="summary-months-back" step="any" placeholder="all">
-        <div class="small-note">Leave blank for all data.</div>
-      </div>
     </div>
   </div>
 
   <div id="status"></div>
 
-  <h2>Plots</h2>
+  <h2>Plot</h2>
   <img id="plot-img" alt="Generated lift plot">
   <img id="summary-img" alt="Generated lift summary plot">
 
@@ -360,7 +355,6 @@
     const vminInput = document.getElementById("vmin");
     const vmaxInput = document.getElementById("vmax");
     const incrementInput = document.getElementById("increment");
-    const summaryMonthsBackInput = document.getElementById("summary-months-back");
 
     const addLiftBtn = document.getElementById("add-lift-btn");
     const plotBtn = document.getElementById("plot-btn");
@@ -526,8 +520,7 @@
       const controls = {
         vmin: vminInput.value === "" ? null : Number(vminInput.value),
         vmax: vmaxInput.value === "" ? null : Number(vmaxInput.value),
-        increment: incrementInput.value === "" ? 10 : Number(incrementInput.value),
-        summary_months_back: summaryMonthsBackInput.value === "" ? null : Number(summaryMonthsBackInput.value)
+        increment: incrementInput.value === "" ? 10 : Number(incrementInput.value)
       };
 
       if (Number.isNaN(controls.vmin)) controls.vmin = null;
@@ -538,29 +531,55 @@
         return;
       }
 
-      statusBox.textContent = "Generating plot...";
+      statusBox.textContent = "Generating plots...";
+
+      const payload = JSON.stringify({ lifts, controls, lift_name: liftName });
 
       try {
-        const response = await fetch(`${API_BASE}/plot.png`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ lifts, controls, lift_name: liftName })
-        });
+        const [plotResponse, summaryResponse] = await Promise.all([
+          fetch(`${API_BASE}/plot.png`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: payload
+          }),
+          fetch(`${API_BASE}/summary.png`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: payload
+          })
+        ]);
 
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(text);
+        if (!plotResponse.ok) {
+          const text = await plotResponse.text();
+          throw new Error(`Main plot failed: ${text}`);
         }
 
-        const blob = await response.blob();
-        const imageUrl = URL.createObjectURL(blob);
-        plotImg.src = imageUrl;
+        if (!summaryResponse.ok) {
+          const text = await summaryResponse.text();
+          throw new Error(`Summary plot failed: ${text}`);
+        }
+
+        const plotBlob = await plotResponse.blob();
+        const summaryBlob = await summaryResponse.blob();
+
+        const plotUrl = URL.createObjectURL(plotBlob);
+        const summaryUrl = URL.createObjectURL(summaryBlob);
+
+        plotImg.src = plotUrl;
         plotImg.style.display = "block";
-        statusBox.textContent = "Plot generated.";
+
+        summaryImg.src = summaryUrl;
+        summaryImg.style.display = "block";
+
+        statusBox.textContent = "Plots generated.";
       } catch (err) {
         statusBox.textContent = "Error: " + err.message;
+        summaryImg.style.display = "none";
+        summaryImg.src = "";
       }
     }
 
