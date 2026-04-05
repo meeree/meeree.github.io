@@ -315,6 +315,12 @@
         <input type="number" id="increment" step="any" value="10">
         <div class="small-note">Defaults to 10.</div>
       </div>
+
+      <div class="form-group">
+        <label for="summary-months-back">Summary Plot Window (months back)</label>
+        <input type="number" id="summary-months-back" step="any" placeholder="all">
+        <div class="small-note">Leave blank to use all data.</div>
+      </div>
     </div>
   </div>
 
@@ -355,6 +361,7 @@
     const vminInput = document.getElementById("vmin");
     const vmaxInput = document.getElementById("vmax");
     const incrementInput = document.getElementById("increment");
+    const summaryMonthsBackInput = document.getElementById("summary-months-back");
 
     const addLiftBtn = document.getElementById("add-lift-btn");
     const plotBtn = document.getElementById("plot-btn");
@@ -443,11 +450,38 @@
         tr.innerHTML = `
           <td>${lift.date}</td>
           <td>${lift.weight}</td>
-          <td>${lift.sets}</td>
+          <td>
+            <span class="sets-cell">
+              <span>${lift.sets}</span>
+              <button type="button" data-index="${filteredIndex}" class="increment-btn">+1</button>
+            </span>
+          </td>
           <td>${lift.reps}</td>
           <td><button type="button" data-index="${filteredIndex}" class="delete-btn">Delete</button></td>
         `;
         liftTableBody.appendChild(tr);
+      });
+
+      document.querySelectorAll(".increment-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const filteredIndex = Number(btn.dataset.index);
+          const activeLift = getActiveLift();
+          const all = getAllLifts();
+
+          const matchingGlobalIndices = all
+            .map((row, i) => ({ row, i }))
+            .filter(item => item.row.lift === activeLift);
+
+          const globalIndex = matchingGlobalIndices[filteredIndex]?.i;
+          if (globalIndex === undefined) return;
+
+          all[globalIndex].sets = Number(all[globalIndex].sets) + 1;
+          saveAllLifts(all);
+
+          renderTable();
+          clearPlotDisplay();
+          statusBox.textContent = "Set count incremented.";
+        });
       });
 
       document.querySelectorAll(".delete-btn").forEach(btn => {
@@ -520,7 +554,8 @@
       const controls = {
         vmin: vminInput.value === "" ? null : Number(vminInput.value),
         vmax: vmaxInput.value === "" ? null : Number(vmaxInput.value),
-        increment: incrementInput.value === "" ? 10 : Number(incrementInput.value)
+        increment: incrementInput.value === "" ? 10 : Number(incrementInput.value),
+        summary_months_back: summaryMonthsBackInput.value === "" ? null : Number(summaryMonthsBackInput.value)
       };
 
       if (Number.isNaN(controls.vmin)) controls.vmin = null;
@@ -528,6 +563,11 @@
 
       if (Number.isNaN(controls.increment) || controls.increment <= 0) {
         statusBox.textContent = "Increment must be a positive number.";
+        return;
+      }
+
+      if (controls.summary_months_back !== null && (Number.isNaN(controls.summary_months_back) || controls.summary_months_back <= 0)) {
+        statusBox.textContent = "Summary months back must be a positive number or blank.";
         return;
       }
 
