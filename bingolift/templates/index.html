@@ -136,6 +136,19 @@
       box-shadow: var(--shadow);
     }
 
+    #recommend-btn {
+      background: linear-gradient(180deg, #2b3a57 0%, #22304a 100%);
+    }
+
+    #recommendations-box {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      white-space: pre-wrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      line-height: 1.45;
+    }
+
     table {
       width: 100%;
       margin-top: 14px;
@@ -265,6 +278,13 @@
   <h2>Metric Over/Under</h2>
   <img id="metric-img" alt="Generated metric comparison plot">
 
+
+<h2>Next Session Recommendations</h2>
+<div class="button-row">
+  <button id="recommend-btn" type="button">Recommend Next Sessions</button>
+</div>
+<textarea id="recommendations-box" readonly placeholder="Click the button to rank next-session set x rep options."></textarea>
+
   <h2 id="active-lift-heading">Logged Lifts</h2>
   <table id="lift-table">
     <thead>
@@ -306,12 +326,14 @@
     const clearBtn = document.getElementById("clear-btn");
     const importBtn = document.getElementById("import-btn");
     const importFile = document.getElementById("import-file");
+    const recommendBtn = document.getElementById("recommend-btn");
 
     const statusBox = document.getElementById("status");
     const liftTableBody = document.querySelector("#lift-table tbody");
     const plotImg = document.getElementById("plot-img");
     const summaryImg = document.getElementById("summary-img");
     const metricImg = document.getElementById("metric-img");
+    const recommendationsBox = document.getElementById("recommendations-box");
 
     function getAllLifts() {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -357,6 +379,10 @@
       summaryImg.src = "";
       metricImg.style.display = "none";
       metricImg.src = "";
+    }
+
+    function clearRecommendations() {
+      recommendationsBox.value = "";
     }
 
     function renderLiftSelector() {
@@ -418,6 +444,7 @@
 
           renderTable();
           clearPlotDisplay();
+          clearRecommendations();
           statusBox.textContent = "Set count incremented.";
         });
       });
@@ -441,6 +468,7 @@
           renderLiftSelector();
           renderTable();
           clearPlotDisplay();
+          clearRecommendations();
           statusBox.textContent = "Lift deleted.";
         });
       });
@@ -473,6 +501,7 @@
       renderLiftSelector();
       renderTable();
 
+      clearRecommendations();
       statusBox.textContent = `Lift added to ${lift}.`;
 
       weightInput.value = "";
@@ -569,6 +598,47 @@
         metricImg.src = "";
       }
     }
+
+
+async function recommendNextSessions() {
+  const lifts = getCurrentLiftRows();
+  const liftName = getActiveLift();
+
+  if (lifts.length === 0) {
+    statusBox.textContent = "No lift data to analyze.";
+    return;
+  }
+
+  const controls = {
+    vmin: vminInput.value === "" ? null : Number(vminInput.value),
+    vmax: vmaxInput.value === "" ? null : Number(vmaxInput.value),
+    increment: incrementInput.value === "" ? 10 : Number(incrementInput.value),
+    summary_months_back: summaryMonthsBackInput.value === "" ? null : Number(summaryMonthsBackInput.value)
+  };
+
+  const payload = JSON.stringify({ lifts, controls, lift_name: liftName });
+  statusBox.textContent = "Generating recommendations...";
+
+  try {
+    const response = await fetch(`${API_BASE}/recommendations`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text);
+    }
+
+    const data = await response.json();
+    recommendationsBox.value = data.text || "No recommendations available yet.";
+    statusBox.textContent = "Recommendations generated.";
+  } catch (err) {
+    recommendationsBox.value = "";
+    statusBox.textContent = "Error: " + err.message;
+  }
+}
 
     function exportCSV() {
       const lifts = getCurrentLiftRows();
@@ -687,6 +757,7 @@
           renderLiftSelector();
           renderTable();
           clearPlotDisplay();
+          clearRecommendations();
           statusBox.textContent = `CSV imported. ${imported.length} rows loaded.`;
         } catch (err) {
           statusBox.textContent = "Import failed: " + err.message;
@@ -702,6 +773,7 @@
       renderLiftSelector();
       renderTable();
       clearPlotDisplay();
+      clearRecommendations();
       statusBox.textContent = "All local data cleared.";
     }
 
@@ -715,6 +787,7 @@
       renderLiftSelector();
       renderTable();
       clearPlotDisplay();
+      clearRecommendations();
     });
 
     addLiftBtn.addEventListener("click", addLift);
@@ -722,6 +795,7 @@
     exportBtn.addEventListener("click", exportCSV);
     importBtn.addEventListener("click", importCSV);
     clearBtn.addEventListener("click", clearAllData);
+    recommendBtn.addEventListener("click", recommendNextSessions);
 
     renderLiftSelector();
     renderTable();
