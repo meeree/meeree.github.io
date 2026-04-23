@@ -331,3 +331,14 @@ td {
 tbody tr {
     border: 3px solid black;
 }
+
+.table-wrap {
+width: 75%;
+margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+.table-wrap {
+width: 95%;
+}
+}

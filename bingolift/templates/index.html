@@ -167,7 +167,8 @@
 	  }
 
 	  #plot-img,
-	  #summary-img {
+	  #summary-img,
+	  #metric-img {
 	    width: 100%;
 	    max-width: 100%;
 	    border: 1px solid var(--border);
@@ -250,7 +251,7 @@
 </head>
 <body>
   <h1>Lift Logger</h1>
-  <p>Log lifts locally in your browser, generate a plot with Flask, and import/export CSV.</p>
+  <p>Log lifts locally in your browser, generate a plot with Flask, and compare simple PR surface fits against your true envelope.</p>
 
   <h2>Select Lift</h2>
   <div class="button-row">
@@ -321,6 +322,16 @@
         <input type="number" id="summary-months-back" step="any" placeholder="all">
         <div class="small-note">Leave blank to use all data.</div>
       </div>
+
+      <div class="form-group">
+        <label for="metric-select">Over/Under Metric</label>
+        <select id="metric-select">
+          <option value="log_linear_surface">Frontier Log Surface</option>
+          <option value="fatigue_exponential">Fatigue Exponential</option>
+          <option value="separable_log_surface">Separable Log Surface</option>
+        </select>
+        <div class="small-note">Shows predicted minus true envelope.</div>
+      </div>
     </div>
   </div>
 
@@ -329,6 +340,9 @@
   <h2>Plot</h2>
   <img id="plot-img" alt="Generated lift plot">
   <img id="summary-img" alt="Generated lift summary plot">
+
+  <h2>Metric Over/Under</h2>
+  <img id="metric-img" alt="Generated metric comparison plot">
 
   <h2 id="active-lift-heading">Logged Lifts</h2>
   <table id="lift-table">
@@ -362,6 +376,7 @@
     const vmaxInput = document.getElementById("vmax");
     const incrementInput = document.getElementById("increment");
     const summaryMonthsBackInput = document.getElementById("summary-months-back");
+    const metricSelect = document.getElementById("metric-select");
 
     const addLiftBtn = document.getElementById("add-lift-btn");
     const plotBtn = document.getElementById("plot-btn");
@@ -376,6 +391,7 @@
     const liftTableBody = document.querySelector("#lift-table tbody");
     const plotImg = document.getElementById("plot-img");
     const summaryImg = document.getElementById("summary-img");
+    const metricImg = document.getElementById("metric-img");
 
     function getAllLifts() {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -419,6 +435,8 @@
       plotImg.src = "";
       summaryImg.style.display = "none";
       summaryImg.src = "";
+      metricImg.style.display = "none";
+      metricImg.src = "";
     }
 
     function renderLiftSelector() {
@@ -555,7 +573,8 @@
         vmin: vminInput.value === "" ? null : Number(vminInput.value),
         vmax: vmaxInput.value === "" ? null : Number(vmaxInput.value),
         increment: incrementInput.value === "" ? 10 : Number(incrementInput.value),
-        summary_months_back: summaryMonthsBackInput.value === "" ? null : Number(summaryMonthsBackInput.value)
+        summary_months_back: summaryMonthsBackInput.value === "" ? null : Number(summaryMonthsBackInput.value),
+        metric_name: metricSelect.value
       };
 
       if (Number.isNaN(controls.vmin)) controls.vmin = null;
@@ -576,7 +595,7 @@
       const payload = JSON.stringify({ lifts, controls, lift_name: liftName });
 
       try {
-        const [plotResponse, summaryResponse] = await Promise.all([
+        const [plotResponse, summaryResponse, metricResponse] = await Promise.all([
           fetch(`${API_BASE}/plot.png`, {
             method: "POST",
             headers: {
@@ -585,6 +604,13 @@
             body: payload
           }),
           fetch(`${API_BASE}/summary.png`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: payload
+          }),
+          fetch(`${API_BASE}/metric.png`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
@@ -603,11 +629,18 @@
           throw new Error(`Summary plot failed: ${text}`);
         }
 
+        if (!metricResponse.ok) {
+          const text = await metricResponse.text();
+          throw new Error(`Metric plot failed: ${text}`);
+        }
+
         const plotBlob = await plotResponse.blob();
         const summaryBlob = await summaryResponse.blob();
+        const metricBlob = await metricResponse.blob();
 
         const plotUrl = URL.createObjectURL(plotBlob);
         const summaryUrl = URL.createObjectURL(summaryBlob);
+        const metricUrl = URL.createObjectURL(metricBlob);
 
         plotImg.src = plotUrl;
         plotImg.style.display = "block";
@@ -615,11 +648,16 @@
         summaryImg.src = summaryUrl;
         summaryImg.style.display = "block";
 
+        metricImg.src = metricUrl;
+        metricImg.style.display = "block";
+
         statusBox.textContent = "Plots generated.";
       } catch (err) {
         statusBox.textContent = "Error: " + err.message;
         summaryImg.style.display = "none";
         summaryImg.src = "";
+        metricImg.style.display = "none";
+        metricImg.src = "";
       }
     }
 
