@@ -139,6 +139,96 @@
     }
 
 
+    #contribution-card {
+      display: none;
+      margin-top: 14px;
+      padding: 16px 18px 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(23, 26, 33, 0.95);
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+
+    .contribution-title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      white-space: nowrap;
+    }
+
+    .contribution-wrap {
+      display: inline-grid;
+      grid-template-columns: 34px auto;
+      grid-template-rows: 18px auto;
+      gap: 4px 8px;
+      min-width: max-content;
+    }
+
+    .contribution-months {
+      grid-column: 2;
+      grid-row: 1;
+      position: relative;
+      height: 18px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .contribution-month-label {
+      position: absolute;
+      top: 0;
+      transform: translateX(0);
+    }
+
+    .contribution-days {
+      grid-column: 1;
+      grid-row: 2;
+      display: grid;
+      grid-template-rows: repeat(7, 12px);
+      gap: 3px;
+      font-size: 11px;
+      color: var(--muted);
+      align-items: center;
+    }
+
+    .contribution-grid {
+      grid-column: 2;
+      grid-row: 2;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 12px;
+      grid-template-rows: repeat(7, 12px);
+      gap: 3px;
+    }
+
+    .contribution-cell {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      outline: 1px solid rgba(255, 255, 255, 0.035);
+    }
+
+    .contribution-level-0 { background: #161b22; }
+    .contribution-level-1 { background: #0e4429; }
+    .contribution-level-2 { background: #006d32; }
+    .contribution-level-3 { background: #26a641; }
+    .contribution-level-4 { background: #39d353; }
+
+    .contribution-legend {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 5px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      min-width: max-content;
+    }
+
     #recommend-btn {
       background: linear-gradient(180deg, #244536 0%, #1f3b2f 100%);
       border-color: #315845;
@@ -282,6 +372,30 @@
   <h2>All-Lift Volume</h2>
   <img id="all-volume-img" alt="Generated all-lift volume plot">
 
+  <h2>Training Contributions</h2>
+  <div id="contribution-card">
+    <div class="contribution-title-row">
+      <span id="contribution-summary"></span>
+      <span>relative volume by day</span>
+    </div>
+    <div class="contribution-wrap">
+      <div id="contribution-months" class="contribution-months"></div>
+      <div class="contribution-days">
+        <span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span>
+      </div>
+      <div id="contribution-grid" class="contribution-grid"></div>
+    </div>
+    <div class="contribution-legend">
+      <span>Less</span>
+      <span class="contribution-cell contribution-level-0"></span>
+      <span class="contribution-cell contribution-level-1"></span>
+      <span class="contribution-cell contribution-level-2"></span>
+      <span class="contribution-cell contribution-level-3"></span>
+      <span class="contribution-cell contribution-level-4"></span>
+      <span>More</span>
+    </div>
+  </div>
+
   <h2>Metric Over/Under</h2>
   <img id="metric-img" alt="Generated metric comparison plot">
 
@@ -340,6 +454,10 @@
     const summaryImg = document.getElementById("summary-img");
     const metricImg = document.getElementById("metric-img");
     const allVolumeImg = document.getElementById("all-volume-img");
+    const contributionCard = document.getElementById("contribution-card");
+    const contributionGrid = document.getElementById("contribution-grid");
+    const contributionMonths = document.getElementById("contribution-months");
+    const contributionSummary = document.getElementById("contribution-summary");
     const recommendationsBox = document.getElementById("recommendations-box");
 
     function getAllLifts() {
@@ -388,6 +506,10 @@
       metricImg.src = "";
       allVolumeImg.style.display = "none";
       allVolumeImg.src = "";
+      contributionCard.style.display = "none";
+      contributionGrid.innerHTML = "";
+      contributionMonths.innerHTML = "";
+      contributionSummary.textContent = "";
       recommendationsBox.value = "";
     }
 
@@ -512,6 +634,136 @@
       repsInput.value = "";
     }
 
+    function parseLocalDate(dateString) {
+      const parts = String(dateString).split("-").map(Number);
+      if (parts.length !== 3 || parts.some(Number.isNaN)) return null;
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    function formatISODate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function addDays(date, days) {
+      const out = new Date(date);
+      out.setDate(out.getDate() + days);
+      return out;
+    }
+
+    function addMonths(date, months) {
+      const out = new Date(date);
+      out.setMonth(out.getMonth() + months);
+      return out;
+    }
+
+    function startOfGitHubWeek(date) {
+      const out = new Date(date);
+      out.setDate(out.getDate() - out.getDay());
+      out.setHours(0, 0, 0, 0);
+      return out;
+    }
+
+    function contributionLevel(value, positiveValues) {
+      if (value <= 0 || positiveValues.length === 0) return 0;
+      const maxValue = Math.max(...positiveValues);
+      if (maxValue <= 0) return 0;
+      const ratio = value / maxValue;
+      if (ratio <= 0.25) return 1;
+      if (ratio <= 0.50) return 2;
+      if (ratio <= 0.75) return 3;
+      return 4;
+    }
+
+    function renderContributionGrid(allLifts, controls) {
+      const parsedRows = allLifts
+        .map(row => ({
+          ...row,
+          dateObj: parseLocalDate(row.date),
+          volume: Number(row.weight) * Number(row.sets) * Number(row.reps)
+        }))
+        .filter(row => row.lift && row.dateObj && Number.isFinite(row.volume) && row.volume > 0);
+
+      if (parsedRows.length === 0) {
+        contributionCard.style.display = "none";
+        return;
+      }
+
+      const maxDate = new Date(Math.max(...parsedRows.map(row => row.dateObj.getTime())));
+      let windowStart = new Date(Math.min(...parsedRows.map(row => row.dateObj.getTime())));
+      if (controls.summary_months_back !== null) {
+        windowStart = addMonths(maxDate, -controls.summary_months_back);
+      }
+      windowStart.setHours(0, 0, 0, 0);
+      maxDate.setHours(0, 0, 0, 0);
+
+      const windowRows = parsedRows.filter(row => row.dateObj >= windowStart && row.dateObj <= maxDate);
+      if (windowRows.length === 0) {
+        contributionCard.style.display = "none";
+        return;
+      }
+
+      const totalByLift = new Map();
+      windowRows.forEach(row => {
+        totalByLift.set(row.lift, (totalByLift.get(row.lift) || 0) + row.volume);
+      });
+
+      const scoreByDate = new Map();
+      windowRows.forEach(row => {
+        const total = totalByLift.get(row.lift) || 0;
+        if (total <= 0) return;
+        const key = formatISODate(row.dateObj);
+        scoreByDate.set(key, (scoreByDate.get(key) || 0) + row.volume / total);
+      });
+
+      const gridStart = startOfGitHubWeek(windowStart);
+      const gridEnd = addDays(startOfGitHubWeek(maxDate), 6);
+      const numDays = Math.round((gridEnd - gridStart) / 86400000) + 1;
+      const numWeeks = Math.ceil(numDays / 7);
+      const positiveValues = [...scoreByDate.values()].filter(v => v > 0);
+      const totalScore = positiveValues.reduce((a, b) => a + b, 0);
+
+      contributionGrid.innerHTML = "";
+      for (let week = 0; week < numWeeks; week++) {
+        for (let day = 0; day < 7; day++) {
+          const current = addDays(gridStart, week * 7 + day);
+          const key = formatISODate(current);
+          const value = scoreByDate.get(key) || 0;
+          const inWindow = current >= windowStart && current <= maxDate;
+          const cell = document.createElement("span");
+          const level = inWindow ? contributionLevel(value, positiveValues) : 0;
+          cell.className = `contribution-cell contribution-level-${level}`;
+          cell.title = inWindow
+            ? `${key}: ${value.toFixed(3)} relative volume`
+            : `${key}: outside selected window`;
+          if (!inWindow) cell.style.opacity = "0.35";
+          contributionGrid.appendChild(cell);
+        }
+      }
+
+      contributionMonths.innerHTML = "";
+      const seenMonths = new Set();
+      for (let week = 0; week < numWeeks; week++) {
+        const current = addDays(gridStart, week * 7);
+        const monthKey = `${current.getFullYear()}-${current.getMonth()}`;
+        if (seenMonths.has(monthKey)) continue;
+        seenMonths.add(monthKey);
+        if (current < windowStart || current > maxDate) continue;
+        const label = document.createElement("span");
+        label.className = "contribution-month-label";
+        label.textContent = current.toLocaleString(undefined, { month: "short" });
+        label.style.left = `${week * 15}px`;
+        contributionMonths.appendChild(label);
+      }
+
+      contributionMonths.style.width = `${numWeeks * 15}px`;
+      contributionSummary.textContent = `${positiveValues.length} training days, ${totalScore.toFixed(2)} summed relative volume`;
+      contributionCard.style.display = "block";
+    }
+
+
     async function generatePlot() {
       const lifts = getCurrentLiftRows();
       const allLifts = getAllLifts();
@@ -607,6 +859,8 @@
         allVolumeImg.src = URL.createObjectURL(allVolumeBlob);
         allVolumeImg.style.display = "block";
 
+        renderContributionGrid(allLifts, controls);
+
         statusBox.textContent = "Plots generated.";
       } catch (err) {
         statusBox.textContent = "Error: " + err.message;
@@ -616,6 +870,10 @@
         metricImg.src = "";
         allVolumeImg.style.display = "none";
         allVolumeImg.src = "";
+        contributionCard.style.display = "none";
+        contributionGrid.innerHTML = "";
+        contributionMonths.innerHTML = "";
+        contributionSummary.textContent = "";
       }
     }
 
