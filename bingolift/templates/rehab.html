@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rehab / Pain Tracker</title>
+  <style>
+    :root {
+      --bg: #080c10;
+      --panel: #0e151c;
+      --panel2: #111c26;
+      --text: #edf7fb;
+      --muted: #93a8b2;
+      --accent: #27d8ee;
+      --accent2: #9defff;
+      --good: #33d6a6;
+      --bad: #ff6f61;
+      --line: #1f4b5c;
+      --input: #071017;
+    }
+    body.light {
+      --bg: #f4dfad;
+      --panel: #fff3d1;
+      --panel2: #f8e3b3;
+      --text: #2d160b;
+      --muted: #6e4b24;
+      --accent: #b94a1f;
+      --accent2: #24747f;
+      --good: #2f8f55;
+      --bad: #b84a35;
+      --line: #c9933b;
+      --input: #fff8dd;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+    h1 { margin: 0; font-size: 1.8rem; }
+    h2 { margin: 0 0 12px; font-size: 1.05rem; color: var(--accent2); }
+    p { color: var(--muted); line-height: 1.45; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.18);
+    }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+    @media (max-width: 850px) { .span-4, .span-5, .span-7, .span-8 { grid-column: span 12; } header { flex-direction: column; } }
+    label { display: block; color: var(--muted); font-size: 0.85rem; margin-bottom: 5px; }
+    input, select, textarea, button {
+      font: inherit;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+    input, select, textarea {
+      width: 100%;
+      background: var(--input);
+      color: var(--text);
+      padding: 9px 10px;
+      margin-bottom: 9px;
+    }
+    textarea { min-height: 68px; resize: vertical; }
+    button {
+      background: var(--panel2);
+      color: var(--text);
+      padding: 9px 11px;
+      cursor: pointer;
+      border-color: var(--line);
+    }
+    button:hover { border-color: var(--accent); color: var(--accent2); }
+    button.primary { background: var(--accent); color: #061015; border-color: var(--accent); font-weight: 700; }
+    button.danger { border-color: var(--bad); color: var(--bad); }
+    .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .quick-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+    .quick-buttons button { text-align: left; }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    .small { font-size: 0.82rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { border-bottom: 1px solid var(--line); padding: 7px 6px; text-align: left; vertical-align: top; }
+    th { color: var(--accent2); font-weight: 700; }
+    .plot { width: 100%; min-height: 240px; display: block; border-radius: 12px; border: 1px solid var(--line); background: var(--panel2); object-fit: contain; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .pill { display: inline-block; padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Rehab / Pain Tracker</h1>
+        <p>Quick-log pain and corrective work so you can see what calms the right hip/QL, neck, ribs, and ankle over time.</p>
+      </div>
+      <div class="toolbar">
+        <a href="/"><button>Main app</button></a>
+        <button id="themeBtn">Toggle theme</button>
+        <button id="exportBtn">Export JSON</button>
+        <label style="margin:0;"><input id="importFile" type="file" accept="application/json" style="display:none;"> <button type="button" onclick="document.getElementById('importFile').click()">Import</button></label>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card span-5">
+        <h2>Log pain</h2>
+        <div class="row">
+          <div><label>Date</label><input id="painDate" type="date"></div>
+          <div><label>Right hip / QL</label><input id="painHip" type="number" min="0" max="10" step="0.5" value="0"></div>
+          <div><label>Neck</label><input id="painNeck" type="number" min="0" max="10" step="0.5" value="0"></div>
+          <div><label>Ribs</label><input id="painRibs" type="number" min="0" max="10" step="0.5" value="0"></div>
+        </div>
+        <div class="row-3">
+          <div><label>Ankle</label><input id="painAnkle" type="number" min="0" max="10" step="0.5" value="0"></div>
+          <div style="grid-column: span 2;"><label>Notes / triggers</label><input id="painNotes" placeholder="e.g. worse after hangs, better after walking"></div>
+        </div>
+        <button class="primary" id="savePainBtn">Save pain log</button>
+        <p class="muted small">Use this once daily if possible. The app estimates exercise effect from the next available pain log.</p>
+      </section>
+
+      <section class="card span-7">
+        <h2>Quick rehab buttons</h2>
+        <div id="quickButtons" class="quick-buttons"></div>
+        <hr style="border-color: var(--line); opacity: 0.5; margin: 14px 0;">
+        <h2>Add custom template</h2>
+        <div class="row">
+          <div><label>Exercise</label><input id="tplName" placeholder="e.g. Serratus wall slides"></div>
+          <div><label>Sets</label><input id="tplSets" type="number" min="0" value="2"></div>
+          <div><label>Reps</label><input id="tplReps" type="number" min="0" value="10"></div>
+          <div><label>Minutes</label><input id="tplMinutes" type="number" min="0" step="0.5" value="0"></div>
+        </div>
+        <button id="addTemplateBtn">Add template</button>
+        <button class="danger" id="resetTemplatesBtn">Reset templates</button>
+      </section>
+
+      <section class="card span-5">
+        <h2>Manual exercise log</h2>
+        <div class="row-3">
+          <div><label>Date</label><input id="exDate" type="date"></div>
+          <div><label>Sets</label><input id="exSets" type="number" min="0" value="2"></div>
+          <div><label>Reps</label><input id="exReps" type="number" min="0" value="10"></div>
+        </div>
+        <label>Exercise</label><input id="exName" placeholder="Exercise name">
+        <div class="row-3">
+          <div><label>Minutes</label><input id="exMinutes" type="number" min="0" step="0.5" value="0"></div>
+          <div><label>Intensity 1–10</label><input id="exIntensity" type="number" min="0" max="10" step="0.5" value="3"></div>
+          <div><label>Side</label><select id="exSide"><option>both</option><option>right</option><option>left</option></select></div>
+        </div>
+        <label>Notes</label><input id="exNotes" placeholder="e.g. felt better after, QL grabbed, no issue">
+        <button class="primary" id="saveExerciseBtn">Save exercise log</button>
+      </section>
+
+      <section class="card span-7">
+        <h2>Summary</h2>
+        <div id="summary" class="toolbar"></div>
+        <p class="muted small">“Effect” is crude: pain change from exercise day to the next pain log within 3 days. Negative is good. It is a signal, not medical truth.</p>
+      </section>
+
+      <section class="card span-12">
+        <h2>Pain over time</h2>
+        <img id="painPlot" class="plot" alt="Pain trend plot">
+      </section>
+      <section class="card span-12">
+        <h2>Rehab work over time</h2>
+        <img id="volumePlot" class="plot" alt="Rehab work plot">
+      </section>
+      <section class="card span-12">
+        <h2>Exercise effect estimate</h2>
+        <img id="effectPlot" class="plot" alt="Exercise effect plot">
+      </section>
+
+      <section class="card span-12">
+        <h2>Recent logs</h2>
+        <div id="recentLogs"></div>
+      </section>
+    </div>
+  </div>
+<script>
+const STORE_KEY = "bingoLiftRehabTrackerV1";
+const defaultTemplates = [
+  {exercise:"Y raises", sets:5, reps:5, minutes:0, intensity:3, side:"both"},
+  {exercise:"Dead bug", sets:2, reps:8, minutes:0, intensity:2, side:"both"},
+  {exercise:"Side plank", sets:2, reps:0, minutes:1, intensity:3, side:"both"},
+  {exercise:"Pallof press", sets:3, reps:12, minutes:0, intensity:3, side:"both"},
+  {exercise:"90/90 breathing", sets:1, reps:0, minutes:3, intensity:1, side:"both"},
+  {exercise:"Open books", sets:2, reps:8, minutes:0, intensity:1, side:"both"},
+  {exercise:"Band face pulls", sets:3, reps:20, minutes:0, intensity:3, side:"both"},
+  {exercise:"Split squat", sets:3, reps:8, minutes:0, intensity:4, side:"both"},
+  {exercise:"Single-leg RDL", sets:3, reps:8, minutes:0, intensity:4, side:"both"},
+  {exercise:"Suitcase carry", sets:3, reps:0, minutes:3, intensity:4, side:"both"}
+];
+let state = loadState();
+function todayISO() { return new Date().toISOString().slice(0,10); }
+function loadState() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (parsed) return {pain_logs: parsed.pain_logs||[], exercise_logs: parsed.exercise_logs||[], templates: parsed.templates||defaultTemplates, theme: parsed.theme||"dark"};
+  } catch(e) {}
+  return {pain_logs: [], exercise_logs: [], templates: defaultTemplates, theme: "dark"};
+}
+function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+function num(id) { return Number(document.getElementById(id).value || 0); }
+function setDefaults() {
+  document.getElementById("painDate").value = todayISO();
+  document.getElementById("exDate").value = todayISO();
+  document.body.classList.toggle("light", state.theme === "light");
+}
+function renderTemplates() {
+  const box = document.getElementById("quickButtons");
+  box.innerHTML = "";
+  state.templates.forEach((tpl, idx) => {
+    const btn = document.createElement("button");
+    const dose = `${tpl.sets || 0}x${tpl.reps || 0}${tpl.minutes ? ` + ${tpl.minutes}m` : ""}`;
+    btn.innerHTML = `<strong>${tpl.exercise}</strong><br><span class="muted small">${dose}</span>`;
+    btn.onclick = () => quickLog(tpl);
+    box.appendChild(btn);
+    const del = document.createElement("button");
+    del.textContent = "×";
+    del.title = "Delete template";
+    del.onclick = () => { state.templates.splice(idx,1); saveState(); renderAll(); };
+    box.appendChild(del);
+  });
+}
+function quickLog(tpl) {
+  state.exercise_logs.push({...tpl, date: todayISO(), notes: "quick log"});
+  saveState();
+  renderAll();
+}
+function savePain() {
+  state.pain_logs.push({
+    date: document.getElementById("painDate").value || todayISO(),
+    right_hip: num("painHip"), neck: num("painNeck"), ribs: num("painRibs"), ankle: num("painAnkle"),
+    notes: document.getElementById("painNotes").value || ""
+  });
+  document.getElementById("painNotes").value = "";
+  saveState(); renderAll();
+}
+function saveExercise() {
+  const name = document.getElementById("exName").value.trim();
+  if (!name) return alert("Add an exercise name.");
+  state.exercise_logs.push({
+    date: document.getElementById("exDate").value || todayISO(), exercise: name,
+    sets: num("exSets"), reps: num("exReps"), minutes: num("exMinutes"), intensity: num("exIntensity"),
+    side: document.getElementById("exSide").value, notes: document.getElementById("exNotes").value || ""
+  });
+  document.getElementById("exName").value = ""; document.getElementById("exNotes").value = "";
+  saveState(); renderAll();
+}
+function addTemplate() {
+  const exercise = document.getElementById("tplName").value.trim();
+  if (!exercise) return alert("Add an exercise name.");
+  state.templates.push({exercise, sets: num("tplSets"), reps: num("tplReps"), minutes: num("tplMinutes"), intensity:3, side:"both"});
+  document.getElementById("tplName").value = "";
+  saveState(); renderAll();
+}
+function payload() { return {pain_logs: state.pain_logs, exercise_logs: state.exercise_logs, controls: {theme: state.theme}}; }
+async function postPlot(url, imgId) {
+  const img = document.getElementById(imgId);
+  try {
+    const res = await fetch(url, {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload())});
+    if (!res.ok) { img.removeAttribute("src"); img.alt = await res.text(); return; }
+    const blob = await res.blob();
+    img.src = URL.createObjectURL(blob);
+  } catch(e) { img.alt = "Could not load plot: " + e; }
+}
+function renderSummary() {
+  const box = document.getElementById("summary");
+  const lastPain = [...state.pain_logs].sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];
+  const last7 = state.exercise_logs.filter(e => (new Date(todayISO()) - new Date(e.date)) / 86400000 <= 7).length;
+  const total = state.exercise_logs.length;
+  box.innerHTML = `
+    <span class="pill">Pain logs: ${state.pain_logs.length}</span>
+    <span class="pill">Exercise logs: ${total}</span>
+    <span class="pill">Last 7 days rehab entries: ${last7}</span>
+    ${lastPain ? `<span class="pill">Latest hip/QL: ${lastPain.right_hip}/10</span>` : ""}
+  `;
+}
+function renderRecent() {
+  const rows = [];
+  state.pain_logs.forEach(p => rows.push({date:p.date, type:"Pain", item:`Hip ${p.right_hip}, Neck ${p.neck}, Ribs ${p.ribs}, Ankle ${p.ankle}`, notes:p.notes||""}));
+  state.exercise_logs.forEach(e => rows.push({date:e.date, type:"Exercise", item:`${e.exercise}: ${e.sets||0}x${e.reps||0}${e.minutes ? ` + ${e.minutes}m` : ""}`, notes:e.notes||""}));
+  rows.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const top = rows.slice(0, 20);
+  document.getElementById("recentLogs").innerHTML = top.length ? `<table><thead><tr><th>Date</th><th>Type</th><th>Entry</th><th>Notes</th></tr></thead><tbody>${top.map(r=>`<tr><td>${r.date}</td><td>${r.type}</td><td>${r.item}</td><td>${r.notes}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">No logs yet.</p>`;
+}
+function renderAll() {
+  document.body.classList.toggle("light", state.theme === "light");
+  renderTemplates(); renderSummary(); renderRecent();
+  postPlot("/rehab_pain.png", "painPlot");
+  postPlot("/rehab_volume.png", "volumePlot");
+  postPlot("/rehab_effect.png", "effectPlot");
+}
+document.getElementById("savePainBtn").onclick = savePain;
+document.getElementById("saveExerciseBtn").onclick = saveExercise;
+document.getElementById("addTemplateBtn").onclick = addTemplate;
+document.getElementById("resetTemplatesBtn").onclick = () => { if(confirm("Reset quick templates?")) { state.templates = defaultTemplates; saveState(); renderAll(); } };
+document.getElementById("themeBtn").onclick = () => { state.theme = state.theme === "dark" ? "light" : "dark"; saveState(); renderAll(); };
+document.getElementById("exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob); const a = document.createElement("a");
+  a.href = url; a.download = `rehab-tracker-${todayISO()}.json`; a.click(); URL.revokeObjectURL(url);
+};
+document.getElementById("importFile").onchange = async (ev) => {
+  const file = ev.target.files[0]; if (!file) return;
+  const imported = JSON.parse(await file.text());
+  state = {pain_logs: imported.pain_logs||[], exercise_logs: imported.exercise_logs||[], templates: imported.templates||defaultTemplates, theme: imported.theme||state.theme};
+  saveState(); renderAll();
+};
+setDefaults(); renderAll();
+</script>
+</body>
+</html>
