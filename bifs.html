@@ -137,8 +137,8 @@ Here's a table of the normal forms, all laid out so that the bifurcation happens
   <thead>
     <tr>
       <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Name</th>
-      <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Normal form, bif at \(\bar g = 1\)</th>
-      <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Behavior after \(\bar g > 1\)</th>
+      <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Normal form, bif at \(g = 1\)</th>
+      <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Behavior after \(g > 1\)</th>
     </tr>
   </thead>
   <tbody>
@@ -146,7 +146,7 @@ Here's a table of the normal forms, all laid out so that the bifurcation happens
     <tr>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Saddle-node</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        \(h_{t+1} = h_t + (\bar g - 1) - h_t^2\)
+        \(h_{t+1} = h_t + (g - 1) - h_t^2\)
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
         Two fixed points appear: one stable, one unstable.
@@ -156,7 +156,7 @@ Here's a table of the normal forms, all laid out so that the bifurcation happens
     <tr>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Transcritical</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        \(h_{t+1} = \bar g h_t - h_t^2\)
+        \(h_{t+1} =  g h_t - h_t^2\)
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
         Same number of fixed points, but they exchange stability.
@@ -166,17 +166,17 @@ Here's a table of the normal forms, all laid out so that the bifurcation happens
     <tr>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Pitchfork</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        \(h_{t+1} = \bar g h_t - h_t^3\)
+        \(h_{t+1} =  g h_t - h_t^3\)
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        Two new stable fixed points appear: \(h^* = \pm\sqrt{\bar g - 1}\). The origin becomes unstable.
+        Two new stable fixed points appear: \(h^* = \pm\sqrt{ g - 1}\). The origin becomes unstable.
       </td>
     </tr>
 
     <tr>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Flip</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        \(h_{t+1} = -\bar g h_t + h_t^3\)
+        \(h_{t+1} = - g h_t + h_t^3\)
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
         Fixed point stays the same, but loses stability; a stable period-2 orbit appears.
@@ -187,7 +187,7 @@ Here's a table of the normal forms, all laid out so that the bifurcation happens
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Neimark–Sacker</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
         \[
-        z_{t+1} = \bar g e^{i\omega} z_t - |z_t|^2 z_t
+        z_{t+1} =  g e^{i\omega} z_t - |z_t|^2 z_t
         \]
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
