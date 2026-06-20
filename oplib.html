@@ -1,0 +1,188 @@
+<html style="background-image: linear-gradient(to bottom, #e5ffcd, #d9ffd8, #d1ffe3, #cbffed, #cafff6, #c8fbfb, #caf7fe, #cef2ff, #d6e9ff, #e9defc, #fad3e8, #ffcdcd);">
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body style="">
+<div class="main_text">
+<h1 id="top">A High Level Block-Based Library Wrapping Standard Autodiff</span></h1>
+<hr>
+
+<table style="margin-left: auto; margin-right: auto; width: 80%;font-size:.8cm; border-collapse:separate; border:solid black 3px; border-radius:6px;">
+
+<tr>
+<td  colspan=2 style="background-color: white; ">
+<b>Relevant Links</b>
+</td>
+</tr>
+
+<tr>
+<td style="width:50%; background-color: #eeeeee;">
+<a href = "https://arxiv.org/abs/2605.08746">Arxiv Pre-Print</a>
+</td>
+
+<td  style="width:50%; background-color: #eeeeee;">
+<a href = "https://github.com/meeree/kpflow/">Pip Pytorch Package</a>
+</td>
+</tr>
+
+
+</table>
+
+<!--<ol style="max-width:45%; font-size: .8cm; text-align:center; text-indent: 0; list-style-type: none;">
+	<li> <b>Table of Contents</b>
+    <li> <a href="#motiv">Broader Motivation and Prior Work</a>
+    <li> <a href="#intro">Introduction</a>
+	<li> <a href="#methods">Methods</a>
+	<li> <a href="#examples">Examples and Intuition</a>
+	<li> <a href="#results">Results</a>
+</ol>-->
+
+\(
+\def\R{{\mathbb{R}}}
+\def\P{{\mathrm{P}}}
+\def\K{{\mathrm{K}}}
+\def\NTK{{\mathrm{NTK}}}
+
+\def\M{{\mathcal{M}}}
+\def\N{{\mathcal{N}}}
+\def\I{{\mathcal{I}}}
+
+\def\F{{\mathrm{F}}}
+\def\S{{\mathrm{S}}}
+
+\def\op#1{{\mathrm{#1}}}
+\def\hs#1{{\mathcal{#1}}}
+\def\err{{\mathrm{err}}}
+\def\T{{\mathrm{T}}}
+\)
+
+
+<br>
+<br>
+
+<p>
+Here I will describe a slightly higher-level view on automatic differentiation, as an informal, introductory design spec for the library I'm writing <a href="https://github.com/meeree/kpflow/">here</a>.
+</p>
+
+<hr>
+<br>
+
+<p>
+What does it mean to be "higher level" than classical autodiff. 
+Well, in pytorch the basic operations are low-level: addition of tensors, elementwise multiplication, \(\tanh\), \(\sin\), for example. 
+</p>
+
+<p>
+For what I'll consider here, the basic primitive is a <i>global constraint</i>, which I will also call a <i>block</i>. 
+Specifically, it has the form
+$$\op F(h, x, \theta) = 0$$
+where \(h \in \hs H, x \in \hs X, \theta \in \hs \Theta\) are the block's <i>state, inputs and parameters</i>, respectively, and 
+$$\op F : (\hs H, \hs X, \hs \Theta) \rightarrow \hs H,$$
+i.e. it constraints the state variables. We require it to be locally well-posed, i.e., so that
+$$(\op D_h \op F(h, x, \theta))^{-1}$$
+can be defined, i.e. the state Jacobian is non-singular, so we can apply the inverse function theorem at each permissable point where \(\op F(h, x, \theta) = 0\).
+</p>
+
+<p>
+A key observation is that if we choose a loss function \(L : \hs H \rightarrow \R\), then the gradient descent flow is 
+$$\delta \theta = -(\op D_\theta \op F)^* \cdot (\op D_h \op F)^{-*} (\nabla_h L)$$
+So, the parameter and state Jacobian of \(\op F\) are <i>the necessary linear operators required to do backpropagation on any loss</i>. 
+To make things nicer, we define some symbols:
+$$\text{ Generator: } \, \op J_h := \op D_h \op F; \, \text{ Propagator/Green's Operator: } \, \op P := \op J_h^{-1}$$
+$$\text{ Parameter Jacobian: } \, \op J_\theta := \op D_h \op F; \, \text{ Parameter Core: } \, \op K :=(\op J_\theta)(\op J_\theta)^*$$
+$$\text{ Error Signal: } \, \err(h) := \nabla_h L(h)$$
+Using these operations and the implicit function theorem, we can see that the gradient flow in the state is first-order given by 
+$$\delta h = -\op P \op K \op P^* (\err(h))$$
+i.e., the operator \(\op P \op K \op P^*\) is the <i>State-space Neural Tangent Kernel (sNTK)</i> for the constraint \(\op F\).
+</p>
+
+<br>
+<br>
+<hr>
+
+<p style="text-align: center;"><b>Guiding Design Philosophy</b></p>
+
+<p>
+Now, the whole design principle is this: provide fast methods for computing these operators by default, relying on fast matrix-free approaches, and specialize them using simplifying assumptions. 
+For example, in a model with weights or one with high redundancy, there is a lot that can be done to make the Jacobians explicit. 
+Finally, we allow the user to manually define any Jacobian by hand through hooks into the model, choose approximation methods to this Jacobian (e.g., for alternative learning rules), or specify additional structured simplifying assumptions on the model.
+</p>
+
+<br>
+<hr>
+<br>
+<figure>
+<a href="schemblocks.png"><img src="schemblocks.png" width=90%/></a>
+<figcaption><p><b>Fig 1</b> High level design of model blocks.</p></figcaption>
+</figure>
+<br>
+<br>
+
+
+<p style="text-align: center;"><b>Jacobians Through VJP and JVP</b></p>
+
+<p>
+First I will outline the default behavior for a generic global constraint block, which effectively derives the operators in a matrix-free way.
+There are three key things to implement: (1) \(\op J_h\) the Generator, (2) \(\op P = (\op J_h)^{-1}\) the Propagator and (3) \(\op J_\theta\) the Parameter Jacobian.
+This means that operators are generic interfaces providing a \(\mathrm{\_\_call\_\_}\) and \(\mathrm{adjoint\_call}\) functionality, for the operator \(M v, M^* p\), respectively. 
+The key is that this <i>totally relies on pytorch</i>, I do not want to re-invent the wheel. 
+Specifically, we can implement \(\op J_h, \op J_\theta\) using the \(\mathrm{vjp}\) and \(\mathrm{jvp}\) operations, which are fundamental to autodiff libraries (e.g., Jax and Pytorch). 
+We also use \(\mathrm{vmap}\) to do such operations in a batched way, i.e. to implement operator \(\mathrm{matmul}\) and \(\mathrm{rmatmul}\). 
+</p>
+
+<p style="text-align: center;"><b>Computing the Propagator/Green's Operator</b></p>
+
+<p>
+Implementing \(\op P\) as a matrix-free inverse can potentially pull in a huge amount of numerical linear algebra (e.g., Krylov methods). 
+The most simple geometric series (Neumann series), however, says that 
+$$\op P = (\op J_h)^{-1} = \sum_{t=1}^\infty (\op I - \op J_h)^{t},$$
+which can be viewed as integrating over all chains of jacobians of length \(t\). 
+In general you only get convergence of this series when \(\rho(\op I - \op J_h)\) is below one. 
+However, amazingly, this operator is typically <i>nilpotent</i>, i.e. there is some \(T\) with \((\op I - \op J_h)^T = 0\), so that this series converges, irregardless of \(\rho(\op I - \op J_h)\), hence why backproapgaton is provably correct even though it can cause exploding gradients. 
+But, \(\op J_h\) is provably nilpotent for any <i>directed acyclic graph (DAG)</i>, so this Neumann series approach is surprisingly effective. 
+Indeed, it is the fundamental way in which backpropation typically takes place, forming all chains of Jacobians to approximate \(\op P^* v\) for \(v \in \hs H\) implicitly.
+</p>
+
+<p>
+Below, I will talk about how \(\op P\) can be calculated in non-nilpotent settings, such as for PDEs, continuous time models or deep equilbrium models, but this is nonstandard for my own work. 
+More practical for me, I will discuss how the propagator associated with compositions, sums and other operations on blocks can be automatically derived and how tricks such as preconditioned Neumann series, splitting and truncation could potentially be applied to make it faster or more stable. 
+Almost all of these tricks are far more natural from this global operator perspective.
+</p>
+
+<br>
+<hr>
+<br>
+
+<h1>Operations on Blocks</h1>
+<p style="text-align: center;"><b>Stacking Blocks</b></p>
+
+<p>
+Consider stacking the state of one block, \(\op F_1(h_1, x, \theta)\) into another block, \(\op F_2((h_1, h_2), x, \theta)\), with identical input. We can expand the state-space and parameter space, creating a new block, 
+$$\op{F_{stk}(\begin{pmatrix} h_1 \\ h_2 \end{pmatrix}, x, \begin{pmatrix} \theta \end{pmatrix}) = \begin{pmatrix} \op F_1(h_1, x, \theta_1) \\ \op F_2(h_2, x, \theta_2) \end{pmatrix}$$
+We let \(h, \theta\) be the new states in these expanded spaces.
+We see that
+$$\op J_{\theta, \op {stk}} = \begin{pmatrix} \op J_{\theta,1} & 0 \\ 0 & \op J_{\theta,2} \end{pmatrix}$$ 
+and 
+$$\op J_{h,\op{stk}} = \begin{pmatrix} \op J_{h,1} & 0 \\ 0 & \op J_{h,2} \end{pmatrix}$$ 
+</p>
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,602 @@
+<html style="background: url(art/modes_poster.png);
+      background-size: repeat; 
+      background-size: 50%;
+>
+<head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body style="">
+<div class="main_text">
+<h1 id="top">Why Write Models as Implicit Constraints?</span></h1>
+<hr>
+
+<table style="margin-left: auto; margin-right: auto; width: 80%;font-size:.8cm; border-collapse:separate; border:solid black 3px; border-radius:6px;">
+
+<tr>
+<td  colspan=2 style="background-color: white; ">
+<b>Relevant Links</b>
+</td>
+</tr>
+
+<tr>
+<td style="width:50%; background-color: #eeeeee;">
+<a href = ".">Arxiv Pre-Print</a>
+</td>
+
+<td  style="width:50%; background-color: #eeeeee;">
+<a href = "https://github.com/meeree/kpflow/">Pip Pytorch Package</a>
+</td>
+</tr>
+
+
+</table>
+
+<!--<ol style="max-width:45%; font-size: .8cm; text-align:center; text-indent: 0; list-style-type: none;">
+	<li> <b>Table of Contents</b>
+    <li> <a href="#motiv">Broader Motivation and Prior Work</a>
+    <li> <a href="#intro">Introduction</a>
+	<li> <a href="#methods">Methods</a>
+	<li> <a href="#examples">Examples and Intuition</a>
+	<li> <a href="#results">Results</a>
+</ol>-->
+
+\(
+\def\R{{\mathbb{R}}}
+\def\P{{\mathrm{P}}}
+\def\K{{\mathrm{K}}}
+\def\NTK{{\mathrm{NTK}}}
+
+\def\M{{\mathcal{M}}}
+\def\N{{\mathcal{N}}}
+\def\I{{\mathcal{I}}}
+
+\def\F{{\mathrm{F}}}
+\def\S{{\mathrm{S}}}
+
+\def\op#1{{\mathrm{#1}}}
+\def\hs#1{{\mathcal{#1}}}
+\def\err{{\mathrm{err}}}
+\def\T{{\mathrm{T}}}
+\)
+
+
+<br>
+
+<p class = "center_text">
+<u>TLDR</u><br>
+Any model can be written as a single, massive implicit constraint. I will try to convince you that this is not a waste of time.
+</p>
+
+<br>
+
+<p class="center_text">
+<b style="font-size: .89cm;">Synopsis</b><br>
+Dynamical systems give us beautiful tools—fixed points, bifurcations, Lyapunov exponents—but modern deep learning models rarely fit that mold cleanly. Transformers, non-autonomous networks, and highly structured architectures often do not come with a natural notion of trajectory or long-term state evolution, so classical dynamical language can become strained.
+<br><br>
+One option is to reframe these models back into a dynamical-systems framework (e.g., energy based reformulation of transformer self-attention). Here, I'll try argue for another route: formulate them implicitly, yielding a global Green’s operator and a parameter kernel. This keeps the core intuition of amplification, sensitivity, and instability, but no longer depends on having a clean underlying dynamical system.
+<br><br>
+From this viewpoint, familiar phenomena like bifurcations become special cases of more general operator behavior. The payoff is a language for learning dynamics that extends beyond classical dynamical systems and applies more naturally to realistic deep learning models.
+</p>
+
+
+<p class="center_text">
+<b style="font-size: .89cm;">Synopsis</b><br><!--
+Why implicit formulation? Well dynamical systems are nice, but tools (e.g., FTLE, fixed points, bifurcations) are not as naturally applicable for realistic models in deep learning (non-autonomous, varied parameters at each layer, or where dynamics just don't make any sense). 
+Many have tried to bridge this gap by reframing common models as dynamical systems (e.g., rethinking transformer self-attention in terms of energy based models). 
+Here, I'll argue that the implicit formulation, formulating a model in terms of its global Green's operator and a parameter kernel can generalize intuition from dynamical systems.
+Common phenomena like bifurcations naturally coincide with properties of the operators, but they are more easily applicable to models in deep learning.-->
+Many models can be viewed, at the right level of zoom, as a single implicit constraint on a global state. 
+As a way to evaluate the model, this is mostly just a reformulation. 
+As a way to think about learning, though, it is often much better: key operators admit clean decompositions and block formulas that expose how updates propagate through the model. 
+More specifically, for any model with weights and biases (e.g. any in deep learning) this surprisingly leads to deep insights and practical ways to derive and compute quantities such as NTK- and Fisher-type operators across very different architectures.</p>
+<br>
+<br>
+
+<h1>Introduction</h1>
+
+<p><b>Notation:</b> Caligraphic (e.g., \(\mathcal{S}\)) is a Hilbert space, roman (e.g., \(\mathrm{T}\)) corresponds to operators or functions on these spaces, normal lowercase denotes elements, e.g, global state \(h \in \mathcal{S}\).
+</p>
+
+<h2>Global State-Space Implicit Formulation</h2>
+<p>
+What is the core structure of any model in deep learning or control? Well, fundamentally we have two things: a generic <i>state</i>, \(h \in \mathcal{S}\), and a set of parameters <i>parameters</i>, \(\theta \in P\). Here, \(S, P\) are Hilbert spaces generically. 
+Typically, we aim to find parameters \(\theta^*\) that minimize a certain loss \(L : h \rightarrow \R\). 
+Also, we usually have external task inputs, \(x \in X\), which are distinguished from the state because they have no dependence on either \(h\) or \(x\).
+</p>
+
+<p>
+Here, I will argue why I think it's a good idea to think of the model as a constraint tying together the state, inputs and parameters.
+Generically, I will say that a model is anything of the implicit form:
+$$\F(h, x, \theta) = 0$$
+where 
+$$\F : (\mathcal{S}, \mathcal{X}, \mathcal{P}) \rightarrow \mathcal{S}$$ 
+is a Frechet differentiable mapping and \((\mathcal{S}, \mathcal{X}, \mathcal{P})\) are Hilbert spaces. 
+Finally, we will require that \(D_h \F : \mathcal{S} \rightarrow \mathcal{S}\) is invertible at every admissable tuple \((h, x, \theta)\) satisfying the constraint. 
+This basically means that locally we can determine \(h\) explicitly if \(x\) and \(\theta\) are provided, so that the model is locally well-posed. 
+</p>
+
+
+<h2>Assuming Weights and Biases</h2>
+
+<p>
+Generically, any model in deep learning can be written in the form of pre-activations, \(v\) under some "global weights and biases" and post-activations, \(q\)
+$$\F_{joint}((v, q), x, W) := \begin{pmatrix} \F(v, q, x) \\q - T_{W,b}(v) \end{pmatrix}  = 0$$
+Here, \(W : \M \rightarrow \N\) and \(T_{W,b}(v) := (I_\I \otimes W) v + (\mathbb{1}_\I \otimes b)\), i.e. it streams \(W, b\) over an <i>index space</i>, \(\I\), assuming \(v \in \I \otimes \M, q \in \I \otimes \N\), meaning that they typically consist of many (possibly infinite) distinct states.
+Replacing \(v\) by \((v, 1)\) and expanding weights can account for the bias \(b\), yielding an equivalent constraint without biases, so we drop the bias from here on.
+</p>
+<p>
+For such a model, we can work out the \(\P, \K\) like block matrices with state-space \((\M \oplus \N) \otimes \I\). Firstly, 
+$$D_\theta \F_{joint} = D_W \F_{joint} = \begin{pmatrix} 0 \\ -v \otimes I_\N \end{pmatrix}$$
+so
+$$\K = \begin{pmatrix} 0 & 0 \\ 0 & v v^* \otimes I_\N \end{pmatrix}$$
+Next, 
+$$D_{(v, q)} \F_{joint} =\begin{pmatrix} D_v \F & D_q \F \\ -T_W & I_{\I \otimes \N} \end{pmatrix}$$
+We have \(\P = (D_{(v,q)} \F_{joint})^{-1}\), which can be explicitly computed as a two-by-two block inverse using the Schur complement. 
+Specifically, define the Schur complement operator 
+$$\op S := D_v \F + D_q \F \cdot \T_W$$
+Then, 
+$$\P = \begin{pmatrix} \op S ^{-1} & - \op S ^{-1} \cdot D_q \F \\ \T_W \cdot \op S ^{-1} & I_{\I \otimes \N} - \T_W \cdot \op S^{-1} \cdot D_q \F \end{pmatrix}$$
+This two diagonal blocks describe \(v\)-to-\(v\) and \(q\)-to-\(q\) dependency propgation, respectively, while the off diagonal blocks describe interdependencies. 
+Note that all involve computing the inverse <i>resolvent</i> \(\op S ^{-1}\), which we will see in examples below is very natural (in a similar way to how \((1 + g)^{-1}\) produces the generating function \(1 + g + g^2 + \dots\)). 
+</p>
+
+<p>
+These formulas give exact block-matrix forms for the NTK and FIM, although they're ugly and we can do more to simplify them, as follows. But for completion, here they are, 
+$$\op{NTK}
+= 
+\begin{pmatrix}
+-\,\S^{-1} \cdot D_q \F \\
+I_{\I \otimes \N} - \T_W \cdot \S^{-1} \cdot D_q \F
+\end{pmatrix}
+(v v^* \otimes I_\N)
+\begin{pmatrix}
+-\,\S^{-1} \cdot D_q \F \\
+I_{\I \otimes \N} - \T_W \cdot \S^{-1} \cdot D_q \F
+\end{pmatrix}^*.$$
+$$\op{FIM}
+=
+(v \otimes I_\N)^*
+\left[
+(D_q \F)^* \cdot \S^{-*} \S^{-1} \cdot D_q \F
++
+\bigl(I_{\I \otimes \N} - \T_W \cdot \S^{-1} \cdot D_q \F\bigr)^*
+\bigl(I_{\I \otimes \N} - \T_W \cdot \S^{-1} \cdot D_q \F\bigr)
+\right]
+(v \otimes I_\N).
+$$
+In general, the loss is a map on the full state space of pre-activations and post-activations, but really that's pretty redundant. 
+It's more natural to use a loss just on \(q\). In that case, the error has the block form \([0, \err(q)]^T\).  
+Hence, the flow of error to corrections to \(v\) and \(q\) looks like
+$$\begin{pmatrix} \delta v \\ \delta q \end{pmatrix} = \NTK \cdot \begin{pmatrix} 0 \\ \err(q) \end{pmatrix}$$
+meaning that only the right column of \(\NTK\) only effectively matter. Also, the error only changes according to \(q\), so we could just track \(\delta q\). 
+Doing this reduces to tracking the bottom right block of \(\NTK\), which is 
+$$\op{NTK}_{qq}
+=
+\bigl(I_{\I \otimes \N} - \T_W \cdot \S^{-1} \cdot D_q \F\bigr)
+(v v^* \otimes I_\N)\bigl(I_{\I \otimes \N} - \T_W \cdot \S^{-1} \cdot D_q \F\bigr)^*$$
+or, using the other Schur complement for \(\P\),
+$$\op{NTK}_{qq} = 
+\bigl(I_{\I \otimes \N} + \T_W \cdot (D_v \F)^{-1} \cdot D_q \F\bigr)^{-1}
+(v v^* \otimes I_\N)
+\bigl(I_{\I \otimes \N} + \T_W \cdot (D_v \F)^{-1} \cdot D_q \F\bigr)^{-*}.$$ 
+But let's use the first formula, yielding
+$$\delta q = \bigl(I_{\I \otimes \N} - \T_W \cdot \S^{-1} \cdot D_q \F\bigr)
+(v v^* \otimes I_\N)\bigl(I_{\I \otimes \N} - \T_W \cdot \S^{-1} \cdot D_q \F\bigr)^* (\err(q))$$
+Also, we get
+$$
+\delta v
+=
+-\,\S^{-1} \cdot D_q \F \cdot (v v^* \otimes I_\N)(\err(q))
++
+\S^{-1} \cdot D_q \F \cdot (v v^* \otimes I_\N)\cdot
+\bigl(\T_W \cdot \S^{-1} \cdot D_q \F\bigr)^*(\err(q)).
+$$
+Alternatively, defining 
+$$\op B := (D_v \F + D_q \F \cdot \T_W)^{-1} \cdot D_q \F$$
+this is 
+$$\delta v = -\op B (v v^* \otimes I_\N) \left[I_{\I \otimes \N} - \op B^* \cdot \T_W^* \right] (\err(q))$$
+
+Using
+$$\err(v)=\T_W^*(\err(q)),$$
+we have
+$$
+\delta v
+=
+-\,\op B \,(v v^* \otimes I_\N)\,\err(q)
++
+\op B \,(v v^* \otimes I_\N)\,\op B^* \err(v).
+$$
+If \(\T_W^*\) is invertible on the relevant subspace, or using \((\T_W^*)^+\), this becomes
+$$
+\delta v
+=
+-\op B \,(v v^* \otimes I_\N)\Bigl[(\T_W^*)^+-\op B^*\Bigr]\err(v).
+$$
+where
+$$\op B := (D_v \F + D_q \F \cdot \T_W)^{-1} \cdot D_q \F$$
+
+</p>
+
+<br>
+<br>
+<h1>Examples</h1>
+
+<h2>Explicit General Case</h2>
+<p>
+Assume the nonlinear constraint is written in solved form
+$$
+v=\Phi(q,x), \qquad q=\T_W v,
+$$
+so that
+$$
+\F(v,q,x)=v-\Phi(q,x), \qquad D_v\F = I, \qquad D_q\F = -\,D_q\Phi.
+$$
+Defining
+$$
+\op G := D_q\Phi,
+$$
+we obtain
+$$
+\S = I_{\I\otimes\M} - \op G \cdot \T_W,
+\qquad
+\op B = -\,(I_{\I\otimes\M} - \op G \cdot \T_W)^{-1}\op G.
+$$
+Hence the induced update to \(v\) from an error on \(q\) is
+$$
+\delta v
+=
+(I_{\I\otimes\M} - \op G \cdot \T_W)^{-1}\op G\,
+(v v^* \otimes I_\N)
+\Bigl(I_{\I\otimes\N} + \op G^*(I_{\I\otimes\M} - \op G \cdot \T_W)^{-*}\T_W^*\Bigr)\err(q).
+$$
+Equivalently, in terms of \(\op B\),
+$$
+\delta v
+=
+-\,\op B\,(v v^* \otimes I_\N)\bigl(I_{\I\otimes\N}-\op B^*\T_W^*\bigr)\err(q).
+$$</p>
+
+<h2>MLP Example</h2>
+<p>
+A standard feedforward MLP fits this implicit framework almost embarrassingly well. Suppose the network has layers
+$$
+W_\ell \in \mathbb{R}^{n_\ell \times m_\ell}, \qquad \ell=1,\dots,L,
+$$
+and define the global state spaces
+$$
+\mathcal{M} := \bigoplus_{\ell=1}^L \mathbb{R}^{m_\ell},
+\qquad
+\mathcal{N} := \bigoplus_{\ell=1}^L \mathbb{R}^{n_\ell}.
+$$
+For a batch of size \(b\), use index space \(\mathcal{I}=\mathbb{R}^b\), so
+$$
+v \in \mathcal{I}\otimes\mathcal{M}, \qquad q \in \mathcal{I}\otimes\mathcal{N}.
+$$
+Here \(v\) stores all layer inputs at once, while \(q\) stores all corresponding post-weight states.
+</p>
+
+<p>
+Let
+$$
+W := \mathrm{blockdiag}(W_1,\dots,W_L),
+$$
+and let \(T_W\) stream this global weight operator across the batch. Then each block satisfies
+$$
+q_\ell = v_\ell W_\ell^T.
+$$
+The nonlinear part of the network is just
+$$
+v_1 = x, \qquad v_{\ell+1} = \sigma(q_\ell), \quad \ell=1,\dots,L-1,
+$$
+so the whole MLP can be written as the joint implicit system
+$$
+F_{\mathrm{joint}}((v,q),x,W)
+:=
+\begin{pmatrix}
+F(v,q,x) \\
+q - T_W(v)
+\end{pmatrix}
+=0,
+$$
+where
+$$
+F(v,q,x)
+=
+\begin{pmatrix}
+v_1 - x \\
+v_2 - \sigma(q_1) \\
+\vdots \\
+v_L - \sigma(q_{L-1})
+\end{pmatrix}.
+$$
+So this is not a new model at all: it is just the usual feedforward equations written globally.
+</p>
+
+<p>
+What makes this useful is that the general operator formulas now specialize automatically. For an MLP,
+$$
+D_vF = I,
+$$
+while \(D_qF\) is the one-step lower shift of activation derivatives,
+$$
+D_qF = -L_\sigma,
+$$
+where \(L_\sigma\) places \(D\sigma(q_\ell)\) on the block directly below the diagonal. Hence
+$$
+S = D_vF + D_qF\,T_W = I - L_\sigma T_W,
+$$
+and so
+$$
+B := S^{-1}D_qF = -(I - L_\sigma T_W)^{-1}L_\sigma.
+$$
+This is exactly where the classical feedforward chains appear: \(L_\sigma T_W\) is strictly lower triangular, so its powers generate the usual products of weights and activation derivatives across layers.
+</p>
+
+<p>
+More concretely, the block \((j,\ell)\) entry of \(B\) is zero for \(j\le \ell\), while for \(j>\ell\),
+$$
+B_{j\ell}
+=
+-\,D\sigma(q_{j-1})\,T_{W_{j-1}}\,D\sigma(q_{j-2})\,T_{W_{j-2}}
+\cdots
+D\sigma(q_{\ell+1})\,T_{W_{\ell+1}}\,D\sigma(q_\ell).
+$$
+So the usual \(W\)-and-\(\sigma'\) algebra of backprop is sitting directly inside the single global resolvent \(S^{-1}\).
+</p>
+
+<p>
+If the loss is placed on \(q\), which is usually the natural choice, then the error has the form \([0,\mathrm{err}(q)]^T\). The induced correction to \(v\) is
+$$
+\delta v
+=
+-\,B\,(v v^* \otimes I_{\mathcal N})\,(I - B^*T_W^*)(\mathrm{err}(q)).
+$$
+Plugging in the MLP value of \(B\) gives
+$$
+\delta v
+=
+(I - L_\sigma T_W)^{-1}L_\sigma\,(v v^* \otimes I_{\mathcal N})
+\Bigl(I + L_\sigma^*(I - L_\sigma T_W)^{-*}T_W^*\Bigr)(\mathrm{err}(q)).
+$$
+So even in an ordinary MLP, the hidden-state update can be read as a low-rank parameter write \(v v^* \otimes I_{\mathcal N}\), dressed by all downstream dependency chains.
+</p>
+
+
+<p>
+In short: for an MLP, the abstract operator \(S^{-1}\) is nothing more than the finite sum of all layer-to-layer chains of weights and activation derivatives. The general framework does not replace the usual \(W\sigma'\) intuition — it recovers it exactly, while also extending to models where no simple layerwise formula exists.
+</p>
+
+<h2>Self-Attention Block</h2>
+<p>
+A simple self-attention block also fits the same framework. Let
+$$
+x \in \mathbb{R}^{b \times d}
+$$
+be a batch of token embeddings. We treat both the input \(x\) and the attention output \(y\) as weight-site states, since both are multiplied by learned matrices. So define
+$$
+v := (x,x,x,y),
+\qquad
+q := (q_Q,q_K,q_V,q_O).
+$$
+The post-weight states are produced by one block-diagonal global weight operator
+$$
+q = T_W(v),
+\qquad
+W = \mathrm{blockdiag}(W_Q,W_K,W_V,W_O).
+$$
+Thus \(q_Q,q_K,q_V\) are the query, key, and value projections of \(x\), while \(q_O\) is the output projection of \(y\).
+</p>
+
+<p>
+The nonlinear part of the block is just the constraint that \(v\) must equal the input \(x\) in its first three slots, and the attention output in its last slot. So we write
+$$
+F(v,q,x)
+=
+v -
+\Bigl(x,\;x,\;x,\;\mathrm{softmax}\!\bigl(q_Q q_K^T/\sqrt d\bigr)\,q_V\Bigr).
+$$
+Then the full block is the joint implicit system
+$$
+F_{\mathrm{joint}}((v,q),x,W)
+=
+\begin{pmatrix}
+F(v,q,x) \\
+q - T_W(v)
+\end{pmatrix}
+=0.
+$$
+</p>
+
+<p>
+This is the same pattern as before. The parameter-write term still comes from the weight-site state \(v\), while the dependency operator \(D_qF\) now captures how perturbations to queries, keys, and values propagate through the attention map. So the same global formulas still apply:
+$$
+S = D_vF + D_qF\,T_W,
+\qquad
+B = S^{-1}D_qF.
+$$
+For an MLP, this reproduces the usual finite chains of weights and activation derivatives. For self-attention, it instead packages the geometry of attention into the same operator language.
+</p>
+
+<p>
+For this self-attention block, the nonlinear constraint is
+$$
+F(v,q,x)=v-\Bigl(x,\;x,\;x,\;\mathrm{softmax}(q_Qq_K^T/\sqrt d)\,q_V\Bigr).
+$$
+Hence
+$$
+D_vF=I,
+\qquad
+D_qF
+=
+-\begin{pmatrix}
+0&0&0&0\\
+0&0&0&0\\
+0&0&0&0\\
+J_Q&J_K&J_V&0
+\end{pmatrix},
+$$
+where \(J_Q,J_K,J_V\) are the partial derivatives of the attention output with respect to \(q_Q,q_K,q_V\). Therefore
+$$
+S=D_vF+D_qF\,T_W
+=
+\begin{pmatrix}
+I&0&0&0\\
+0&I&0&0\\
+0&0&I&0\\
+-\,J_QT_{W_Q}&-\,J_KT_{W_K}&-\,J_VT_{W_V}&I
+\end{pmatrix},
+$$
+so
+$$
+S^{-1}
+=
+\begin{pmatrix}
+I&0&0&0\\
+0&I&0&0\\
+0&0&I&0\\
+J_QT_{W_Q}&J_KT_{W_K}&J_VT_{W_V}&I
+\end{pmatrix},
+\qquad
+B=S^{-1}D_qF=D_qF.
+$$
+Thus the same block-resolvent framework applies exactly as in the MLP case, but the simple layerwise \(W\sigma'\) chains are replaced by the Jacobian of the attention map.
+</p>
+
+
+<h1>Practical Implementation Consequences</h1>
+
+<a href="index.html" style="text-decoration: none;">
+<div class="top_bar" style="left: 30px;">
+goto: main
+</div>
+</a>
+
+<a href="" style="text-decoration: none;">
+<div class="top_bar" style="right: 30px;">
+goto: top
+</div>
+</a>
+
+<div class="top_bar" style="top: 4vw; left: 4vw; bottom: auto; width: 6.5vw; height: 6.5vw; 
+    border-radius: 0px; border: 0;  image-rendering: pixelated; border: 1px solid grey;">
+	
+<label for="toggle" id="toggle-btn"  class="toc-clicker">
+<img style="width: 100%; height: 100%;" src="toc.png">
+</label>
+
+<input type="checkbox" id="toggle" hidden>
+
+<div id="toc" class="top_bar" style="top: 10.5vw; left: 4vw; bottom: auto; 
+border-radius: 0; border: 0;  image-rendering: pixelated; border: 0; background: none;">
+
+
+<ol class = "toctable">
+    <li style = "text-align: center; list-style-type:none;"> <a href="#top" style = "color: black;">Unpacking K-P Flow </a>
+    <li  value="1"> <a href="#motiv">Broader Motivation and Prior Work </a>
+	<li> <a href="#intro">Introduction</a> 
+	<ol>
+		<li> <a href="#gdflow">The Hidden State GD Flow </a>
+		<li> <a href="#ntkflow">The Neural Tangent Operator </a>
+		<li> <a href="#working">Optional: Working with Tensor Operators </a>
+		<li> <a href="#kpflow">Decomposing the NTO into \(\mathcal{P}\) and \(\mathcal{K}\)  </a>
+		<li> <a href="#formal">Formal Operator Definitions</a>
+		<li> <a href="#language">A General Language: Variants of GD in Tensor-Operator Form</a>
+	</ol>
+	<li> <a href="#exmp1">Examples</a>
+	<ol>
+		<li> <a href="#exmp1">Finally an Example: Vanilla RNN and Hodgkin Huxley</a>
+	</ol>
+	<li> <a href="#simp">Application: Simplicity Bias</a>
+	<ol>
+	</ol>
+</ol>
+
+
+<!--
+<table class = "toctable" style="width: 100%; height: 100%; padding: 0; background: white; border-radius: 0; margin-top: 10px;">
+<tr><td style = "text-align: center;">
+<a href="#top" style = "color: black;">
+Unpacking K-P Flow
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#motiv">
+Broader Motivation and Prior Work
+</a>
+</td></tr>
+
+<tr><td class="tocsub">
+<a href="#intro">
+Gradient Descent (GD) Setup
+</a>
+</td></tr>
+
+<tr><td class="tocsub">
+<a href="#gdflow">
+The Hidden State GD Flow
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#ntkflow">
+The Neural Tangent Operator
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#working">
+Working with Tensor Operators
+</a>
+</td></tr>
+
+
+<tr><td>
+<a href="#kpflow">
+Decomposing the NTO into \(\mathcal{P}\) and \(\mathcal{K}\) 
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#formal">
+Formal Operator Definitions
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#language">
+A General Language: Variants of GD in Tensor-Operator Form
+</a>
+</td></tr>
+
+<tr><td>
+<a href="#exmp1">
+Finally an Example: Vanilla RNN and Hodgkin Huxley
+</a>
+</td></tr>
+
+
+
+</table>-->
+</div>
+</div>
+
+
+
+</body>
+</html>

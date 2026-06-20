@@ -1,0 +1,185 @@
+<html style="background-color: #a5afcd;
+      background-position: center;
+background-repeat: no-repeat;
+background-size: cover;>
+	  
+	  <head>
+<meta name="description" content="James Hazelden">
+<link rel=StyleSheet href="nut_styles.css" type="text/css" media=all>
+<title>James Hazelden</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script language="JavaScript">
+<!--
+   if (self.location.href != top.location.href) {
+      top.location.href = self.location.href;
+   }
+-->
+</script>
+<link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+</head>
+<body style="">
+<div class="main_text">
+<h1 id="top">Mathematical Perspectives on Neural Implicit Representations</h1>
+<hr>
+
+<table style="margin-left: auto; margin-right: auto; width: 80%;font-size:.8cm; border-collapse:separate; border:solid black 3px; border-radius:6px;">
+
+<tr>
+<td  colspan=2 style="background-color: white; ">
+<b>Relevant Links</b>
+</td>
+</tr>
+
+<td  style="width:100%; background-color: #eeeeee;">
+<a href = "./">Accompanying Code</a>
+</td>
+</tr>
+</table>
+
+<br>
+
+<p class = "center_text">
+<u>TLDR</u><br>
+<i><b>Q: </b> What unique features distinguish so-called Neural Implicit Representations (NReps)? What sort of things are hard to learn or distinguished about such NReps?</i><br>
+<i><b>A: </b></i>
+</p>
+
+<br>
+<br>
+
+\(
+\def\tr{{\text{tr}}}
+\def\G{{\mathcal{G}}}
+\def\K{{\mathcal{K}}}
+\def\P{{\mathcal{P}}}
+\def\Q{{\mathcal{Q}}}
+\def\d{{\text{d}}}
+\def\R{{\mathbb{R}}}
+\def\E{{\mathbb{E}}}
+\def\Err{{\text{Err}}}
+\def\Res{{\text{Res}}}
+\def\diag{{\text{diag}}}
+\def\back{{\leftarrow}}
+\def\j{{\mathfrak{j}}}
+\def\V{{\mathcal{V}}}
+\def\pt{{\mathcal{D}_t}}
+\def\Cov{{\text{Cov}}}
+\def\effrank{{\text{effrank}}}
+\def\bias{{\text{bias}}}
+\def\NTK{{\text{NTK}_{\text{cs}}}}
+\)
+
+
+<br>
+<br>
+
+<hr>
+
+<h2>Introduction</h2>
+
+<p>
+A Neural Implicit Representation (NRep) is a type of model stored by using a neural network for coordinate lookup.
+Consider a shape \(S \subset \R^d\) (typically \(d = 2\) for two-dimensional shapes or \(3\) for three-dimensional geometric parts). 
+For now, we assume the shape is specified by some occupancy function \(\phi_S : \R^d \rightarrow \{0, 1\}\). 
+Specifically, we have 
+$$\phi_S(x) = \begin{cases} 1 & x \in S \\ 0 & x \not \in S \end{cases}$$
+Below, we consider more sophisticated representations (including SDF Signed Distance Fields). 
+Then, an NRep is a parameterized function on some parameter domain \(P\) such that \(\phi : \R^2 \times P \rightarrow \R\) satisfies 
+$$\phi_S(x) \approx \phi(x; \theta),$$
+up to some error tolerance (and typially on a disrete set of test points). 
+In recent years, NReps have become a very hot field, with many efficient models proposed by NVidia and others (e.g., <a href="https://github.com/nv-tlabs/nglod">NGLoD</a>, <a href="https://arxiv.org/abs/2103.10429">Neural Parts</a>). 
+In this blog, I will discuss the unique features that make learning NReps distinct as a task subset. 
+</p>
+
+<h2>Model Assumptions</h2>
+
+<p>
+Throughout this work, I will assume the model is given by an autonomous neural ODE with linear input and output embeddings. 
+This assumption just makes the math simpler, but discrete models (e.g., MLPs) are very easy to describe in similar terms.
+This assumption also matches more recent work, e.g., diffusion generative models. 
+Specifically, assume 
+$$\phi(x; \theta) = w_{out}^T h(x, T; \theta)$$
+where for \(t \in (0, T]\), 
+$$\frac{d}{d t} h(x, t; \theta) = f(h(x, t; \theta))$$ 
+with initial condition set by \(x\), 
+$$h(x, 0; \theta) = W_{in} x$$
+Here, \(w_{out}\) and \(h(x, T; \theta)\) are vectors in \(\R^n\), \(W_{in}\) is an \(n\) by \(d\) matrix. 
+</p>
+
+<h2>Motivating Example</h2>
+
+<p>
+Let's, as usual, start with a very simple motivating example.
+Let's restrict to \(d = 1\) and assume 
+$$S = (-1, 1) \subset \R$$
+is a single interval. 
+Consider the any solution \(\phi(\cdot; \theta)\) of the form above, i.e. a flow with endpoints
+$$\phi(x; \theta) = w_{out}^T h(x, T; \theta), \quad h(x, 0; \theta) = x w_{in}$$
+If it solves the task, \(\phi(x; \theta) = \mathbb{1}_{x \in (-1, 1)}\) is an indicator, so we see the flow \(h\) maps the line defined by \(w_{in}\) in \(\R^n\) to two distinct points: \(0\) for points outside and \(w_{out}\) for points inside \(S\). 
+Specifically (dropping \(\theta\) for brevity now), define the time-varying readout, 
+$$y(x, t) := w_{out}^T h(x, t)$$
+Then, \(y(x,t)\) should look something like this:
+</p>
+
+<br>
+
+<figure>
+<a href="occ.png"><img src="occ.png" width=50%/></a>
+<figcaption><p><b>Fig 1</b> Example solution output dynamics, \(y(x, t)\), with points in \(S\) colored blue. Here, the final time is \(T = 1\).</p>
+</figure>
+
+<br>
+
+<p>
+Note this output flow is not given by an autonomous ODE itself due to the crossings between red and blue. 
+Instead, we need an additional dimension in the hidden space to distinguish between the blue trajectories and the red ones, so they don't cross. 
+To do this, we can solve the task by a hidden trajectory with \(n = 2\), for example, as below. 
+In this plot, I let \(h(x,t)\) be a two-D vector where the first component steers the output as desired and the second component goes to \(1\) (vertically) if the point is inside the shape, and \(0\) otherwise. The readout weights here are just \(w_{out} = [1, 0]^T\). 
+</p>
+<br>
+
+<figure>
+<a href="occ_3d.png"><img src="occ_3d.png" width=50%/></a>
+<figcaption><p><b>Fig 2</b> Example hidden trajectories corresponding to the readouts in Fig 1.</p>
+</figure>
+<br>
+
+
+<h3>Observation 1: Outputs do NOT need to correspond to fixed points</h3>
+
+<p>
+It's tempting to think of the 
+</p>
+
+<h3>FTLE Dynamics</h3>
+
+<p>
+Define the readout FLTE mapping, 
+$$\Pi_{x, t} : \delta x \mapsto \delta y(x, t)$$
+by 
+$$\Pi_{x,t} = \frac{\d y(x,t)}{\d x} \in \mathbb{R}^{1 \times d}$$ 
+In our case, \(d\) is just \(1\), so we can write lowercase \(\pi_{x,t} \in \R\). 
+Initially, we have \(y(x, 0) = w_{out}^T w_{in} x\), so 
+$$\pi_{x,0} = w_{out}^T w_{in}$$
+At the final time \(t = T\), in order to solve the task we have \(y(x, T) = \delta_{x \in S}\), so \(\pi_{x,T}\) is almost zero everywhere, 
+$$|\pi_{x,T}| = \begin{cases} 0 & x \not\in \text{bd} (S) \\ + \infty & x \in \text{bd}(S)\end{cases}$$
+</p>
+<br>
+
+<figure>
+<a href="learned_occ.png"><img src="learned_occ.png" width=50%/></a>
+<figcaption><p><b>Fig 3</b> Output of a model trained to classify occupancy on the simple example task. </p>
+</figure>
+<br>
+
+</div>
+</div>
+
+
+
+</body>
+</html>

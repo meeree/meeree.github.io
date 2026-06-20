@@ -13,7 +13,6 @@
 -->
 </script>
 <link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script type="text/javascript" id="MathJax-script" async
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
 </script>
@@ -827,7 +826,7 @@ $$R(q) = q^T (A_0 q R) q + q^T (A_q \otimes I_n) q$$
 </p>
 
 <p>
-If we diagonalize the Grammian resolvent \(R^{-1} = ((I_n-W^T)(I_n-W))^{-1}\) into eigenvectors \(q_j\) with eigenvalues \(\lambda_j^{-2}\), and diagonalize \(d\) into temporal modes \(b_k\) with eigenvalues \(\sigma_k^{-2}\), the natural tensor-product basis for the operator is 
+If we diagonalize the Grammian \(R = (I_n-W^T)(I_n-W)\) into eigenvectors \(q_j\) with eigenvalues \(\lambda_j^{-2}\), and diagonalize \(d\) into temporal modes \(b_k\) with eigenvalues \(\sigma_k^{-2}\), the natural tensor-product basis for the operator is 
 $$\{u_{k,j} := b_k \otimes q_j\}_{k, j}$$
 If we plug this in, we have 
 $$\Phi^{-1} u_{k,j} = (A_0 b_k) \otimes (R q_j) + (A_1 b_k) \otimes q_j$$
@@ -846,6 +845,18 @@ Then, \(A_1\) looks like
 $$A_1 = -D D^T \circ D_t^2 + D (C + C^T) D^T \circ (I_{\j,t} - D_t)$$
 </p>
 
+<p>
+Decompose 
+$$\Phi \approx (B \otimes U) (\Sigma^2 \otimes \Lambda^2) (B \otimes U)^T$$
+I.e.
+$$\Phi \approx \sum_{i,j} \sigma_i^2 \lambda_j^2 (b_i u_j^T) \otimes (b_i u_j^T)$$
+
+Define 
+$$p = \sum_{j=1}^{n_x} \int_t b^i_j(t) \varepsilon_j(t) \d t$$
+Then,
+$$(b_i \otimes b_i)(\varepsilon) = b_i^T p$$
+So spatially it all exists in the \(p\) direction. 
+</p>
 
 <hr class="wave">
 

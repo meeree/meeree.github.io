@@ -17,7 +17,6 @@ background-size: cover;>
 -->
 </script>
 <link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script type="text/javascript" id="MathJax-script" async
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
 </script>
@@ -209,7 +208,11 @@ $$\pi_{j,t} : \theta \mapsto h_j(t)$$
 Define \(J_\Pi\) as the Jacobian of \(\Pi\) with respect to \(\theta\). 
 Importantly, the configuration space NTK is just 
 $$\NTK = J_\Pi J_\Pi^T$$
-Now, we'd like to define a <i>soft-bifurcation</i> as a place where a certain parameter perturbation will be associated with a very small eigenvalue. 
+Now, we'd like to define a <i>soft-bifurcation</i> as a place where a certain parameter perturbation will be associated with a very small eigenvalue.
+Specifically, fix a threshold \(\varepsilon\) and let \(J_\Pi\) have eigenvalues \(\lambda_1, \lambda_2, ...\), with parameter-space eigenvectors 
+$$J_\Pi = 
+We define a <i>soft-bifurcation</i> as  
+Specifically, for a parameter vector \(p \in \
  define a <i>soft-bifurcation</i> as a place where 
 $$
 </p>

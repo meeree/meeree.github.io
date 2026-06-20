@@ -13,7 +13,6 @@
 -->
 </script>
 <link rel="icon" href="./koch-snowflake.png" type="image/x-icon">
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script type="text/javascript" id="MathJax-script" async
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
 </script>
@@ -307,6 +306,38 @@ Here, you can play with the landscape for the \(T = 5\) case.
 <br>
 <br>
 
+<hr>
+
+<h2>Reducing the High-D Case to Normal Forms</h2>
+
+<p>
+Normal forms are cool and produce nice plots and all, but if they don't predict learning dynamics in high-D, they're not so useful for understanding GD in real models.
+Near codimension-one bifurcations, the formal procedure for projecting bifurcation-relevant dynamics to a normal form is referred to as <i>center-manifold reduction</i>.
+Here, we will look at how GD itself, i.e. the learning operators, reduce near a bifurcation, while I'll refer to as <i><b>center-manifold gradient flow reduction</b></i>. 
+</p>
+
+<br>
+<hr>
+
+<p>
+Consider a high-dimensional dynamical system, of the form 
+$$h_{t+1} = f(h_t, \theta)$$
+with \(B\) sampled ICs, simulated for \(T-1\) steps, so that \(h \in \hs H := \R^{B \times T \times N}\) can be seen as the 3-tensor, which I call the "empirical global state." 
+We assign it a loss function, which might include some metadata, e.g., targets,
+$$\op L : \hs H \rightarrow \R$$
+For example, in a student-teacher scenario, as above, 
+$$\op L_{mse}(h) := \frac{1}{2}\mathbb{E}_{b,t}[\|h_{b,t} - h^*_{b,t}\|^2]$$
+where \(h^*\) is some deterministic target trajectory dependent on the same sample ICs. 
+In general the weight update looks like,
+$$\delta \theta = -\mathbb{E}_{b, t}[ (D_\theta f_{b,t})^T \cdot a_{b,t}]$$
+where \(a = \nabla_h L\) define the <i>adjoint state</i>. Actually, if we define the linear Green's operator \(\op P : \hs H \rightarrow \hs H\), which integrates forcing perturbations,
+$$\op P : \delta f \rightarrow \delta h$$
+to first-order, i.e. it has blocks defined by state-transition matrices, 
+$$\op P[b, t; b', t'] = \delta_{b, b'} \cdot \Phi^{b}(t, t') \in \R^{N \times N}$$
+then, we have that 
+$$a = \op P^*(\err(h))$$
+where \(\err(h) := \nabla_h L\), is the error signal, e.g., \((h - h^*)/(B\cdot T)\) in the mse case above.
+</p>
 </body>
 </html>
 
