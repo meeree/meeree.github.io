@@ -102,6 +102,7 @@ The formal procedure for this, including locality and error quantification, we c
 <p>
 I'll try to keep things intuitive with examples (e.g., symmetric linear RNN) to motivate the more general results. At the end I'll present some more detailed experiments. 
 And throughout, especially in the normal form case, I'll try to make some cool plots. 
+Get ready to immerse your self in lots of local--practically observed, but a pain to actually prove--math!
 </p>
 
 <br>
@@ -329,11 +330,76 @@ Here, you can play with the landscape for the \(T = 5\) case.
     loading="lazy">
   </iframe>
   <figcaption>
-    <p><b>Fig 4</b> Amplification surface for T = 5 <a href="pitchfork_amplification_surface_T5.html">(link)</a>.</p>
+    <p><b>Fig 4</b> Amplification surface for T = 5, pitchfork bifurcation <a href="pitchfork_amplification_surface_T5.html">(link)</a>.</p>
   </figcaption>
 </figure>
 <br>
 <br>
+
+<p>
+For reference (and fun), here are the corresponding surfaces for the other bifurcations in the table above. 
+</p>
+
+<br>
+<figure style="width: 100%; margin: 0 auto;">
+  <iframe
+    src="saddle_node_amplification_surface_T5.html"
+    style="width: 100%; height: 700px; border: none;"
+    loading="lazy">
+  </iframe>
+  <figcaption>
+    <p><b>Fig 4</b> Amplification surface for T = 5, saddle-node bifurcation <a href="saddle_node_amplification_surface_T5.html">(link)</a>.</p>
+  </figcaption>
+</figure>
+<br>
+<br>
+
+
+<br>
+<figure style="width: 100%; margin: 0 auto;">
+  <iframe
+    src="transcritical_amplification_surface_T5.html"
+    style="width: 100%; height: 700px; border: none;"
+    loading="lazy">
+  </iframe>
+  <figcaption>
+    <p><b>Fig 4</b> Amplification surface for T = 5, transcritical bifurcation <a href="transcritical_amplification_surface_T5.html">(link)</a>.</p>
+  </figcaption>
+</figure>
+<br>
+<br>
+
+
+<br>
+<figure style="width: 100%; margin: 0 auto;">
+  <iframe
+    src="flip_amplification_surface_T5.html"
+    style="width: 100%; height: 700px; border: none;"
+    loading="lazy">
+  </iframe>
+  <figcaption>
+    <p><b>Fig 4</b> Amplification surface for T = 5, flip bifurcation <a href="flip_amplification_surface_T5.html">(link)</a>.</p>
+  </figcaption>
+</figure>
+<br>
+<br>
+
+
+<br>
+<figure style="width: 100%; margin: 0 auto;">
+  <iframe
+    src="neimark_sacker_amplification_surface_T5.html"
+    style="width: 100%; height: 700px; border: none;"
+    loading="lazy">
+  </iframe>
+  <figcaption>
+    <p><b>Fig 4</b> Amplification surface for T = 5, Neimark-Sacker bifurcation <a href="neimark_sacker_amplification_surface_T5.html">(link)</a>.</p>
+  </figcaption>
+</figure>
+<br>
+<br>
+
+
 
 <hr>
 
@@ -774,7 +840,7 @@ The first two plots show loss and the right shows \(W e_1, W e_2 \in \R^2\) over
 <br>
 <figure>
 <a href="2d_linear_rnn.png"><img src="2d_linear_rnn.png" width=100%/></a>
-<figcaption><p><b>Fig 5</b>Two-Dimensional linear RNN example. Left and Middle show loss associated with x-dimensional component of flow and y-dimensional component of flow. Right plots \(W e_1, W e_2 \in \R^2\) over training, showing misdirection of the latter at the bifurcation in the first eigenvalue.</p></figcaption>
+<figcaption><p><b>Fig 5</b> Two-Dimensional linear RNN example. Left and Middle show loss associated with x-dimensional component of flow and y-dimensional component of flow. Right plots \(W e_1, W e_2 \in \R^2\) over training, showing misdirection of the latter at the bifurcation in the first eigenvalue.</p></figcaption>
 </figure>
 <br>
 <br>
@@ -789,8 +855,8 @@ Not sure why the two complex modes don't do the same, and that's something I nee
 
 <br>
 <figure>
-<a href="full_many_eigenvalue_influence_UNTIL_SPIKES.gif"><img src="full_many_eigenvalue_influence_UNTIL_SPIKES.gif" width=100%/></a>
-<figcaption><p><b>Fig 6</b>Learning in a linear student-teacher setup with two-dimensional readout. Eigenvalues of the student (circles) are plotted, evolving over GD, with teacher eigenvalues shown as stars. Red lines denote "interference" of eigenvalues on one-another during learning, i.e. how much their associated eigenvector outer product \(v_i v_j^T\) dominates learning over the direct \(v_j v_j^T\) signal. Note mode one is fast to learn and shuts down others!</p></figcaption>
+<a href="full_many_eigenvalue_influence_UNTIL_SPIKES.gif"><img src="full_many_eigenvalue_influence_UNTIL_SPIKES.gif" width=80%/></a>
+<figcaption><p><b>Fig 6</b> Learning in a linear student-teacher setup with two-dimensional readout. Eigenvalues of the student (circles) are plotted, evolving over GD, with teacher eigenvalues shown as stars. Red lines denote "interference" of eigenvalues on one-another during learning, i.e. how much their associated eigenvector outer product \(v_i v_j^T\) dominates learning over the direct \(v_j v_j^T\) signal. Note mode one is fast to learn and shuts down others!</p></figcaption>
 </figure>
 <br>
 <br>
