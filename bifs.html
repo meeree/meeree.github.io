@@ -201,7 +201,8 @@ Here's a table of the normal forms, all laid out so that the bifurcation happens
 <br>
 <hr>
 
-<h3>GD Learning for Scalar-Valued Normal Forms</h3>
+<h1>GD Learning for Scalar-Valued Normal Forms</h1>
+<br>
 
 <p>
 Normal forms can be written 
@@ -308,12 +309,18 @@ Here, you can play with the landscape for the \(T = 5\) case.
 
 <hr>
 
-<h2>Reducing the High-D Case to Normal Forms</h2>
-
+<h1>Reducing the High-D Case to Normal Forms</h1>
+<br>
 <p>
 Normal forms are cool and produce nice plots and all, but if they don't predict learning dynamics in high-D, they're not so useful for understanding GD in real models.
 Near codimension-one bifurcations, the formal procedure for projecting bifurcation-relevant dynamics to a normal form is referred to as <i>center-manifold reduction</i>.
-Here, we will look at how GD itself, i.e. the learning operators, reduce near a bifurcation, while I'll refer to as <i><b>center-manifold gradient flow reduction</b></i>. 
+Here, we will look at how GD itself, i.e. the learning operators, reduce near a bifurcation, while I'll refer to as <i><b>center-manifold reduction of the state-space NTK</b></i>. 
+</p>
+
+
+<p>
+<b>TL;DR: </b> (Condition 1) If \(D_\mu \alpha\) for a normal-form \(\alpha\) depending on \(\mu\) dominates, the Jacobian \(D_\theta h\), Fisher information and NTK are rank-one.
+Furthermore, (Condition 2) if \(D_\mu h \approx D_\mu \alpha\), assuming weak cross-talk of the bifurcation on residual dynamics, the high-D Green's propagator, \(\op P\), is given by a rank-one separable tensor product that is easy to compute. 
 </p>
 
 <br>
@@ -328,7 +335,8 @@ $$\op L : \hs H \rightarrow \R$$
 For example, in a student-teacher scenario, as above, 
 $$\op L_{mse}(h) := \frac{1}{2}\mathbb{E}_{b,t}[\|h_{b,t} - h^*_{b,t}\|^2]$$
 where \(h^*\) is some deterministic target trajectory dependent on the same sample ICs. 
-In general the weight update looks like,
+
+<!--In general the weight update looks like,
 $$\delta \theta = -\mathbb{E}_{b, t}[ (D_\theta f_{b,t})^T \cdot a_{b,t}]$$
 where \(a = \nabla_h L\) define the <i>adjoint state</i>. Actually, if we define the linear Green's operator \(\op P : \hs H \rightarrow \hs H\), which integrates forcing perturbations,
 $$\op P : \delta f \rightarrow \delta h$$
@@ -336,8 +344,429 @@ to first-order, i.e. it has blocks defined by state-transition matrices,
 $$\op P[b, t; b', t'] = \delta_{b, b'} \cdot \Phi^{b}(t, t') \in \R^{N \times N}$$
 then, we have that 
 $$a = \op P^*(\err(h))$$
-where \(\err(h) := \nabla_h L\), is the error signal, e.g., \((h - h^*)/(B\cdot T)\) in the mse case above.
+where \(\err(h) := \nabla_h L\), is the error signal, e.g., \((h - h^*)/(B\cdot T)\) in the mse case above.-->
 </p>
+
+<br>
+<hr>
+<p>
+Near a bifurcation at a fixed point \(\bar h\) we break up coordinates into bifurcation relevant parameter \(\mu \in \R\) and residual parameters \(R \in \R^{m-1}\) so that we get the reduced dynamics
+$$h = \bar h + \alpha(\mu) \otimes v_{bif} + \varepsilon(\alpha, \mu, R)$$ 
+Here, \(\alpha_t\) describes the one-dimensional dynamics along the direction \(v_{bif}\) relevant to the bifurcation, which is defined by the normal form, and \(\varepsilon_t\) captures everything else, i.e. the behavior not local to the bifurcation.
+Note that we assume \(\alpha\) depends solely on the 1D bifurcation parameter \(\mu\), while \(\varepsilon\) depends on \(\mu, R\) and on \(\alpha\) itself. 
+</p>
+
+<p>
+The key quantity of learning is \(\nabla_\theta L\), i.e., how do parameters change. 
+But really we care more about how parameters change in the bifurcation-relevant and residual parameters change.
+Define the <i>error signal</i>
+$$\err := \partial_h L$$
+Where \(\partial_h L\) means "forget the fact that \(h\) depends on prior states," e.g., for the MSE loss above, \(\partial_h L_{mse} = h - h^*\). 
+Then,
+$$\nabla_\mu L = [D_\mu h]^T(\err); \quad \nabla_R L = [D_R h]^T(\err)$$
+Now, we see by the chain rule
+$$d_\mu h = d_\mu \alpha \otimes v_{bif} + (d_\mu \epsilon + D_\alpha \epsilon \cdot d_\mu \alpha)$$
+The first term is exactly predicatable by the normal form, as we'll delve into below. 
+The middle term can be bounded by assuming state and parameter locality near the bifurcation.
+The third term describes cross talk: if changes to \(\alpha\) have a very strong effect on the bifurcation-irrelevant directions, it becomes isolate everything simply to the bifurcation-relevant part. 
+Finally, 
+$$D_R h = D_R \varepsilon$$
+We see that if \(d_\mu \alpha\) is much larger than \(D_R h\), then this term dominates learning, i.e. \(D_\theta h\) is dominated by the rank-one term \(d_\mu h\). 
+Furthermore, if \( d_\mu \alpha\) does not cause much cross-talk with the residual dynamics, i.e. if \(D_\alpha \epsilon \cdot d_\mu \alpha\) is small relative to it, then, 
+$$D_\mu h \approx d_\mu \alpha \otimes v_{bif}$$
+In other words, learning is concentrated to the simple learning described by this separable, rank-one field, with \(d_\mu \alpha\) predicatable exactly by the normal form and \(v_{bif} \in \R^N\) describing the bifurcation direction, local to the fixed point. 
+
+</p>
+<hr>
+
+<h4>detailed discussion (skip!)</h4>
+<p>
+Below is a more detailed discussion, which I need to merge in.
+<!--
+
+
+I'd like to examine when the Jacobians \(D_\mu h, D_R h\) are well predicted by a rank-one Jacobian arising from the scalar-valued normal form dynamics of \(\alpha\). 
+If the former is, it means  
+
+
+Now, the key quantity for learning is 
+$$\nabla_\theta L = [D_\theta h]^T \cdot (\partial_h L)$$
+ 
+Expanding using the bifurcation form of \(h\) above, we get 
+$$\nabla_\theta L = -\left[ D_\mu h \cdot D_\theta \mu + D_R h \cdot D_\theta R \right]^T \cdot \err$$
+The terms \(D_\theta \mu\) and \(D_\theta R\) simply come from the coordinate change and are not a big deal. 
+Indeed, it's useful to look directly at 
+$$\nabla_\mu L 
+By the chain rule, 
+$$D_\mu h = D_\mu \alpha \otimes v_{bif} + (D_\mu \epsilon + D_\alpha \epsilon \cdot D_\mu \alpha)$$
+The first term is exactly predicatable by the normal form, as we'll delve into below. 
+The middle term can be bounded by assuming state and parameter locality near the bifurcation.
+The third term describes cross talk: if changes to \(\alpha\) have a very strong effect on the bifurcation-irrelevant directions, it becomes isolate everything simply to the bifurcation-relevant part. 
+Finally, 
+$$D_R h = D_R \epsilon$$
+</p>
+
+<p>
+The key quantity for learning is the parameter Jacobian of the state, \(D_\theta h\), which is 
+$$D_\theta h = D_\mu h \cdot D_\theta \mu + D_R h \cdot D_\theta R$$
+The quantities \(D_\theta \mu, D_\theta R\) depend how the coordinate transformation into bifurcation-relevant and residual parameters is setup and are relatively irrelevant. 
+The key thing we can go deeper on is \(D_\mu h\), which is 
+$$D_\mu h = D_\mu \alpha \otimes v_{bif} + D_\mu \varepsilon$$
+Now, here's where the normal form enters: we can assume \(\alpha\), the dynamics along the bifurcation-relevant state-space direction \(v_{bif}\), obey a normal form. 
+Specifically, assuming \(\varepsilon\) absorbs all higher-order terms in the normal form approximation, we can plug in 
+$$\alpha_{t+1} = f_\alpha(\alpha_t, \mu)$$
+where \(f_\alpha\) is some normal form, exactly identifying that 
+$$D_\mu \alpha = \op P_\alpha \cdot D_\mu f_\alpha$$
+where \(\op P_\alpha\) is Green's propagator for \(\alpha\).
+Now, \(D_\mu h \approx D_\mu \alpha \otimes v_{bif}\) under some locality assumptions on the parameters (near the birucation) and state samples (near the relevant fixed point).
+We can quantify these errors more carefully of course, depending on the bifurcaiton time. 
+Furthermore, when we stick an error signal in with this locality assumption, \(\err(h) = \partial_h L\), then 
+$$\nabla_\theta L \approx [((D_\mu f_\alpha)^T \otimes \op v_{bif}^T) \cdot (\op P_\alpha^T \otimes I_N) \cdot \err(h)] \nabla_\theta \mu  + (D_\theta R)^T[(D_R h)^T \cdot \err(h)]$$
+The bifurcation contribution dominates when \(P_\alpha^T (\err(h))\) is large relative to the second term, which can occur naturally when \(\op P_\alpha\) is very large in norm relative to residual propagation, and learning in that component is not expended, i.e. the signal \(\P_\alpha^T (\err(h))\) is not zero.
+Note the term \(D_\mu \alpha\) is a <b>rank-one operator</b>.
+</p>
+
+<p>
+We can consider the example of the pitchfork. There, we have 
+$$f_\alpha(\alpha, \mu) = \mu \alpha - \alpha^3$$
+yielding
+$$D_\mu \alpha = \op P_\alpha \cdot \alpha$$
+Indeed, for any normal form with this \(\mu \alpha\) parameter entry, we get the \(D_\mu f_\alpha = \alpha\) Jacobian term.
+Then, 
+$$((D_\mu f_\alpha)^T \otimes \op I_N) \cdot (\op P_\alpha^T \otimes v_{bif}^T) \cdot \err(h) = (\alpha \otimes v_{bif})^T \cdot a_{bif}$$
+where \(a_{bif} = (\op P_{\alpha}^T \otimes \op I_N) (\err(h))\) is the adjoint relevant to the bifurcation. We see \(\alpha \otimes v_{bif}\) is the term we project onto: \(\alpha \in \R^{B \times T}\) specifies the temporal basis (e.g., an exponential collapse) and \(v_{bif} \in \R^{N}\) specifies the spatial direction.
+We see that if the error in the \(v_{bif}\) direction is eventually damped out, i.e. learning has run on that simple flow for a while, this term stops dominating. 
+</p>
+-->
+<p>
+Near a bifurcation at a fixed point \(\bar h\), we split the parameters into two groups. The first is the bifurcation-relevant parameter, which we call \(\mu\). The remaining parameters are collected into \(R\). Intuitively, \(\mu\) moves us toward or away from the bifurcation, while \(R\) moves us in directions that are not primarily responsible for the bifurcation.
+</p>
+
+<p>
+We also split the trajectory itself into a bifurcation-relevant part and a residual part:
+<br>
+$$h=\bar h+\alpha(\mu)\otimes v_{\mathrm{bif}}+\varepsilon(\alpha,\mu,R).$$
+</p>
+
+<p>
+Here, \(v_{\mathrm{bif}}\) is the state-space direction involved in the bifurcation, and \(\alpha\) is the scalar trajectory along that direction. Everything else is absorbed into \(\varepsilon\). So \(\alpha\) is the simple one-dimensional object described by the normal form, while \(\varepsilon\) represents all the messy high-dimensional behavior that is not captured by the bifurcation coordinate alone.
+</p>
+
+<p>
+For the cleanest version of the argument, assume that \(\alpha\) depends only on \(\mu\). The residual term \(\varepsilon\), however, may still depend on \(\alpha\), \(\mu\), and \(R\). This assumption means that the main bifurcation coordinate is controlled by the bifurcation parameter, while the residual parameters affect only the residual part of the trajectory.
+</p>
+
+<p>
+The learning question is: when does changing the parameters mostly change the trajectory through the bifurcation coordinate? In other words, when is the trajectory Jacobian dominated by the \(\mu\)-direction?
+</p>
+
+<p>
+By the chain rule,
+<br>
+$$D_\mu h = D_\mu\alpha\otimes v_{\mathrm{bif}} + D_\mu\varepsilon.$$
+</p>
+
+<p>
+Since \(\alpha\) is assumed not to depend on \(R\), we also have
+<br>
+$$D_R h = D_R\varepsilon.$$
+</p>
+
+<p>
+This gives the first main condition. The bifurcation parameter dominates the trajectory Jacobian when the scalar bifurcation sensitivity is much larger than the residual sensitivities:
+<br>
+$$\|D_\mu\alpha\| \gg \|D_\mu\varepsilon\|, \qquad \|D_\mu\alpha\| \gg \|D_R\varepsilon\|_F.$$
+</p>
+
+<p>
+When this happens, the full trajectory Jacobian is approximately
+<br>
+$$D_{(\mu,R)}h \approx (D_\mu\alpha\otimes v_{\mathrm{bif}})\,e_\mu^T.$$
+</p>
+
+<p>
+This is the basic rank-one learning picture. The trajectory is high-dimensional, but its parameter dependence is dominated by a single direction: the bifurcation parameter \(\mu\). Importantly, this does <i>not</i> require the full high-dimensional propagator to be rank one. It only requires the bifurcation sensitivity to dominate the residual sensitivities.
+</p>
+
+<p>
+We can make the statement precise with a simple bound. Let
+<br>
+$$M_\mu=\|D_\mu\varepsilon\|, \qquad M_R=\|D_R\varepsilon\|_F.$$
+</p>
+
+<p>
+Then the bifurcation sensitivity satisfies
+<br>
+$$\|D_\mu h\|\geq \|D_\mu\alpha\|-M_\mu,$$
+<br>
+while the residual sensitivity satisfies
+<br>
+$$\|D_Rh\|_F\leq M_R.$$
+</p>
+
+<p>
+Therefore,
+<br>
+$$\frac{\|D_Rh\|_F}{\|D_\mu h\|}\leq \frac{M_R}{\|D_\mu\alpha\|-M_\mu}.$$
+</p>
+
+<p>
+This is the cleanest version of the argument. If \(\|D_\mu\alpha\|\) blows up near the bifurcation, while \(M_\mu\) and \(M_R\) stay bounded, then
+<br>
+$$\frac{\|D_Rh\|_F}{\|D_\mu h\|}\to 0.$$
+</p>
+
+<p>
+So the bifurcation direction dominates the full trajectory Jacobian. This is condition (1). It says that learning becomes effectively one-dimensional in parameter space because the scalar bifurcation sensitivity becomes enormous.
+</p>
+
+<p>
+Now we can ask a stronger question. Can we predict the actual field \(D_\mu h\) from the scalar normal form itself?
+</p>
+
+<p>
+Suppose the bifurcation coordinate obeys a scalar normal form:
+<br>
+$$\alpha_{t+1}=f_\alpha(\alpha_t,\mu).$$
+</p>
+
+<p>
+Then the sensitivity of \(\alpha\) to \(\mu\) satisfies a linearized recurrence. In operator form, we can write this as
+<br>
+$$D_\mu\alpha=P_\alpha D_\mu f_\alpha.$$
+</p>
+
+<p>
+Here, \(P_\alpha\) is the scalar Green's propagator for the one-dimensional normal form. This object tells us how a small parameter forcing accumulates over time along the bifurcation coordinate.
+</p>
+
+<p>
+For example, for a pitchfork-like normal form,
+<br>
+$$\alpha_{t+1}=(1+\mu)\alpha_t-c\alpha_t^3,$$
+<br>
+we have
+<br>
+$$D_\mu f_\alpha(\alpha_t,\mu)=\alpha_t.$$
+</p>
+
+<p>
+So in this case,
+<br>
+$$D_\mu\alpha=P_\alpha\alpha.$$
+</p>
+
+<p>
+This scalar quantity is the key object. Near the bifurcation, \(P_\alpha\) can become very large. When that happens, the scalar sensitivity \(D_\mu\alpha\) can blow up, and the first condition above can hold even if the rest of the high-dimensional system is complicated.
+</p>
+
+<p>
+If the residual term is also small, then the full sensitivity field is predicted by the scalar normal form:
+<br>
+$$D_\mu h \approx (D_\mu\alpha)\otimes v_{\mathrm{bif}}.$$
+</p>
+
+<p>
+For the pitchfork example, this becomes
+<br>
+$$D_\mu h \approx (P_\alpha\alpha)\otimes v_{\mathrm{bif}}.$$
+</p>
+
+<p>
+This is condition (2). It is stronger than condition (1). Condition (1) only says that the bifurcation sensitivity dominates the residual sensitivities. Condition (2) says that the shape of the full sensitivity field is actually predicted by the scalar normal form.
+</p>
+
+<p>
+To understand when condition (2) holds, we need to look at the full propagator. Write the implicit dynamics as
+<br>
+$$F(h,\theta)=0,$$
+<br>
+and define the full Green's propagator
+<br>
+$$P=(D_hF)^{-1}.$$
+</p>
+
+<p>
+In the coordinates \((\alpha,\varepsilon)\), the inverse propagator has the block form
+<br>
+$$P^{-1}=D_hF=
+\begin{pmatrix}
+A_{\alpha\alpha} & A_{\alpha\varepsilon}\\
+A_{\varepsilon\alpha} & A_{\varepsilon\varepsilon}
+\end{pmatrix}.$$
+</p>
+
+<p>
+The off-diagonal terms \(A_{\alpha\varepsilon}\) and \(A_{\varepsilon\alpha}\) are the crosstalk terms. They measure how much the residual directions affect the bifurcation coordinate, and how much the bifurcation coordinate leaks into the residual directions.
+</p>
+
+<p>
+If there is no crosstalk, then the off-diagonal blocks vanish:
+<br>
+$$A_{\alpha\varepsilon}=0,\qquad A_{\varepsilon\alpha}=0.$$
+</p>
+
+<p>
+In that case, the propagator separates cleanly. The bifurcation block is just the scalar propagator:
+<br>
+$$A_{\alpha\alpha}^{-1}=P_\alpha.$$
+</p>
+
+<p>
+In the original state-space coordinates, this means the relevant part of the full propagator is approximately
+<br>
+$$P \approx P_\alpha\otimes \Pi_{\mathrm{bif}}, \qquad \Pi_{\mathrm{bif}}=v_{\mathrm{bif}}v_{\mathrm{bif}}^T.$$
+</p>
+
+<p>
+With small crosstalk, we can make the same statement perturbatively. Write
+<br>
+$$A=A_0+E,$$
+<br>
+where \(A_0\) is the block-diagonal part and \(E\) contains the off-diagonal crosstalk:
+<br>
+$$A_0=
+\begin{pmatrix}
+A_{\alpha\alpha} & 0\\
+0 & A_{\varepsilon\varepsilon}
+\end{pmatrix},
+\qquad
+E=
+\begin{pmatrix}
+0 & A_{\alpha\varepsilon}\\
+A_{\varepsilon\alpha} & 0
+\end{pmatrix}.$$
+</p>
+
+<p>
+If the crosstalk is small enough that
+<br>
+$$\|A_0^{-1}E\|<1,$$
+<br>
+then the full propagator \(A^{-1}\) is close to the block-diagonal propagator \(A_0^{-1}\). A standard perturbation bound gives
+<br>
+$$\|A^{-1}-A_0^{-1}\|\leq \frac{\|A_0^{-1}\|^2\|E\|}{1-\|A_0^{-1}E\|}.$$
+</p>
+
+<p>
+This is the clean condition for the separable-propagator approximation. It says that condition (2) holds when crosstalk is small relative to the inverse critical gap. Near a bifurcation, \(P_\alpha\) can become very large, so this is a stronger and more fragile condition than condition (1).
+</p>
+
+<p>
+In short, there are two levels of approximation.
+</p>
+
+<p>
+<b>Condition (1): bifurcation dominance.</b> The bifurcation sensitivity dominates the residual sensitivity:
+<br>
+$$\|D_\mu h\|\gg \|D_Rh\|_F.$$
+<br>
+This follows if \(\|D_\mu\alpha\|\) blows up while the residual sensitivities stay bounded.
+</p>
+
+<p>
+<b>Condition (2): separable propagator.</b> The full propagator is well predicted by the scalar normal-form propagator:
+<br>
+$$P\approx P_\alpha\otimes \Pi_{\mathrm{bif}}.$$
+<br>
+This requires weak crosstalk between the bifurcation coordinate and the residual coordinates.
+</p>
+
+<p>
+The main learning claim only needs condition (1). The stronger mechanistic picture, where the entire sensitivity field is predicted by the scalar normal form, additionally requires condition (2). This distinction is useful because the bifurcation channel can dominate learning even when the full high-dimensional propagator is not itself rank one or exactly separable.
+</p>
+
+<br>
+<hr>
+<br>
+
+<h1>Interference Between Tasks</h1>
+<br>
+
+<p>
+In summary, associated with a bifurcation, there is a local field \(d_\mu \alpha \otimes v_{bif}\) describing the space-time operator into which the error signal is plugged, yielding a change along the bifurcation-relevant parameter direction, \(\delta \mu\). 
+The exact update is in the direction 
+$$\delta \theta = - \langle d_\mu \alpha \otimes v_{bif}, \err \rangle \cdot (D_\theta \mu)$$
+The key is that \(v_{bif}\) may interere with error signals in other directions, causing updates to rely heavily on a single direction and temporal structure descibed by \(d_\mu \alpha\), which I call <b>bifurcation-induced tunnel-vision</b>, more clear in the next section. 
+In the next section I'll work through a clean example where everything, including \(D_\theta \mu\) is made explicit and intuitive.
+</p>
+
+<h3>Worked Example: Linear Symmetric RNN</h3>
+<p>
+Let's consider a nice toy example of a linear symmetric RNN, where here "bifurcation" really just means "stability flip of an eigenvalue."
+Consider dynamics 
+$$h_{t+1} = W h_t$$ 
+with symmetric \(W\) to make things even simpler.
+Assume all eigenvalues of \(W\) are within the unit circle interior up to the first bifurcation.
+Suppose an eigenvalue \(\lambda\) passes through \(1\) at a fixed point. Letting \(\mu := \lambda - 1\) and \(v_{bif}\) be the eigenvector direction at the crossing. 
+The dynamics of the normal form \(\alpha\) are linear,
+$$\alpha_{t+1} = g \alpha_t, \quad g := \mu + 1$$
+Thus, we get the time-varying signal,
+$$(d_\mu \alpha)_t = t g^{t-1} \alpha_0 = t \alpha_{t-1}$$
+We see that for \(g > 1\), this blows up in the tail, growing like \(T^{3/2}\) in the number of timesteps \(T\).
+We see that condition (1), dominance of \(d_\mu \alpha\) in the derivative \(D_\theta h\) occurs. 
+Note also that condition (2), that \(d_\mu h = d_\mu \alpha \otimes v_{bif}\) is satisfied naturally since the dynamical system is linear, hence eigenvector flows are closed with no cross talk. 
+<!--We can even look at the Green's propagator itself. 
+Specfi, if we create an orthonormal basis completing \(v_{bif}\) with \(v_1 = v_{bif}\), we can decompose the full propagator as 
+$$\op P = \sum_i \op P_i \otimes v_i v_i^T$$ 
+where \(\op P_i\) propagates flow along \(v_i\), using symmetry and the fact that eigenvector flows are closed for a linear dynamical system.
+Hence, since \(\op P_1\), the bifurcation-relevant flow, blows up by a similar argument, we have that 
+$$\op P \approx \op P_1 \otimes v_{bif} v_{bif}^T,$$
+i.e. propgation of all dependencies is captures exactly by -->
+</p>
+<p>
+Finally, let's look at task interference. 
+By symmetry, we can define 
+$$\mu(W) = v^T W v - 1$$ 
+So,
+$$D_{W} \mu = v_{bif} v_{bif}^T$$
+The rank-one weight update proposed on an error \(\err \in \R^{B \times T \times N}\) is hence
+$$\delta W = -\langle d_\mu \alpha \otimes v_{bif}, \err\rangle  \cdot v v^T$$
+In the MSE loss case with a student-teacher task, this yields a change to the loss 
+We see that this update pulls the weights into over-reliance on the rank-one outer product \(v v^T\), meaning that the diversity of dynamics is damped out and tasks tend to rely on this direction to solve the task.
+More nuanced than that, the inner temporal filter \((d_\mu \alpha)_t = t \alpha_{t-1}\) biases towards corrections that have "exponential growth under with gain \(g\)" characteristics, i.e. components of the task that are orthogonal temporally are not well fit by this update.
+This precisely describes what I call <b>bifurcation-induced tunnel-vision</b> for this clean toy example. 
+We only get out of this tunnel vision when learning in the \(v_{bif}\) direction is expended, since the operator \(\op P\) is always rank-one dominated by \(\op P_1\). 
+Specifically, a sufficient condition to end this period of tunnel-vision is 
+$$\sum_{b, t} \langle \err_{b,t}, v_{bif} \rangle \approx 0,$$
+meaning that the error associated with the eigenvector \(v_{bif}\) is zero. 
+</p>
+
+<hr>
+<br>
+
+<p>
+Below is an example of this tunnel vision for this linear RNN case (non symmetric in this case). 
+I trained a 2 by 2 linear RNN with weights starting at \(W_0 = \text{diag}(0.5, 0.6)\) with the goal of mimicking dynamics of a teacher with weightrs \(W^* = \text{diag}(1.5, 1.2)\). 
+Of course, this task could be solved by simply pushing the eigenvalues up without changing eigenvectors at all. 
+But, GD relies on rotation of the eigenvectors, so that, at the bifurcation, there is a direction \(v_{bif}\), close to \(e_1\), with \(v_{bif} v_{bif}^T\) dominating weight corrections.
+The first two plots show loss and the right shows \(W e_1, W e_2 \in \R^2\) over training: note that at the bifurcation the second quantity is misdirected and starts to flow towards \(e_1\) for a time, i.e. the cross terms dominate!
+</p>
+
+<br>
+<figure>
+<a href="2d_linear_rnn.png"><img src="2d_linear_rnn.png" width=100%/></a>
+<figcaption><p><b>Fig 5</b>Two-Dimensional linear RNN example. Left and Middle show loss associated with x-dimensional component of flow and y-dimensional component of flow. Right plots \(W e_1, W e_2 \in \R^2\) over training, showing misdirection of the latter at the bifurcation in the first eigenvalue.</p></figcaption>
+</figure>
+<br>
+<br>
+
+<p>
+As a further fun plot, here's a linear RNN's eigenvalues with \(N = 50\) units. 
+The red lines correspond to "interference" during learning. 
+Note that when the first unstable mode appears, it interferes with the stable modes a lot until it is well learned!
+Not sure why the two complex modes don't do the same, and that's something I need to look at more carefully.
+</p>
+
+
+<br>
+<figure>
+<a href="full_many_eigenvalue_influence_UNTIL_SPIKES.gif"><img src="full_many_eigenvalue_influence_UNTIL_SPIKES.gif" width=100%/></a>
+<figcaption><p><b>Fig 6</b>Learning in a linear student-teacher setup with two-dimensional readout. Eigenvalues of the student (circles) are plotted, evolving over GD, with teacher eigenvalues shown as stars. Red lines denote "interference" of eigenvalues on one-another during learning, i.e. how much their associated eigenvector outer product \(v_i v_j^T\) dominates learning over the direct \(v_j v_j^T\) signal. Note mode one is fast to learn and shuts down others!</p></figcaption>
+</figure>
+<br>
+<br>
+
 </body>
 </html>
 
