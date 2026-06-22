@@ -80,6 +80,34 @@ We train a dynamical system with gradient descent (GD) and look at the loss and 
 Prior work showed that the drops can coincide with dynamical bifurcations: an event in which the dynamics change very suddenly, e.g., a fixed point splits into multiple fixed points or a limit cycle. 
 </p>
 
+<br>
+<hr>
+<br>
+
+<h3>Center Findings</h3>
+<p>
+(1) Bifurcations are associated with complicated, fractal geometry even in very simple, scalar-valued normal forms, which capture the range of classical codimension-one bifurcations.
+The also cause <b>massive amplification of sensitivies related to learning</b>. 
+</p>
+
+<p>
+(2) In high-D models, the massive amplification of bifurcations cause learning to become rank-one and predictable local to bifurcations, with an exact rank-one space-time basis defined by the normal form analysis. 
+The formal procedure for this, including locality and error quantification, we call <i>center-manifold reduction of learning</i>. 
+</p>
+
+<p>
+(3) This rank-one local learning near bifurcations causes a <b>"bifurcation-induced tunnel-vision,"</b> whereby there is an over-reliance on a single rank-one parameter mode, which causes tasks to be misdirected during the period where the bifurcation-relevant learning occurs and dominates.
+</p>
+
+<p>
+I'll try to keep things intuitive with examples (e.g., symmetric linear RNN) to motivate the more general results. At the end I'll present some more detailed experiments. 
+And throughout, especially in the normal form case, I'll try to make some cool plots. 
+</p>
+
+<br>
+<hr>
+<br>
+
 <p>
 We will discuss discrete dynamical systems of the form 
 $$h_{t+1} = f(h_t, \theta)$$
@@ -314,7 +342,7 @@ Here, you can play with the landscape for the \(T = 5\) case.
 <p>
 Normal forms are cool and produce nice plots and all, but if they don't predict learning dynamics in high-D, they're not so useful for understanding GD in real models.
 Near codimension-one bifurcations, the formal procedure for projecting bifurcation-relevant dynamics to a normal form is referred to as <i>center-manifold reduction</i>.
-Here, we will look at how GD itself, i.e. the learning operators, reduce near a bifurcation, while I'll refer to as <i><b>center-manifold reduction of the state-space NTK</b></i>. 
+Here, we will look at how GD itself, i.e. the learning operators, reduce near a bifurcation, while I'll refer to as <i><b>center-manifold reduction of learning</b></i>. 
 </p>
 
 
