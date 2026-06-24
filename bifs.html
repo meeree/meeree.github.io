@@ -84,7 +84,7 @@ Prior work showed that the drops can coincide with dynamical bifurcations: an ev
 <hr>
 <br>
 
-<h3>Center Findings</h3>
+<h3>Central Findings</h3>
 <p>
 (1) Bifurcations are associated with complicated, fractal geometry even in very simple, scalar-valued normal forms, which capture the range of classical codimension-one bifurcations.
 The also cause <b>massive amplification of sensitivies related to learning</b>. 
@@ -141,32 +141,38 @@ Practically, this implies that the <i>order</i> in which task components are lea
 <hr>
 
 <h3>Reviewing Normal Forms</h3>
-
 <p>
 To understand bifurcations, the natural tool is the <i>normal form</i>, which is a simple model capturing a bifurcation's behavior. 
-The classical bifurcations that occur most frequently (from a "this event requires few things to line up" perspective) are the codimension-one bifurcations.
-These occur when, local to a fixed point \(\bar h\), where \(f(\bar h, \bar \theta) = 0\) for some \(\bar \theta\), the Jacobian \(D_h f(\bar h, \bar \theta\)\) has an eigenvalue pass through the unit circle, \(|\lambda| = 1\) in the complex plane. 
+There are dynamical systems of the form 
+$$\alpha_{t+1} = f(\alpha_t, \mu)$$
+where \(\alpha_t, \mu \in \R\) are scalar, \(\alpha\) is the state, \(\mu\) is the bifurcation parameter. 
+At \(\mu = 0\) we assume there is a bifurcation as described below. 
+These can be used to describe codimension-one bifurcations, which are the most frequently occuring when training a model, from a "this event requires few things to line up" perspective.
+</p>
+
+<p>
+Codimension-one bifurcations occur when, local to a fixed point \(\bar \alpha\), where \(f(\bar \alpha, \bar \theta) = \bar \alpha\) for some \(\bar \theta\), the Jacobian \(D_\alpha f(\bar \alpha, \bar \theta)\) has an eigenvalue pass through the unit circle, \(|\lambda| = 1\), in the complex plane. 
 In continuous time, the condition is instead a crossing of an eigenvalue through zero. 
 Correspondingly, there are actually only at most <i>six</i> unique codimension-one bifurcations for a discrete non-linear dynamical system, and <i>four</i> for a continuous-time non-linear dynamical system.
 Here's a simple figure laying out the discrete ones.
 <br>
 <figure>
-<a href="bifs.png"><img src="bifs.png" width=90%/></a>
+<a href="bifs.png"><img src="bifs.png" width=50%/></a>
 <figcaption><p><b>Fig 1</b> Classifying discrete bifurcations.</p></figcaption>
 </figure>
 <br>
 <br>
 
 <p>
-Here's a table of the normal forms, all laid out so that the bifurcation happens at critical parameter \(\bar g = 1\):
+Here's a table of the normal forms, all laid out so that the bifurcation happens at critical parameter \(\mu = 0\):
 </p>
 
 <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 22px;">
   <thead>
     <tr>
       <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Name</th>
-      <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Normal form, bif at \(g = 1\)</th>
-      <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Behavior after \(g > 1\)</th>
+      <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Normal form, bif at \(\mu = 0\)</th>
+      <th style="border-bottom: 2px solid #333; text-align: left; padding: 8px;">Qualitative behavior near \(\mu = 0\)</th>
     </tr>
   </thead>
   <tbody>
@@ -174,40 +180,40 @@ Here's a table of the normal forms, all laid out so that the bifurcation happens
     <tr>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Saddle-node</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        \(h_{t+1} = h_t + (g - 1) - h_t^2\)
+        \(\alpha_{t+1} = \alpha_t - \mu - \alpha_t^2\)
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        Two fixed points appear: one stable, one unstable.
+        For \(\mu < 0\), two fixed points exist: one stable, one unstable. At \(\mu = 0\), they collide and disappear.
       </td>
     </tr>
 
     <tr>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Transcritical</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        \(h_{t+1} =  g h_t - h_t^2\)
+        \(\alpha_{t+1} = (1 + \mu)\alpha_t - \alpha_t^2\)
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        Same number of fixed points, but they exchange stability.
+        Same number of fixed points, but they exchange stability at \(\mu = 0\).
       </td>
     </tr>
 
     <tr>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Pitchfork</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        \(h_{t+1} =  g h_t - h_t^3\)
+        \(\alpha_{t+1} = (1 + \mu)\alpha_t - \alpha_t^3\)
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        Two new stable fixed points appear: \(h^* = \pm\sqrt{ g - 1}\). The origin becomes unstable.
+        For \(\mu > 0\), two new stable fixed points appear: \(\alpha^* = \pm\sqrt{\mu}\). The origin becomes unstable.
       </td>
     </tr>
 
     <tr>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Flip</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        \(h_{t+1} = - g h_t + h_t^3\)
+        \(\alpha_{t+1} = -(1 + \mu)\alpha_t - \alpha_t^3\)
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        Fixed point stays the same, but loses stability; a stable period-2 orbit appears.
+        Fixed point stays the same, but loses stability at \(\mu = 0\); with this sign, this is the subcritical flip case.
       </td>
     </tr>
 
@@ -215,17 +221,16 @@ Here's a table of the normal forms, all laid out so that the bifurcation happens
       <td style="border-bottom: 1px solid #ccc; padding: 8px;"><b>Neimark–Sacker</b></td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
         \[
-        z_{t+1} =  g e^{i\omega} z_t - |z_t|^2 z_t
+        z_{t+1} = (1 + \mu)e^{i\omega} z_t - |z_t|^2 z_t
         \]
       </td>
       <td style="border-bottom: 1px solid #ccc; padding: 8px;">
-        Fixed point stays the same, but loses stability; an invariant circle / quasiperiodic orbit appears.
+        Fixed point stays the same, but loses stability at \(\mu = 0\); for \(\mu > 0\), an invariant circle / quasiperiodic orbit appears.
       </td>
     </tr>
 
   </tbody>
 </table>
-</p>
 
 <br>
 <hr>
@@ -235,42 +240,43 @@ Here's a table of the normal forms, all laid out so that the bifurcation happens
 
 <p>
 Normal forms can be written 
-$$h_{t+1} = f(h_t, g)$$
-where \(h_t\) here is a scalar and so is \(g\). We assume \(\bar g = 1\) produces the bifurcation. 
-Typically, one then draws a <i>bifurcation diagram</i>, plotting, versus \(g\), the fixed points of the normal form. 
-Here is the pitchfork example (big surprise, it looks like a pitchfork!):
+$$\alpha_{t+1} = f(\alpha_t, \mu)$$
+where \(\alpha_t\) here is a scalar and so is \(\mu\). We assume \(\mu = 0\) produces the bifurcation. 
+Typically, one then draws a <i>bifurcation diagram</i>, plotting, versus \(\mu\), the fixed points of the normal form. 
+Here is the pitchfork example, big surprise, it looks like a pitchfork!
 </p>
 <br>
 <figure>
-<a href="pitchfork_bifurcation_diagram.png"><img src="pitchfork_bifurcation_diagram.png" width=90%/></a>
+<a href="pitchfork_bifurcation_diagram.png"><img src="pitchfork_bifurcation_diagram.png" width=50%/></a>
 <figcaption><p><b>Fig 2</b> Fixed points of the pitchfork.</p></figcaption>
 </figure>
 <br>
 <br>
 
+<!--
 <p>
 For this section, we'll examine this specific example in some depth. Recall it has 
-$$f(h, g) = g h - h^3$$
+$$f(\alpha, \mu) = (1 + \mu)\alpha - \alpha^3$$
 yielding a state derivative (Jacobian),
-$$D_h f = f'(h) = g - 3 h^2$$
+$$D_\alpha f = f'(\alpha) = 1 + \mu - 3\alpha^2$$
 </p>
 
 <p>
-Given a given \(h_0\) initial condition (IC), which we can visualize as the \(y\)-axis in this plot, the model will evolve so as to fall onto one of the fixed points (FPs). 
-Specifically, for \(g\) below \(1\), the dynamics converge to \(0\) irregardless of \(h_0\), and for \(g > 1\), the trajectory converges to one of the two stable branches, repulsed by the unstable FP at zero. 
-</p>
+Given an \(\alpha_0\) initial condition (IC), which we can visualize as the \(y\)-axis in this plot, the model will evolve so as to fall onto one of the fixed points (FPs). 
+Specifically, for \(\mu < 0\), the dynamics converge to \(0\) regardless of \(\alpha_0\), and for \(\mu > 0\), the trajectory converges to one of the two stable branches, repulsed by the unstable FP at zero. 
+</p>-->
 
 <p>
 <b>Training</b> But what if we trained the model?
 For example, consider a <i>student-teacher</i> setup, where we have two models with identical normal form dynamics 
-$$h_{t+1} = f(h_t, g)$$
-but with the student initialized so that \(g = g_0\) and with fixed teacher parameter \(g = g^*\). 
-We denote the student by \(h_t\) and teacher by \(h_t^*\), simulating both for \(T-1\) timesteps on the same IC (or ensemble of ICs) and define a loss based on how much they match. 
+$$\alpha_{t+1} = f(\alpha_t, \mu)$$
+but with the student initialized so that \(\mu = \mu_0\) and with fixed teacher parameter \(\mu = \mu^*\). 
+We denote the student by \(\alpha_t\) and teacher by \(\alpha_t^*\), simulating both for \(T-1\) timesteps on the same IC, or ensemble of ICs, and define a loss based on how much they match. 
 For example, assuming a single IC for simplicity, we define a <i>running MSE loss</i>
-$$L(h) := \frac{1}{2}\mathbb{E}_{t=0}^{T-1} [ \| h_t - h_t^*\|^2]$$
+$$L(\alpha) := \frac{1}{2}\mathbb{E}_{t=0}^{T-1} [ \| \alpha_t - \alpha_t^*\|^2]$$
 or a <i>terminal loss</i> just comparing the final times. I'll prefer and use the former here. 
-With this loss acquired, we can run GD on \(g\). 
-This is a nice setup because it's clear that the simplest solution is to continuously push \(g\) from \(g_0\) to \(g^*\), but, since the loss compares trajectories, not parameters, we can quantify how much GD is biased and screws up this task. 
+With this loss acquired, we can run GD on \(\mu\). 
+This is a nice setup because it's clear that the simplest solution is to continuously push \(\mu\) from \(\mu_0\) to \(\mu^*\), but, since the loss compares trajectories, not parameters, we can quantify how much GD is biased and screws up this task. 
 </p>
 
 <br>
@@ -278,35 +284,85 @@ This is a nice setup because it's clear that the simplest solution is to continu
 <br>
 
 <p>
-Let's examine the loss landscape of the task, which depends on the choice of \(g\), the timeframe \(T\) and the sample IC \(h_0\). 
-One final thing before that though. 
+Let's examine the loss landscape of the task, which depends on the choice of \(\mu\), the timeframe \(T\), and the sample IC \(\alpha_0\). 
+</p>
+
+<h3>\(d_\mu \alpha\) Amplifcation</h3>
+
+<p>
+The key object that translate error signals into updates to the parameters, \(\mu\) is the derivative \(d_\mu \alpha\). 
+Here I use \(d\) since \(\mu\) is a scalar valued quantity. 
+Note \(\alpha\) is the unrolled state for a single IC choice in this simple case, i.e., it can be seen as a vector in \(\R^T\), so \(d_\mu \alpha\) is a row-vector of length \(T\). 
+</p>
+
+<p>
+As will become aparent below in the high-D case, we'd like to understand the behavior of \(d_\mu \alpha\) around the bifurcation, specifically to understand how it gets amplified. 
+We can measure the amplification of learning as \(\|d_\mu \alpha\|\), the norm of this row vector, for a varied range of \(\mu\) and \(\alpha_0\) choices, looking at the behavior around the \(\mu = 0\).
+What I find is that this quantity grows rapidly around the bifurcation, meaning that learning with a fixed SGD learning rate would experience much larger steps around the bifurcation.
+Importantly, in the high-D case, this means that a scalar-valued bifurcation can cause the geometry of learning to become rank-one, dominated by the bifurcation, highly amplified, and misdirect learning on subtasks. 
+</p>
+
+<p>
+The figure below plots \(\|d_\mu \alpha\|\) for varied \(\alpha_0\) and \(\mu\) values, unrolling the model for \(T = 25\) steps. 
+Note, in particular, the massive amplification in <i>every</i> case at the \(\mu = 0\) boundary. 
+Note <i>dark blue points correspond to extreme amplifcation</i> above \(10^7\).
+"Training" the parameter \(\mu\) for any of these five normal forms consists of iteratively perturbing \(\mu\) along a horizontal slice given a fixed IC \(\alpha_0\).
+Thus, we see that training is perilous and likely to fail near bifurcation boundaries and beyond (e.g., the pitchfork). 
+</p>
+
+
+<br>
+<figure>
+<a href="bifurcation_dmu_alpha_summary_T25_highres.png"><img src="bifurcation_dmu_alpha_summary_T25_highres.png" width=100%/></a>
+<figcaption><p><b>Fig 3</b> For each normal form, the state is \(\alpha\) and the parameters are \(\mu\), with a bifurcation at \(\mu = 0\) (see table above). 
+For each bifurcation type, we plot the norm \(\|d_\mu \alpha\|\), where \(\alpha \in \R^T\) is the state of the model, unrolled over \(T = 25\) timesteps, with a fixed IC \(\alpha_0\) (y-axis) and fixed parameter \(\mu\) (x-axis). 
+Dark blue points in correspond to amplification above \(10^7\), i.e. regimes where learning would become basically impossible due to severe exploding gradients.
+Vertical green dashed line denotes the bifurcation boundary and white lines denote fixed points (dashed for unstable).
+Bottom right panel plots the sample slice at \(0.001\) for the five cases, showing the ampkifcation at \(\mu = 0\).
+Plots cut off when the amplification is \(> 10^7\) in this case (marked with the infinity symbol).
+</figure>
+<br>
+<br>
+
+<h3>Green's Propgator Amplification</h3>
+
+<p>
+The following section is more of an artifact from earlier analysis looking at the Green's propagator, not \(d_\mu \alpha\) itself. 
+We get nice plots but feel free to skip it!
+</p>
+
+<p>
 We define \(\op P\) as the <i>Green's operator</i> on \(R^{1 \times T \times 1}\) defined as the block matrix
 $$\op P = \begin{pmatrix} \Phi(0, 0) & 0 & \dots & 0 \\ \Phi(1, 0) & \Phi(1,1) & \dots & 0 \\ \vdots & \vdots & \ddots & \vdots \\ \Phi(T-1, 0) & \Phi(T-1, 1) & \dots & \Phi(T-1, T-1) \end{pmatrix}$$
-where \(\Phi(t, s)\) is the <i>state-transition matrix</i>, \(\Phi(t, s) = d h(t) / d h(s)\), which is scalar valued in this normal form case. 
-Here, \(\op P\) is simply a \(T\) by \(T\) matrix, and it describes the linear integration of perturbations to the forcing, i.e. \(\op P : \delta f \mapsto \delta h\). 
+where \(\Phi(t, s)\) is the <i>state-transition matrix</i>, \(\Phi(t, s) = D_{\alpha(s)} \alpha(s)\), which is scalar valued in this normal form case. 
+Here, \(\op P\) is simply a \(T\) by \(T\) matrix, and it describes the linear integration of perturbations to the forcing, i.e. \(\op P : \delta f \mapsto \delta \alpha\). 
 Crucially, we have in this case
-$$\delta g = \mathbb{E}_{t=0}^{T-1} [h_t a_t] \text{ using the adjoint signal } a := \op P^T (h^* - h)]$$
+$$\delta \mu = \mathbb{E}_{t=0}^{T-1} [\alpha_t a_t] \text{ using the adjoint signal } a := \op P^T (\alpha^* - \alpha)]$$
 In non-scalar cases, we instead have an outer product. See my <a href="kpflow.html">previous blog</a> for more details. 
 We define the <i>amplification landscape</i> by simply measuring \(\|\op P\|_F = \sqrt{\sum_{0\leq s \leq t}^{T-1} \|\Phi(t, s)\|_F^2}\), where the Frobenius norm is just absolute value in this scalar simple case. 
 The cool thing is that the operator \(\op P\) does not care about the task error, so the landscape tells us generally "how steep is learning at this point," and, in higher-D cases, how biased/stiff is it towards only a few modes.
 </p>
 
 <p>
-Below, I plotted the amplification, \(\| \op P\|_F\), as well as the loss landscape for the pitchfork, with teacher parameter \(g^* = 2\) fixed. 
+As in my prior work, we have that \(d_\mu \alpha = \op P^T(d_\mu f)\), i.e. it arises from applying \(\op P^T\) to a specific signal, so \(\op P^T\) is a more generic object telling us the amplification geometry more broadly.
+</p>
+
+<p>
+Below, I plotted the amplification, \(\| \op P\|_F\), as well as the loss landscape for the pitchfork, with teacher parameter \(\mu^* = 1\) fixed. 
 Amazingly, this very simple scalar-valued state and parameter case yields wild, fractal patterns in the amplification landscape and consequently the loss landscape.
 </p>
 
 <br>
 <figure>
 <a href="pitchfork_phi_norm_trajectory_mse_exp_scale.png"><img src="pitchfork_phi_norm_trajectory_mse_exp_scale.png" width=100%/></a>
-<figcaption><p><b>Fig 3</b> Amplification landscape (left) and loss landscape (right) for the pitchfork. Rows correspond to choices of \(T\), the timesteps of evaluation. In each plot, the vertical axis corresponds to \(h_0\) IC choice, while the horizontal corresponds to \(g\) value. Loss is evaluated with teacher \(g^* = 2\) fixed. White regions correspond to nan/inf. Lines illustrate FPs, as in the previous figure. </p></figcaption>
+<figcaption><p><b>Fig 4</b> Amplification landscape (left) and loss landscape (right) for the pitchfork. Rows correspond to choices of \(T\), the timesteps of evaluation. In each plot, the vertical axis corresponds to \(\alpha_0\) IC choice, while the horizontal corresponds to \(\mu\) value. Loss is evaluated with teacher \(\mu^* = 1\) fixed. White regions correspond to nan/inf. Lines illustrate FPs, as in the previous figure.</p></figcaption>
 </figure>
 <br>
 <br>
 
 <p>
-These plots tell us a lot. E.g, (1) there is a region (the white parts) where learning with that IC and \(g_0\) value is doomed to fail from extreme exploding gradients. (2) This same phenomenom is also an issue for large \(g\), irregardless of the teacher \(g^*\), also exhibiting chaos and exploding in that region.
-(3) Furthermore, the loss landscape approaching from the right is hard to traverse and from the left there is a sudden jump around the upper and lower fixed point boundary. 
+These plots tell us a lot. E.g., (1) there is a region, the white parts, where learning with that IC and \(\mu_0\) value is doomed to fail from extreme exploding gradients. (2) This same phenomenon is also an issue for large \(\mu\), regardless of the teacher \(\mu^*\), also exhibiting chaos and exploding in that region.
+(3) Furthermore, the loss landscape approaching from the right is hard to traverse, and from the left there is a sudden jump around the upper and lower fixed point boundary. 
 </p>
 
 <br>
@@ -314,9 +370,9 @@ These plots tell us a lot. E.g, (1) there is a region (the white parts) where le
 <br>
 
 <p>
-One might think that the amplification is determined by asymptotics, but this is surprisingly untrue. Specifically, all asymptotic paths (except at \(h = 0\) with \(g > 1\)) converge to a stable FP with Jacobian smaller than 1, so that 
+One might think that the amplification is determined by asymptotics, but this is surprisingly untrue. Specifically, all asymptotic paths, except at \(\alpha = 0\) with \(\mu > 0\), converge to a stable FP with Jacobian smaller than 1, so that 
 $$\lim_{T \rightarrow \infty} \Phi(T, s) = 0$$
-so the amplification \(\op \| P\|_F\) is determine by the transient period in which the dynamics are far enough from a stable FP so that the Jacobians involved actually contribute something that makes it not collapse. 
+so the amplification \(\| \op P\|_F\) is determined by the transient period in which the dynamics are far enough from a stable FP so that the Jacobians involved actually contribute something that makes it not collapse. 
 </p>
 
 <p>
@@ -330,75 +386,11 @@ Here, you can play with the landscape for the \(T = 5\) case.
     loading="lazy">
   </iframe>
   <figcaption>
-    <p><b>Fig 4</b> Amplification surface for T = 5, pitchfork bifurcation <a href="pitchfork_amplification_surface_T5.html">(link)</a>.</p>
+    <p><b>Fig 5</b> Amplification surface for T = 5, pitchfork bifurcation <a href="pitchfork_amplification_surface_T5.html">(link)</a>.</p>
   </figcaption>
 </figure>
 <br>
 <br>
-
-<p>
-For reference (and fun), here are the corresponding surfaces for the other bifurcations in the table above. 
-</p>
-
-<br>
-<figure style="width: 100%; margin: 0 auto;">
-  <iframe
-    src="saddle_node_amplification_surface_T5.html"
-    style="width: 100%; height: 700px; border: none;"
-    loading="lazy">
-  </iframe>
-  <figcaption>
-    <p><b>Fig 4</b> Amplification surface for T = 5, saddle-node bifurcation <a href="saddle_node_amplification_surface_T5.html">(link)</a>.</p>
-  </figcaption>
-</figure>
-<br>
-<br>
-
-
-<br>
-<figure style="width: 100%; margin: 0 auto;">
-  <iframe
-    src="transcritical_amplification_surface_T5.html"
-    style="width: 100%; height: 700px; border: none;"
-    loading="lazy">
-  </iframe>
-  <figcaption>
-    <p><b>Fig 4</b> Amplification surface for T = 5, transcritical bifurcation <a href="transcritical_amplification_surface_T5.html">(link)</a>.</p>
-  </figcaption>
-</figure>
-<br>
-<br>
-
-
-<br>
-<figure style="width: 100%; margin: 0 auto;">
-  <iframe
-    src="flip_amplification_surface_T5.html"
-    style="width: 100%; height: 700px; border: none;"
-    loading="lazy">
-  </iframe>
-  <figcaption>
-    <p><b>Fig 4</b> Amplification surface for T = 5, flip bifurcation <a href="flip_amplification_surface_T5.html">(link)</a>.</p>
-  </figcaption>
-</figure>
-<br>
-<br>
-
-
-<br>
-<figure style="width: 100%; margin: 0 auto;">
-  <iframe
-    src="neimark_sacker_amplification_surface_T5.html"
-    style="width: 100%; height: 700px; border: none;"
-    loading="lazy">
-  </iframe>
-  <figcaption>
-    <p><b>Fig 4</b> Amplification surface for T = 5, Neimark-Sacker bifurcation <a href="neimark_sacker_amplification_surface_T5.html">(link)</a>.</p>
-  </figcaption>
-</figure>
-<br>
-<br>
-
 
 
 <hr>
@@ -429,16 +421,6 @@ $$\op L : \hs H \rightarrow \R$$
 For example, in a student-teacher scenario, as above, 
 $$\op L_{mse}(h) := \frac{1}{2}\mathbb{E}_{b,t}[\|h_{b,t} - h^*_{b,t}\|^2]$$
 where \(h^*\) is some deterministic target trajectory dependent on the same sample ICs. 
-
-<!--In general the weight update looks like,
-$$\delta \theta = -\mathbb{E}_{b, t}[ (D_\theta f_{b,t})^T \cdot a_{b,t}]$$
-where \(a = \nabla_h L\) define the <i>adjoint state</i>. Actually, if we define the linear Green's operator \(\op P : \hs H \rightarrow \hs H\), which integrates forcing perturbations,
-$$\op P : \delta f \rightarrow \delta h$$
-to first-order, i.e. it has blocks defined by state-transition matrices, 
-$$\op P[b, t; b', t'] = \delta_{b, b'} \cdot \Phi^{b}(t, t') \in \R^{N \times N}$$
-then, we have that 
-$$a = \op P^*(\err(h))$$
-where \(\err(h) := \nabla_h L\), is the error signal, e.g., \((h - h^*)/(B\cdot T)\) in the mse case above.-->
 </p>
 
 <br>
@@ -475,7 +457,7 @@ In other words, learning is concentrated to the simple learning described by thi
 
 <h4>detailed discussion (skip!)</h4>
 <p>
-Below is a more detailed discussion, which I need to merge in.
+Below is a more detailed discussion.
 <!--
 
 
@@ -821,9 +803,9 @@ We see that this update pulls the weights into over-reliance on the rank-one out
 More nuanced than that, the inner temporal filter \((d_\mu \alpha)_t = t \alpha_{t-1}\) biases towards corrections that have "exponential growth under with gain \(g\)" characteristics, i.e. components of the task that are orthogonal temporally are not well fit by this update.
 This precisely describes what I call <b>bifurcation-induced tunnel-vision</b> for this clean toy example. 
 We only get out of this tunnel vision when learning in the \(v_{bif}\) direction is expended, since the operator \(\op P\) is always rank-one dominated by \(\op P_1\). 
-Specifically, a sufficient condition to end this period of tunnel-vision is 
+<!--Specifically, a sufficient condition to end this period of tunnel-vision is 
 $$\sum_{b, t} \langle \err_{b,t}, v_{bif} \rangle \approx 0,$$
-meaning that the error associated with the eigenvector \(v_{bif}\) is zero. 
+meaning that the error associated with the eigenvector \(v_{bif}\) is zero. -->
 </p>
 
 <hr>
@@ -840,7 +822,7 @@ The first two plots show loss and the right shows \(W e_1, W e_2 \in \R^2\) over
 <br>
 <figure>
 <a href="2d_linear_rnn.png"><img src="2d_linear_rnn.png" width=100%/></a>
-<figcaption><p><b>Fig 5</b> Two-Dimensional linear RNN example. Left and Middle show loss associated with x-dimensional component of flow and y-dimensional component of flow. Right plots \(W e_1, W e_2 \in \R^2\) over training, showing misdirection of the latter at the bifurcation in the first eigenvalue.</p></figcaption>
+<figcaption><p><b>Fig 6</b> Two-Dimensional linear RNN example. Left and Middle show loss associated with x-dimensional component of flow and y-dimensional component of flow. Right plots \(W e_1, W e_2 \in \R^2\) over training, showing misdirection of the latter at the bifurcation in the first eigenvalue.</p></figcaption>
 </figure>
 <br>
 <br>
@@ -856,7 +838,7 @@ Not sure why the two complex modes don't do the same, and that's something I nee
 <br>
 <figure>
 <a href="full_many_eigenvalue_influence_UNTIL_SPIKES.gif"><img src="full_many_eigenvalue_influence_UNTIL_SPIKES.gif" width=80%/></a>
-<figcaption><p><b>Fig 6</b> Learning in a linear student-teacher setup with two-dimensional readout. Eigenvalues of the student (circles) are plotted, evolving over GD, with teacher eigenvalues shown as stars. Red lines denote "interference" of eigenvalues on one-another during learning, i.e. how much their associated eigenvector outer product \(v_i v_j^T\) dominates learning over the direct \(v_j v_j^T\) signal. Note mode one is fast to learn and shuts down others!</p></figcaption>
+<figcaption><p><b>Fig 7</b> Learning in a linear student-teacher setup with two-dimensional readout. Eigenvalues of the student (circles) are plotted, evolving over GD, with teacher eigenvalues shown as stars. Red lines denote "interference" of eigenvalues on one-another during learning, i.e. how much their associated eigenvector outer product \(v_i v_j^T\) dominates learning over the direct \(v_j v_j^T\) signal. Note mode one is fast to learn and shuts down others!</p></figcaption>
 </figure>
 <br>
 <br>
