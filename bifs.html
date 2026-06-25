@@ -69,6 +69,7 @@
 \def\hs#1{{\mathcal{#1}}}
 \def\err{{\mathrm{err}}}
 \def\T{{\mathrm{T}}}
+\def\Z{{\mathbb{Z}}}
 \)
 
 
@@ -130,12 +131,14 @@ This is a little bit less simple from the gradient flow perspective since \(x\) 
 
 <h3>Summary/Structure of this Blog</h3>
 <p>
-How should we understand bifurcations? 
-<br><br><b>(1)</b> I'll turn to normal forms, examining learning under GD in these very simple, scalar-valued, cases. 
-<br><br><b>(2)</b> After that, I'll discuss high-dimensional models, showing that the normal form analysis is not meaningless: just as they often match the projected behavior of a high-D model at a bifurcation, I'll argue that bifurcations funnel GD in such a way that they describe the local learning dynamics pretty well in a dramatically reduced, low-rank way.
-Crucial to this will be three notions: <i>parameter locality</i>, describing how close the parameters are to a bifurcation, <i>state-space sample locality</i>, quantifying how far a bifurcation is from the relevant sample GD trajectories and finally <i>residual dynamics</i>, accounting for the non-bifurcation relevant dynamics of the model near a bifurcation during GD. 
-<br><br><b>(3)</b> Finally, I'll examine in detail the consequences of bifurcations, arguing that they collapse learning geometry locally, causing a slowdown of learning in all non-bifurcation relevant parts of a task, misdirecting error signals. 
-Practically, this implies that the <i>order</i> in which task components are learned matters.
+How should we understand bifurcations?
+
+<br><br><b>(1)</b> We'll first study normal forms: simple scalar systems where we can see exactly how GD behaves near a bifurcation.
+
+<br><br><b>(2)</b> We'll then turn to high-dimensional models, arguing that these scalar analyses still matter because bifurcations locally reduce learning to a low-rank, normal-form-like geometry.
+
+<br><br><b>(3)</b> Finally, we will discuss the consequences: bifurcations funnel learning into a narrow direction, slowing progress on other task components and making the order of learning matter.
+
 </p>
 <br>
 <hr>
@@ -842,6 +845,83 @@ Not sure why the two complex modes don't do the same, and that's something I nee
 </figure>
 <br>
 <br>
+
+<h1>Formation of Dynamics Under GD: Bifurcation Graph Topology and Complexity</h1>
+
+<p>
+This blog has focused mostly on how bifurcations impact geometry/dynamics.
+But, zooming out, we can think high-level about bifurcations as phase-transitions of the model dynamics which it is required to pass through to form a certain task solution.
+Specifically, for example, we can define integer coordinates:
+$$S := \text{# of Stable FPs}$$
+$$U := \text{# of Unstable Directions}$$
+$$O := \text{# of Orbits}$$
+Consider a teacher-student setup where one matches \(h\) to \(h^*\). 
+One can think about matching trajectories or weights. 
+But, to truly <i>globally</i> solve the problem in a way that actually learns the fixed-point geometry, one would like \(S, U, O\) for the student and teacher to match up.
+So, learning can be seen as a series of discrete moves in \(\Z^3\) from \(S_0, U_0, O_0\) for the student to \(S^*, U^*, O^*\) for the teacher. 
+Of course, this is just a necessary condition: we also need geometry to match. 
+I'll call the space of all possible, reachable points \(S, U, O\) from a starting point \((S_0, U_0, O_0)\), in \(\Z^3\) the <i><b>bifurcation graph</b></i>, \(G\).
+For simplicity, I'll assume here \((S_0, U_0, O_0) = (1, 0, 0)\)), i.e. we start with stable collapse to an FP, which is consistent with a vanilla RNN with Xavier initialization.
+</p>
+<p>
+We'll see that \(G\) is <i>not</i> all of \(\Z^3\), and there is a clear invariant that is preserved if we only consider codimension-one bifurcations. 
+For learning, one often cares only about matching in a local region, not global, so I'll also define a related, <i>effective bifurcation graph</i> within a domain, which we can actually make to encompass <i>all</i> of \(\Z^3\) by using the "move fixed point outside of domain" strategy, not just codim-1 bifurcations.
+</p>
+
+<p>
+Below, I plotted this bifurcation graph. 
+It is defined by observing:
+<ul>
+<li> <p>Pitchfork and Saddle-Node: \((S, U, O) \mapsto (S+1, U+1, O)\).</p> </li>
+<li> <p>Neimark–Sacker: \((S, U, O) \mapsto (S-1, U, O+1)\).</p> </li>
+<li> <p>Flip: \((S, U, O) \mapsto (S-1, U+1, O+1)\).</p> </li>
+<li> <p>Transcritical: \((S, U, O)\) stays the same.</p> </li>
+</ul>
+</p>
+
+<p>
+Also, all bifurcations are reversible, flipping the sign of \(+\) and \(-\). 
+</p>
+
+<br>
+<figure>
+<a href="reachable_boundary_rotating.gif"><img src="reachable_boundary_rotating.gif" width=80%/></a>
+<figcaption><p><b>Fig 8</b> Bifurcation graph, \(G \subset \Z^3\), of reachable attractor configurations \((S, U, O)\) starting at \((1, 0, 0)\), the orange star, using only codimension-one bifurcation "moves." A quick calculation gives the regions as \(O - 1 \leq U- S \leq 2 O - 1\).   
+</p></figcaption>
+</figure>
+<br>
+<br>
+
+<p>
+What have we shown in this work related to the bifurcation graph? 
+Well: traversing through \(G\) during GD is hard: each bifurcaiton coincides with massive amplification, one-dimensional learning, misdirecting of other bifurcation-relevant learning, etc. 
+<!--<b>TODO: show effective trajectory in \(G\), showing it is weird/biased, more than just invariant bias</b>
+--></p>
+
+<h3>Notions of Complexity</h3>
+
+<p>
+This graph condenses a model into three integers on the lattice \(\Z^3\), but what if we want a scalar?
+One simple choice is \(c(S, U, O) := S + U + O\) the "complexity" of the dynamics. 
+One can naturally then categorize tasks by \(c\), with tasks with higher \(c\) requiring a longer traversal of \(G\) from the initial configuration \((1, 0, 0)\) with complexity \(1\). 
+Note that \(c\) is simply the \(\ell_1\) norm on \(\Z^3\), and the absolute value difference in complexity between configurations is the "Manhattan" distance, or \(\ell_1\) norm, so \(c\) has nice properties.
+</p>
+
+<p>
+If we assume a fixed RHS (e.g., for teacher-student or fixed RNN parameterization) of a model, so we have dynamis \(h_{t+1} = f(h_t, \theta)\), we can naturally define some abuses of notation, 
+$$c_f(\theta) = c(\theta) := c(S(\theta), U(\theta), O(\theta))$$
+where, formally, 
+$$S(\theta) := |\{\bar h | f(\bar h) = 0 \, \text{ and all } \, \max(\lambda(D_h f(\bar h))) \lt 1\}|$$
+where \(\lambda(A)\) is the eigenvalue set. Likewise, we define
+$$U(\theta) := |\{(\lambda_i, \bar h) | f(\bar h) = 0 \, \text{ and } \, \lambda_i \in \text{real}(\lambda(D_h f(\bar h))) \, \text{ and } \, \lambda_i \gt 1\}|$$
+Finally,
+$$O(\theta) := \frac{1}{2} |\{(\lambda_i, \bar h) | f(\bar h) = 0 \, \text{ and } \, \lambda_i \in \text{complex}(\lambda(D_h f(\bar h))) \, \text{ and } \, |\lambda_i| \gt 1\}|$$
+We divide by \(2\) here since complex eigenvalues always come in conjugate pairs. 
+</p>
+
+<p>
+This naturally defines a nice space:
+</p>
 
 </body>
 </html>
