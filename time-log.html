@@ -173,7 +173,7 @@
             const value=row.values[i];
             if(!value)return;
             const top=y(stacked+value),bottom=y(stacked);
-            svg+=`<rect class="bar-segment" x="${x(i)-bw/2}" y="${top}" width="${bw}" height="${Math.max(0,bottom-top)}" rx="2" fill="${row.color}"><title>${escapeHTML(days[i].toLocaleDateString()+", "+row.task+": "+formatMinutes(value))}</title></rect>`;
+            svg+=`<rect class="bar-segment" x="${x(i)-bw/2}" y="${top}" width="${bw}" height="${Math.max(0,bottom-top)}" rx="6" fill="${row.color}" fill-opacity="0.6"><title>${escapeHTML(days[i].toLocaleDateString()+", "+row.task+": "+formatMinutes(value))}</title></rect>`;
             stacked+=value;
           });
           svg+=`<text class="day" x="${x(i)}" y="${h-25}" text-anchor="middle">${days[i].toLocaleDateString(undefined,{weekday:"short"})}</text><text class="date-label" x="${x(i)}" y="${h-9}" text-anchor="middle">${shortDate(days[i])}</text>`;
