@@ -178,7 +178,7 @@
           });
           svg+=`<text class="day" x="${x(i)}" y="${h-25}" text-anchor="middle">${days[i].toLocaleDateString(undefined,{weekday:"short"})}</text><text class="date-label" x="${x(i)}" y="${h-9}" text-anchor="middle">${shortDate(days[i])}</text>`;
         });
-        series.forEach(row=>{svg+=`<polyline class="task-line" points="${row.values.map((v,i)=>`${x(i)},${y(v)}`).join(" ")}" stroke="${row.color}"/>`;row.values.forEach((v,i)=>{svg+=`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="${row.color}"><title>${escapeHTML(row.task+": "+formatMinutes(v))}</title></circle>`})});
+     //   series.forEach(row=>{svg+=`<polyline class="task-line" points="${row.values.map((v,i)=>`${x(i)},${y(v)}`).join(" ")}" stroke="${row.color}"/>`;row.values.forEach((v,i)=>{svg+=`<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="${row.color}"><title>${escapeHTML(row.task+": "+formatMinutes(v))}</title></circle>`})});
         if(!weekEntries.length) svg+=`<text class="empty-chart" x="${w/2}" y="${h/2}" text-anchor="middle">No time logged this week</text>`;
         $("chart-wrap").innerHTML=svg+"</svg>";
         $("legend").innerHTML=series.map(row=>`<span class="legend-item"><span class="legend-swatch" style="background:${row.color}"></span>${escapeHTML(row.task)}</span>`).join("");
