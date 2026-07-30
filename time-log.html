@@ -90,19 +90,19 @@
       <div class="legend" id="legend" aria-label="Chart legend"></div>
     </section>
 
-    <section class="card entries-card" aria-labelledby="entries-heading">
-      <div class="section-head entries-head">
-        <div><p class="kicker">History</p><h2 id="entries-heading">Logged entries</h2></div>
-        <button class="secondary" id="export" type="button">Export CSV</button>
-      </div>
-      <div id="entries"></div>
-    </section>
     <section class="card projects-card" aria-labelledby="projects-heading">
       <div class="section-head">
         <div><p class="kicker">Progress</p><h2 id="projects-heading">Projects</h2></div>
         <form class="new-project" id="new-project-form"><input id="new-project-name" type="text" maxlength="100" placeholder="e.g. Current BFI paper" aria-label="New project name"><input id="new-project-deadline" type="date" aria-label="Project deadline"><button class="secondary" type="submit">Add project</button></form>
       </div>
       <div id="projects"></div>
+    </section>
+    <section class="card entries-card" aria-labelledby="entries-heading">
+      <div class="section-head entries-head">
+        <div><p class="kicker">History</p><h2 id="entries-heading">Logged entries</h2></div>
+        <button class="secondary" id="export" type="button">Export CSV</button>
+      </div>
+      <div id="entries"></div>
     </section>
     <p class="note">Saved locally in this browser.</p>
   </div></main>
@@ -187,6 +187,12 @@
         const x=i=>m.left+((i+.5)*pw)/7, y=v=>m.top+ph-(v/max)*ph, bw=Math.min(58,pw/9.2);
         const ticks=Array.from({length:5},(_,i)=>max*i/4);
         let svg=`<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Daily total time as bars and time per task as lines for the selected week">`;
+        keys.forEach((date,i)=>{
+          const dueProjects=projects.filter(project=>project.deadline===date);
+          if(!dueProjects.length)return;
+          const names=dueProjects.map(project=>project.name).join(", ");
+          svg+=`<rect x="${x(i)-bw/2}" y="${m.top}" width="${bw}" height="${ph}" rx="3" fill="#d22323" fill-opacity="0.11"><title>${escapeHTML("Deadline: "+names)}</title></rect>`;
+        });
         ticks.forEach(t=>{svg+=`<line class="grid" x1="${m.left}" x2="${w-m.right}" y1="${y(t)}" y2="${y(t)}"/><text class="axis" x="${m.left-10}" y="${y(t)+4}" text-anchor="end">${t?Number((t/60).toFixed(1))+"h":"0"}</text>`});
         totals.forEach((total,i)=>{
           let stacked=0;

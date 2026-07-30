@@ -475,7 +475,7 @@ I'm not sure why the two complex modes don't do the same, and that's something I
 </figure>
 <br>
 <br>
-
+<!--
 <h1>Are These Observations About GD, or Generic?</h1>
 
 <p>
@@ -483,7 +483,17 @@ We observed that bifurcations induce massive amplification, rank-one state-space
 We claimed this happens due to the nature of learning: we only observe outputs of the model and try to match those.
 For example, in the student-teacher setup where the underlying dynamics are shared but the parameters differ, one could directly interpolate the parameters to recover a perfect solution. 
 This provides a nice synthetic baseline for testing whether this strategy leads to the same phenomena around bifurcations or not.  
+</p>-->
+
+
+<h1>Forgetting at Bifurcations</h1>
+
+<p>
+We study a student--teacher recurrent task in which the teacher implements a four-fixed-point dynamical system in the first two readout coordinates, together with a third stable readout mode.  The student is trained by SGD to match the teacher trajectories over a finite horizon from shared initial conditions.  Across training, the loss exhibits two sharp drops aligned with outward crossings of recurrent eigenvalues through the unit circle, suggesting that the four fixed points are acquired through two sequential pitchfork-like bifurcations.  We track this process using saved model snapshots, recurrent spectra, $P P^\ast$ temporal modes, and restricted readout losses.
+
+The three readout subtasks do not learn uniformly.  The first two readouts improve together after the bifurcation events, while the third stable readout remains relatively weak in normalized error despite having small absolute MSE.  Pairwise restricted-loss plots show that learning the first unstable mode reorganizes the gradient signal: progress on the other readouts slows or bends during the transition, consistent with a transient shutdown or misdirection effect.  Thus the student can solve the teacher trajectory-matching problem, but the route taken by SGD is structured by the order in which unstable dynamical modes are acquired.
 </p>
+
 
 <h1>Formation of Dynamics Under GD: Bifurcation Graph Topology and Complexity</h1>
 
