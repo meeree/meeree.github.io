@@ -3,24 +3,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="An interactive arm-wrestling win graph with global data and browser-local additions.">
-  <title>Arm Wrestling Chain</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="description" content="Bingo Arm is an interactive community graph of who beat whom in arm wrestling.">
+  <meta name="theme-color" content="#fffaf0">
+  <meta property="og:title" content="Bingo Arm">
+  <meta property="og:description" content="Follow the arrows from winner to loser and add your own arm-wrestling results.">
+  <meta property="og:image" content="assets/bingoarm-banner.png">
+  <title>Bingo Arm</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css?v=3">
   <script defer src="https://cdn.jsdelivr.net/npm/cytoscape@3.34.0/dist/cytoscape.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@4.0.0/cytoscape-dagre.js"></script>
-  <script defer src="config.js?v=2"></script>
-  <script defer src="app.js?v=2"></script>
+  <script defer src="config.js?v=3"></script>
+  <script defer src="app.js?v=3"></script>
 </head>
 <body>
   <header class="site-header">
-    <div>
-      <p class="eyebrow">COMMUNITY WIN GRAPH</p>
-      <h1>Arm Wrestling Chain</h1>
+    <img class="hero-art" src="assets/bingoarm-banner.png" alt="" aria-hidden="true">
+    <div class="hero-shade" aria-hidden="true"></div>
+    <div class="header-copy">
+      <div class="brand-lockup">
+        <img class="brand-icon" src="assets/bingoarm-icon.png" alt="Bingo Arm icon">
+        <div>
+          <p class="eyebrow">COMMUNITY WIN GRAPH</p>
+          <h1>Bingo Arm</h1>
+        </div>
+      </div>
       <p class="subtitle">Follow the arrows from winner to loser. Add your own matches locally, then export them for global review.</p>
-    </div>
-    <div class="header-actions">
-      <button id="themeButton" class="button ghost" type="button" aria-label="Toggle dark mode">Dark mode</button>
-      <button id="helpButton" class="button ghost" type="button">How it works</button>
+      <div class="header-actions">
+        <button id="themeButton" class="button ghost" type="button" aria-label="Toggle dark mode">Dark mode</button>
+        <button id="helpButton" class="button ghost" type="button">How it works</button>
+      </div>
     </div>
   </header>
 
