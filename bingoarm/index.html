@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive arm-wrestling win graph with global data and browser-local additions.">
+  <title>Arm Wrestling Chain</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/cytoscape@3.34.0/dist/cytoscape.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@4.0.0/cytoscape-dagre.js"></script>
+  <script defer src="config.js?v=2"></script>
+  <script defer src="app.js?v=2"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">COMMUNITY WIN GRAPH</p>
+      <h1>Arm Wrestling Chain</h1>
+      <p class="subtitle">Follow the arrows from winner to loser. Add your own matches locally, then export them for global review.</p>
+    </div>
+    <div class="header-actions">
+      <button id="themeButton" class="button ghost" type="button" aria-label="Toggle dark mode">Dark mode</button>
+      <button id="helpButton" class="button ghost" type="button">How it works</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="toolbar" aria-label="Graph controls">
+      <label class="search-control">
+        <span>Find a person</span>
+        <input id="searchInput" type="search" placeholder="Start typing a name…" autocomplete="off">
+      </label>
+      <div class="toolbar-buttons">
+        <button id="fitButton" class="button ghost" type="button">Fit graph</button>
+        <button id="layoutButton" class="button ghost" type="button">Reorder</button>
+        <button id="directionButton" class="button ghost" type="button" data-direction="TB">Top → bottom</button>
+      </div>
+      <div class="filter-group" role="group" aria-label="Visible records">
+        <label><input id="showGlobal" type="checkbox" checked> Global</label>
+        <label><input id="showLocal" type="checkbox" checked> My additions</label>
+      </div>
+    </section>
+
+    <section class="summary-grid" aria-label="Graph summary">
+      <article class="summary-card">
+        <span>People</span>
+        <strong id="peopleCount">0</strong>
+      </article>
+      <article class="summary-card">
+        <span>Matches</span>
+        <strong id="matchCount">0</strong>
+      </article>
+      <article class="summary-card">
+        <span>My additions</span>
+        <strong id="localCount">0</strong>
+      </article>
+      <article class="summary-card">
+        <span>Cycles</span>
+        <strong id="cycleCount">0</strong>
+      </article>
+    </section>
+
+    <section class="workspace">
+      <aside class="panel add-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">ADD A RESULT</p>
+            <h2>Who beat whom?</h2>
+          </div>
+          <span class="local-badge">Saved locally</span>
+        </div>
+
+        <form id="matchForm">
+          <label>
+            Winner
+            <input id="winnerInput" list="peopleList" placeholder="Winner's name" required maxlength="80" autocomplete="off">
+          </label>
+          <button id="swapButton" class="swap-button" type="button" title="Swap winner and loser" aria-label="Swap winner and loser">⇅</button>
+          <label>
+            Loser
+            <input id="loserInput" list="peopleList" placeholder="Loser's name" required maxlength="80" autocomplete="off">
+          </label>
+          <datalist id="peopleList"></datalist>
+
+          <div class="form-row">
+            <label>
+              Date <span class="optional">optional</span>
+              <input id="dateInput" type="date">
+            </label>
+            <label>
+              Context <span class="optional">optional</span>
+              <input id="contextInput" type="text" placeholder="Practice, tournament…" maxlength="100">
+            </label>
+          </div>
+
+          <label>
+            Note <span class="optional">optional</span>
+            <textarea id="noteInput" rows="2" maxlength="240" placeholder="Right arm, best of three, disputed, etc."></textarea>
+          </label>
+
+          <button class="button primary full" type="submit">Add match</button>
+          <p id="formStatus" class="status" aria-live="polite"></p>
+        </form>
+
+        <div class="panel-divider"></div>
+
+        <div class="export-section">
+          <h3>Share your additions</h3>
+          <p>Export only your browser-local changes. The site owner can review and merge them into the public graph.</p>
+          <button id="exportButton" class="button secondary full" type="button">Export my changes</button>
+          <button id="submitButton" class="button ghost full" type="button">Send for global review</button>
+          <button id="resetButton" class="text-button danger" type="button">Delete all my local additions</button>
+        </div>
+      </aside>
+
+      <section class="graph-panel" aria-label="Interactive arm wrestling graph">
+        <div id="graphMessage" class="graph-message" role="status">Loading graph…</div>
+        <div id="cy" aria-label="Directed graph where arrows point from winner to loser"></div>
+        <div class="graph-legend" aria-label="Graph legend">
+          <span><i class="legend-node global"></i> Global person</span>
+          <span><i class="legend-node local"></i> Locally added</span>
+          <span><i class="legend-line"></i> Beat</span>
+          <span><i class="legend-line cycle"></i> Part of a cycle</span>
+        </div>
+      </section>
+
+      <aside class="panel detail-panel">
+        <div id="emptyDetails" class="empty-details">
+          <div class="empty-icon">↗</div>
+          <h2>Select a person</h2>
+          <p>Click any node to see their direct wins, losses, reach, and editable local results.</p>
+        </div>
+
+        <div id="personDetails" hidden>
+          <div class="detail-heading">
+            <div>
+              <p class="eyebrow">PERSON</p>
+              <h2 id="detailName"></h2>
+            </div>
+            <span id="detailSource" class="source-badge"></span>
+          </div>
+
+          <div class="detail-stats">
+            <div><span>Wins</span><strong id="detailWins">0</strong></div>
+            <div><span>Losses</span><strong id="detailLosses">0</strong></div>
+            <div><span>Reach</span><strong id="detailReach">0</strong></div>
+            <div><span>Tier</span><strong id="detailTier">—</strong></div>
+          </div>
+
+          <div class="quick-actions">
+            <button id="addWinButton" class="button secondary" type="button">Add someone they beat</button>
+            <button id="addLossButton" class="button ghost" type="button">Add who beat them</button>
+          </div>
+
+          <section class="record-section">
+            <h3>Beat</h3>
+            <ul id="winsList" class="record-list"></ul>
+          </section>
+          <section class="record-section">
+            <h3>Lost to</h3>
+            <ul id="lossesList" class="record-list"></ul>
+          </section>
+        </div>
+      </aside>
+    </section>
+
+    <section class="admin-panel panel">
+      <details>
+        <summary>Site-owner merge tools</summary>
+        <div class="admin-content">
+          <div>
+            <h2>Merge exported submissions</h2>
+            <p>Choose one or more exported JSON files. They are merged into the current graph in your browser, deduplicated, and downloaded as a replacement <code>global-graph.json</code>.</p>
+          </div>
+          <label class="file-control">
+            Submission files
+            <input id="submissionFiles" type="file" accept="application/json,.json" multiple>
+          </label>
+          <button id="mergeButton" class="button secondary" type="button">Merge and download global graph</button>
+          <label class="file-control">
+            Replace current global graph preview
+            <input id="globalFile" type="file" accept="application/json,.json">
+          </label>
+          <p id="adminStatus" class="status" aria-live="polite"></p>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <dialog id="helpDialog">
+    <form method="dialog" class="dialog-card">
+      <button class="dialog-close" value="close" aria-label="Close">×</button>
+      <p class="eyebrow">HOW IT WORKS</p>
+      <h2>A graph, not a perfect ranking</h2>
+      <p>Each arrow goes from a winner to a person they beat. The layout tries to place stronger upstream records above weaker downstream records.</p>
+      <ul>
+        <li><strong>Global records</strong> come from <code>global-graph.json</code> and are the same for everyone.</li>
+        <li><strong>Local records</strong> live only in this browser until exported.</li>
+        <li><strong>Cycles</strong> are allowed and shown with dashed highlighted arrows.</li>
+        <li><strong>Reach</strong> counts distinct people downstream through direct or indirect wins.</li>
+      </ul>
+      <button class="button primary full" value="close">Got it</button>
+    </form>
+  </dialog>
+
+  <dialog id="confirmDialog">
+    <form method="dialog" class="dialog-card compact">
+      <h2>Delete local additions?</h2>
+      <p>This removes every match and person stored by this site in this browser. Global data will not change.</p>
+      <div class="dialog-actions">
+        <button class="button ghost" value="cancel">Cancel</button>
+        <button id="confirmResetButton" class="button danger-button" value="confirm">Delete local data</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer>
+    <span id="versionText">Global graph</span>
+    <span>Data stays in your browser unless you export or submit it.</span>
+  </footer>
+</body>
+</html>
