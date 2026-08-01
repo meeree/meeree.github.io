@@ -1,93 +1,36 @@
 {
   "schemaVersion": 1,
-  "graphVersion": "global-2026-08-01-7",
-  "updatedAt": "2026-08-01T01:50:17.410Z",
-  "people": [
-    {
-      "id": "alex-hsu",
-      "name": "Alex Hsu"
-    },
-    {
-      "id": "alex-johnson",
-      "name": "Alex Johnson"
-    },
-    {
-      "id": "charbel-abi-younes",
-      "name": "Charbel Abi-Younes"
-    },
-    {
-      "id": "damien-beecroft",
-      "name": "Damien Beecroft"
-    },
-    {
-      "id": "ike-griss-salas",
-      "name": "Ike Griss Salas"
-    },
-    {
-      "id": "james-hazelden",
-      "name": "James Hazelden"
-    },
-    {
-      "id": "mike-wendels",
-      "name": "Mike Wendels"
-    }
-  ],
+  "type": "arm-wrestling-graph-submission",
+  "baseGraphVersion": "global-2026-08-01-7",
+  "exportedAt": "2026-08-01T02:04:42.831Z",
+  "people": [],
   "matches": [
     {
-      "id": "m-james-hazelden-alex-hsu",
-      "winnerId": "james-hazelden",
-      "loserId": "alex-hsu",
-      "date": "",
-      "context": "",
-      "note": ""
-    },
-    {
-      "id": "m-alex-hsu-alex-johnson",
+      "id": "local-match-df2aed5b-9de2-42ee-97b2-30c09d0c38b0",
       "winnerId": "alex-hsu",
-      "loserId": "alex-johnson",
-      "date": "",
-      "context": "",
-      "note": ""
-    },
-    {
-      "id": "m-alex-johnson-charbel-abi-younes",
-      "winnerId": "alex-johnson",
-      "loserId": "charbel-abi-younes",
-      "date": "",
-      "context": "",
-      "note": ""
-    },
-    {
-      "id": "m-mike-wendels-alex-hsu",
-      "winnerId": "mike-wendels",
-      "loserId": "alex-hsu",
-      "date": "",
-      "context": "",
-      "note": ""
-    },
-    {
-      "id": "m-james-hazelden-mike-wendels",
-      "winnerId": "james-hazelden",
-      "loserId": "mike-wendels",
-      "date": "",
-      "context": "",
-      "note": ""
-    },
-    {
-      "id": "m-james-hazelden-damien-beecroft",
-      "winnerId": "james-hazelden",
       "loserId": "damien-beecroft",
       "date": "",
       "context": "",
-      "note": ""
+      "note": "",
+      "createdAt": "2026-08-01T02:02:34.721Z"
     },
     {
-      "id": "m-james-hazelden-ike-griss-salas",
-      "winnerId": "james-hazelden",
+      "id": "local-match-699a61fc-9da4-4a84-b546-5b95edb35551",
+      "winnerId": "ike-griss-salas",
+      "loserId": "damien-beecroft",
+      "date": "",
+      "context": "",
+      "note": "",
+      "createdAt": "2026-08-01T02:02:44.944Z"
+    },
+    {
+      "id": "local-match-94e4494f-d35e-4caa-9b5a-ec20cc248f29",
+      "winnerId": "mike-wendels",
       "loserId": "ike-griss-salas",
       "date": "",
       "context": "",
-      "note": ""
+      "note": "",
+      "createdAt": "2026-08-01T02:03:24.327Z"
     }
   ]
 }
