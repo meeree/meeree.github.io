@@ -520,3 +520,44 @@ width: 95%;
   font-size: 0.50cm;
   line-height: 0.78cm;
 }
+
+/* Selected Works: mobile layout */
+@media (max-width: 768px) {
+  .selected-works-content-row {
+    display: block;
+  }
+
+  .selected-works-content-row > .selected-works-cell {
+    display: block;
+    width: 100% !important;
+    padding: 22px 24px;
+  }
+
+  .selected-works-cell-left {
+    border-right: 0 !important;
+    border-bottom: 3px solid #cccccc !important;
+  }
+
+  .selected-work-inner,
+  .selected-work-image-right {
+    grid-template-columns: minmax(125px, 32%) minmax(0, 1fr);
+    column-gap: 22px;
+  }
+
+  .selected-work-image-box {
+    width: 100%;
+    max-width: 180px;
+    justify-self: center;
+  }
+
+  .selected-work-copy h3 {
+    font-size: 0.58cm;
+    line-height: 0.80cm;
+    margin-bottom: 10px;
+  }
+
+  .selected-work-copy p {
+    font-size: 0.46cm;
+    line-height: 0.68cm;
+  }
+}
