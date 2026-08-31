@@ -41,11 +41,13 @@
     .task-line{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:2.4}
     .legend{display:flex;flex-wrap:wrap;gap:9px 18px;min-height:20px;padding:2px 7px 0 50px}.legend-item{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:.76rem}
     .legend-swatch{width:11px;height:11px;border-radius:3px}
+    .trend{display:block;width:100%;height:auto;margin-top:18px}.trend-line{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.trend-dot{fill:var(--surface);stroke:var(--accent);stroke-width:2}.trend-title{margin:22px 0 0;color:var(--muted);font-size:.76rem;font-weight:650}
     .entries-head{margin-bottom:14px}.secondary{height:38px;font-size:.82rem}.entry-list{border-top:1px solid var(--border)}
     .entry{display:grid;grid-template-columns:minmax(0,1fr) auto auto 28px;align-items:center;gap:14px;min-height:66px;border-bottom:1px solid var(--border)}.entry:last-child{border-bottom:0}
     .entry>div:first-child{display:grid;gap:3px;min-width:0}.entry strong{overflow:hidden;font-size:.92rem;text-overflow:ellipsis;white-space:nowrap}.entry span{color:var(--muted);font-size:.76rem}
     .entry-time{font-weight:700;font-variant-numeric:tabular-nums}.increment{display:flex;align-items:center;gap:5px}.increment input{width:54px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--soft);color:var(--text);padding:0 7px;text-align:right}.increment button{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--accent);font-weight:800}.increment button:hover{border-color:var(--accent);background:var(--soft)}.delete{width:28px;height:28px;border:0;border-radius:50%;background:transparent;color:#999c94;font-size:1.2rem;line-height:1}.delete:hover{background:#fff0ee;color:#b42318}
     .empty-state{margin:0;border-top:1px solid var(--border);color:var(--muted);padding:28px 0 8px;font-size:.88rem}.note{margin:24px 0 0;color:var(--muted);font-size:.76rem;text-align:center}
+    .page-actions{display:flex;justify-content:center;padding:8px 0 0}.danger-secondary{border-color:#e4c7c3;color:#9f2d24}.danger-secondary:hover{border-color:#c95b51;background:#fff4f2}
     .new-project,.new-item{display:flex;align-items:center;gap:8px}.new-project input,.new-item input,.percent input,.deadline-input{height:38px;border:1px solid var(--border);border-radius:8px;outline:none;background:var(--soft);color:var(--text);padding:0 10px}.new-project input[type="text"]{width:min(220px,36vw)}.new-project input[type="date"]{width:145px}
     .project-list{display:grid;gap:16px}.project{border-top:1px solid var(--border);padding-top:18px}.project:first-child{border-top:0;padding-top:0}.project.deadline-today{margin:0 -12px;padding:18px 12px 12px;border-radius:10px;background:rgba(210,35,35,.075)}.project.deadline-today:first-child{padding-top:12px}.project-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.project-title{display:grid;gap:7px;min-width:0}.project-head h3{margin:0;font-size:.98rem}.deadline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.deadline-input{width:140px;height:32px;font-size:.78rem}.countdown{color:var(--muted);font-size:.77rem;font-weight:650}.countdown.due{color:#b42318}.progress-list{display:grid;gap:12px}.progress-row{display:grid;grid-template-columns:minmax(120px,190px) minmax(180px,1fr) 72px 28px;align-items:center;gap:12px}.progress-label{overflow:hidden;font-size:.86rem;font-weight:620;text-overflow:ellipsis;white-space:nowrap}.progress-track{height:18px;overflow:hidden;border-radius:5px;background:var(--grid)}.progress-fill{height:100%;border-radius:inherit;opacity:.72;transition:width 180ms ease}.percent,.new-item-percent{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:.78rem}.percent input{width:52px;padding:0 6px;text-align:right}.new-item{margin-top:16px;padding-left:202px}.new-item>input:first-child{min-width:0;flex:1}.new-item-percent input{width:64px}
     @media(max-width:760px){.shell{padding:34px 14px 28px}.header{align-items:flex-start;flex-direction:column;gap:22px}.stats{width:100%}.form{grid-template-columns:1fr 1fr}.task-field{grid-column:1/-1}.primary{grid-column:1/-1}.chart-card,.entries-card,.log-card{padding:18px}.legend{padding-left:0}}
@@ -88,6 +90,8 @@
       </div>
       <div class="chart-wrap" id="chart-wrap"></div>
       <div class="legend" id="legend" aria-label="Chart legend"></div>
+      <p class="trend-title">Total time per week</p>
+      <div class="chart-wrap" id="weekly-trend"></div>
     </section>
 
     <section class="card projects-card" aria-labelledby="projects-heading">
@@ -104,6 +108,7 @@
       </div>
       <div id="entries"></div>
     </section>
+    <div class="page-actions"><button class="secondary danger-secondary" id="cull-tasks" type="button">Cull unused tasks</button></div>
     <p class="note">Saved locally in this browser.</p>
   </div></main>
 
@@ -119,7 +124,7 @@
         "#A6761D","#666666","#E41A1C","#377EB8","#4DAF4A",
         "#984EA3","#FF7F00","#A65628","#F781BF","#17A2A4"
       ];
-      let data = { tasks: [], entries: [] };
+      let data = { tasks: [], entries: [], taskColors: {} };
       let projects = [];
       let weekStart = mondayOf(new Date());
 
@@ -144,7 +149,21 @@
       function escapeHTML(value) { return String(value).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
       function csvCell(value) { const s=String(value); return /[",\n]/.test(s)?`"${s.replaceAll('"','""')}"`:s; }
       function save() { localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); render(); }
-      function saveProjects() { localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects)); renderProjects(); }
+      function saveProjects() { localStorage.setItem(PROJECTS_KEY,JSON.stringify(projects)); render(); }
+      function ensureTaskColors() {
+        if(!data.taskColors||typeof data.taskColors!=="object")data.taskColors={};
+        data.tasks.forEach(task=>{
+          if(!Number.isInteger(data.taskColors[task])){
+            const used=new Set(Object.values(data.taskColors));
+            let index=0;while(used.has(index)&&index<COLORS.length)index++;
+            data.taskColors[task]=index<COLORS.length?index:Object.keys(data.taskColors).length%COLORS.length;
+          }
+        });
+      }
+      function taskColor(task) {
+        ensureTaskColors();
+        return COLORS[(data.taskColors[task]??0)%COLORS.length];
+      }
 
       function load() {
         try {
@@ -153,6 +172,7 @@
           const savedProjects = JSON.parse(localStorage.getItem(PROJECTS_KEY));
           if (Array.isArray(savedProjects)) projects = savedProjects;
         } catch (_) {}
+        ensureTaskColors();
         dateInput.value = localISODate();
         render();
       }
@@ -174,13 +194,14 @@
         $("week-total").textContent = formatMinutes(weekEntries.reduce((s,e)=>s+Number(e.minutes),0));
         $("week-heading").textContent = `${shortDate(weekStart)} – ${shortDate(addDays(weekStart,6))}`;
         renderChart(weekEntries,keys);
+        renderWeeklyTrend();
         renderEntries();
         renderProjects();
       }
 
       function renderChart(weekEntries,keys) {
         const days = keys.map(parseDate), tasks = [...new Set(weekEntries.map(e=>e.task))].sort();
-        const series = tasks.map((task,i)=>({task,color:COLORS[i%COLORS.length],values:keys.map(date=>weekEntries.filter(e=>e.date===date&&e.task===task).reduce((s,e)=>s+Number(e.minutes),0))}));
+        const series = tasks.map(task=>({task,color:taskColor(task),values:keys.map(date=>weekEntries.filter(e=>e.date===date&&e.task===task).reduce((s,e)=>s+Number(e.minutes),0))}));
         const totals = keys.map((_,i)=>series.reduce((s,row)=>s+row.values[i],0));
         const w=760,h=310,m={top:25,right:18,bottom:50,left:50},pw=w-m.left-m.right,ph=h-m.top-m.bottom;
         const max=Math.ceil(Math.max(60,...totals,...series.flatMap(s=>s.values))/60)*60;
@@ -211,6 +232,27 @@
         $("legend").innerHTML=series.map(row=>`<span class="legend-item"><span class="legend-swatch" style="background:${row.color}"></span>${escapeHTML(row.task)}</span>`).join("");
       }
 
+      function renderWeeklyTrend() {
+        const totals=new Map();
+        data.entries.forEach(entry=>{
+          const monday=localISODate(mondayOf(parseDate(entry.date)));
+          totals.set(monday,(totals.get(monday)||0)+Number(entry.minutes));
+        });
+        const activeWeeks=[...totals.keys()].sort();
+        if(!activeWeeks.length){$("weekly-trend").innerHTML=`<svg class="trend" viewBox="0 0 760 105" role="img" aria-label="No weekly totals yet"><text class="empty-chart" x="380" y="55" text-anchor="middle">No weekly totals yet</text></svg>`;return;}
+        const weeks=[];for(let date=parseDate(activeWeeks[0]),last=parseDate(activeWeeks.at(-1));date<=last;date=addDays(date,7))weeks.push(localISODate(date));
+        const w=760,h=125,m={top:12,right:18,bottom:30,left:50},pw=w-m.left-m.right,ph=h-m.top-m.bottom;
+        const values=weeks.map(week=>totals.get(week));
+        const max=Math.max(60,...values),x=i=>weeks.length===1?m.left+pw/2:m.left+i*pw/(weeks.length-1),y=v=>m.top+ph-(v/max)*ph;
+        let svg=`<svg class="trend" viewBox="0 0 ${w} ${h}" role="img" aria-label="Total logged time per week">`;
+        [0,max/2,max].forEach(t=>{svg+=`<line class="grid" x1="${m.left}" x2="${w-m.right}" y1="${y(t)}" y2="${y(t)}"/><text class="axis" x="${m.left-9}" y="${y(t)+4}" text-anchor="end">${Number((t/60).toFixed(1))}h</text>`});
+        if(weeks.length>1)svg+=`<polyline class="trend-line" points="${values.map((v,i)=>`${x(i)},${y(v)}`).join(" ")}"/>`;
+        values.forEach((value,i)=>{svg+=`<circle class="trend-dot" cx="${x(i)}" cy="${y(value)}" r="4"><title>${escapeHTML(`Week of ${shortDate(parseDate(weeks[i]))}: ${formatMinutes(value)}`)}</title></circle>`});
+        const labelIndexes=[0,Math.floor((weeks.length-1)/2),weeks.length-1].filter((v,i,a)=>a.indexOf(v)===i);
+        labelIndexes.forEach(i=>{svg+=`<text class="date-label" x="${x(i)}" y="${h-8}" text-anchor="middle">${shortDate(parseDate(weeks[i]))}</text>`});
+        $("weekly-trend").innerHTML=svg+"</svg>";
+      }
+
       function renderEntries() {
         const entries=[...data.entries].sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt));
         $("export").disabled=!entries.length;
@@ -227,7 +269,7 @@
         const task=taskSelect.value===NEW_TASK?newTaskInput.value.trim():taskSelect.value;
         const minutes=Math.round(Number(minutesInput.value));
         if(!task||!dateInput.value||!Number.isFinite(minutes)||minutes<=0)return;
-        if(!data.tasks.includes(task))data.tasks.push(task);
+        if(!data.tasks.includes(task)){data.tasks.push(task);ensureTaskColors();}
         data.entries.push({id:crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`,task,date:dateInput.value,minutes,createdAt:new Date().toISOString()});
         newTaskInput.value="";minutesInput.value="";dateInput.value=localISODate();
         save();renderTasks(task);
@@ -252,6 +294,13 @@
         const rows=[["task","date","minutes","hours"],...[...data.entries].sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt.localeCompare(b.createdAt)).map(e=>[e.task,e.date,e.minutes,(e.minutes/60).toFixed(2)])];
         const blob=new Blob([rows.map(row=>row.map(csvCell).join(",")).join("\n")],{type:"text/csv;charset=utf-8"});
         const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=`time-log-${localISODate()}.csv`;link.click();URL.revokeObjectURL(url);
+      });
+      $("cull-tasks").addEventListener("click",()=>{
+        const used=new Set(data.entries.filter(entry=>Number(entry.minutes)>0).map(entry=>entry.task));
+        const unused=data.tasks.filter(task=>!used.has(task));
+        if(!unused.length){alert("There are no unused tasks to remove.");return;}
+        if(!confirm(`Remove ${unused.length} task${unused.length===1?"":"s"} with zero logged time?`))return;
+        data.tasks=data.tasks.filter(task=>used.has(task));save();
       });
       $("new-project-form").addEventListener("submit",event=>{
         event.preventDefault();const input=$("new-project-name"),deadlineInput=$("new-project-deadline"),name=input.value.trim();if(!name)return;
