@@ -47,7 +47,7 @@
     .entry>div:first-child{display:grid;gap:3px;min-width:0}.entry strong{overflow:hidden;font-size:.92rem;text-overflow:ellipsis;white-space:nowrap}.entry span{color:var(--muted);font-size:.76rem}
     .entry-time{font-weight:700;font-variant-numeric:tabular-nums}.increment{display:flex;align-items:center;gap:5px}.increment input{width:54px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--soft);color:var(--text);padding:0 7px;text-align:right}.increment button{width:32px;height:32px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--accent);font-weight:800}.increment button:hover{border-color:var(--accent);background:var(--soft)}.delete{width:28px;height:28px;border:0;border-radius:50%;background:transparent;color:#999c94;font-size:1.2rem;line-height:1}.delete:hover{background:#fff0ee;color:#b42318}
     .empty-state{margin:0;border-top:1px solid var(--border);color:var(--muted);padding:28px 0 8px;font-size:.88rem}.note{margin:24px 0 0;color:var(--muted);font-size:.76rem;text-align:center}
-    .page-actions{display:flex;justify-content:center;padding:8px 0 0}.danger-secondary{border-color:#e4c7c3;color:#9f2d24}.danger-secondary:hover{border-color:#c95b51;background:#fff4f2}
+    .page-actions{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:8px 0 0}.rename-task{display:flex;align-items:center;gap:8px}.rename-task select,.rename-task input{height:38px;border:1px solid var(--border);border-radius:8px;outline:none;background:var(--surface);color:var(--text);padding:0 10px}.rename-task select{max-width:190px}.rename-task input{width:190px}.danger-secondary{border-color:#e4c7c3;color:#9f2d24}.danger-secondary:hover{border-color:#c95b51;background:#fff4f2}
     .new-project,.new-item{display:flex;align-items:center;gap:8px}.new-project input,.new-item input,.percent input,.deadline-input{height:38px;border:1px solid var(--border);border-radius:8px;outline:none;background:var(--soft);color:var(--text);padding:0 10px}.new-project input[type="text"]{width:min(220px,36vw)}.new-project input[type="date"]{width:145px}
     .project-list{display:grid;gap:16px}.project{border-top:1px solid var(--border);padding-top:18px}.project:first-child{border-top:0;padding-top:0}.project.deadline-today{margin:0 -12px;padding:18px 12px 12px;border-radius:10px;background:rgba(210,35,35,.075)}.project.deadline-today:first-child{padding-top:12px}.project-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.project-title{display:grid;gap:7px;min-width:0}.project-head h3{margin:0;font-size:.98rem}.deadline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.deadline-input{width:140px;height:32px;font-size:.78rem}.countdown{color:var(--muted);font-size:.77rem;font-weight:650}.countdown.due{color:#b42318}.progress-list{display:grid;gap:12px}.progress-row{display:grid;grid-template-columns:minmax(120px,190px) minmax(180px,1fr) 72px 28px;align-items:center;gap:12px}.progress-label{overflow:hidden;font-size:.86rem;font-weight:620;text-overflow:ellipsis;white-space:nowrap}.progress-track{height:18px;overflow:hidden;border-radius:5px;background:var(--grid)}.progress-fill{height:100%;border-radius:inherit;opacity:.72;transition:width 180ms ease}.percent,.new-item-percent{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:.78rem}.percent input{width:52px;padding:0 6px;text-align:right}.new-item{margin-top:16px;padding-left:202px}.new-item>input:first-child{min-width:0;flex:1}.new-item-percent input{width:64px}
     @media(max-width:760px){.shell{padding:34px 14px 28px}.header{align-items:flex-start;flex-direction:column;gap:22px}.stats{width:100%}.form{grid-template-columns:1fr 1fr}.task-field{grid-column:1/-1}.primary{grid-column:1/-1}.chart-card,.entries-card,.log-card{padding:18px}.legend{padding-left:0}}
@@ -108,7 +108,10 @@
       </div>
       <div id="entries"></div>
     </section>
-    <div class="page-actions"><button class="secondary danger-secondary" id="cull-tasks" type="button">Cull unused tasks</button></div>
+    <div class="page-actions">
+      <form class="rename-task" id="rename-task-form"><select id="rename-task-select" aria-label="Task to rename"></select><input id="rename-task-name" maxlength="80" placeholder="New task name" aria-label="New task name"><button class="secondary" type="submit">Rename task</button></form>
+      <button class="secondary danger-secondary" id="cull-tasks" type="button">Cull unused tasks</button>
+    </div>
     <p class="note">Saved locally in this browser.</p>
   </div></main>
 
@@ -184,6 +187,12 @@
         const isNew = taskSelect.value === NEW_TASK;
         newTaskInput.hidden = !isNew;
         $("task-field").classList.toggle("new",isNew);
+        const renameSelect=$("rename-task-select"),previous=renameSelect.value;
+        renameSelect.innerHTML=data.tasks.map(task=>`<option value="${escapeHTML(task)}">${escapeHTML(task)}</option>`).join("");
+        if(data.tasks.includes(previous))renameSelect.value=previous;
+        $("rename-task-name").disabled=!data.tasks.length;
+        renameSelect.disabled=!data.tasks.length;
+        $("rename-task-form").querySelector("button").disabled=!data.tasks.length;
       }
 
       function render() {
@@ -301,6 +310,23 @@
         if(!unused.length){alert("There are no unused tasks to remove.");return;}
         if(!confirm(`Remove ${unused.length} task${unused.length===1?"":"s"} with zero logged time?`))return;
         data.tasks=data.tasks.filter(task=>used.has(task));save();
+      });
+      $("rename-task-form").addEventListener("submit",event=>{
+        event.preventDefault();
+        const oldName=$("rename-task-select").value,newName=$("rename-task-name").value.trim();
+        if(!oldName||!newName||oldName===newName)return;
+        const existingIndex=data.tasks.indexOf(newName),oldIndex=data.tasks.indexOf(oldName);
+        if(existingIndex>=0){
+          if(!confirm(`“${newName}” already exists. Merge all “${oldName}” entries into it?`))return;
+          data.tasks.splice(oldIndex,1);
+          delete data.taskColors[oldName];
+        }else{
+          data.tasks[oldIndex]=newName;
+          data.taskColors[newName]=data.taskColors[oldName];
+          delete data.taskColors[oldName];
+        }
+        data.entries.forEach(entry=>{if(entry.task===oldName)entry.task=newName;});
+        $("rename-task-name").value="";save();renderTasks(newName);
       });
       $("new-project-form").addEventListener("submit",event=>{
         event.preventDefault();const input=$("new-project-name"),deadlineInput=$("new-project-deadline"),name=input.value.trim();if(!name)return;
